@@ -91,13 +91,14 @@ class Token:
     Each token consists of a type (from TokenType) and an optional value.
     """
 
-    def __init__(self, token_type, value=None):
-        self.token_type = token_type
+    def __init__(self, type_, value=None):
+        self.type = type_
         self.value = value
 
     def __repr__(self):
-        """
-        Returns a readable string representation of the token.
-        If the token has a value, it includes the value in the representation.
-        """
-        return f"Token({self.token_type}, {self.value})" if self.value else f"Token({self.token_type})"
+        '''
+        Generates a string representation of the token.
+        '''
+        if self.value:
+            return f"{self.type} | {self.value}"
+        return f"{self.type}"
