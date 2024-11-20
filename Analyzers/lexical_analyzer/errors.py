@@ -98,9 +98,9 @@ class InvalidIdentifierError(Error):
     # Triggered when: An identifier does not follow the rules for naming variables (e.g., it must start with @).
         
     # Example Code:
-    # Feint Main() { Feint = 5; }
+    # Feint Main() { x = 5; }
 
     # Error Message:
-    # LexerError: Invalid identifier 'Feint' at line 1, column 13
+    # LexerError: Invalid identifier 'x' at line 1, column 13
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, "Lexical error: Invalid identifier error", details)
