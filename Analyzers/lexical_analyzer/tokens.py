@@ -15,12 +15,16 @@ class TokenType(Enum):
     DRIBBLE = "Dribble"   # Equivalent to if
     SHOOT = "Shoot"       # Equivalent to else
     PASS = "Pass"         # Equivalent to elif
+    DEFAULT = "Default"   # Equivalent to default
+    SWITCH = "Switch"     # Equivalent to switch
+    GET = "Get"           # Equivalent to case
 
     # Loop Statements
     FORWARD = "Forward"     # Equivalent to for
     PLAY = "Play"           # Equivalent to while
     TIMEOUT = "Timeout"     # Equivalent to break
     RESUME = "Resume"       # Equivalent to continue
+    RUN = "Run"             # Equivalent to do-while
 
     # Others/Functions
     REBOUND = "Rebound"   # Equivalent to return

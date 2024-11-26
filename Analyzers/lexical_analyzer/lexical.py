@@ -6,7 +6,7 @@ from Analyzers.lexical_analyzer.positions import Position
 
 """
 Example Code:
-Feint Main() {
+Feint Team() {
     Announce("Hello World");
 }
 
@@ -14,7 +14,7 @@ Output:
 Lexeme              Token
 -------------------------
 Feint               FEINT
-Main                MAIN
+Team                TEAM
 (                   LEFT_PAREN
 )                   RIGHT_PAREN 
 {                   CODE_BLOCK_LEFT
