@@ -107,6 +107,134 @@ class Lexer:
                         self.advance()
             # Reserved Words
 
+            #Reserved Symbols
+            elif self.current_char == "=":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state124()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "+":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state128()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "-":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state132()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "*":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state136()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "/":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state140()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "%":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state144()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "!":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state148()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "<":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state151()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == ">":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state155()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "&":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state159()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "[":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state161()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "{":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state165()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "(":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state169()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            elif self.current_char == "@":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state173()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+
+
 """
 # AND state 0-4
 AND - Announce
