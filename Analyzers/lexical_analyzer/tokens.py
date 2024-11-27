@@ -6,6 +6,7 @@ class TokenType(Enum):
     CHANT = "Chant"       # Equivalent to str
     FLOATER = "Floater"   # Equivalent to float
     STAT = "Stat"         # Equivalent to bool
+    CONST = "Const"       # Equivalent to const
 
     # Input/Output Statements
     INBOUND = "Inbound"   # Equivalent to input

@@ -340,7 +340,6 @@ class Lexer:
         return tokens, errors                        
     """
     States 1 - 12 AND - Announce
-
     Chant - Const
     Default - Dribble - Dunk
     Feint - Floater - Forward
@@ -464,11 +463,378 @@ class Lexer:
     # FINAL STATE
     def state12(self, input_str):
         return True, Token(TokenType.ANNOUNCE.value, input_str)
+    
+    def state13(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "h":
+                return self.state14(input_str)
+            case "o":
+                return self.state19(input_str)
+            case _:
+                return False, input_str
+            
+    def state14(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "a":
+                return self.state15(input_str)
+            case _:
+                return False, input_str
+            
+    def state15(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "n":
+                return self.state16(input_str)
+            case _:
+                return False, input_str
+            
+    def state16(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "t":
+                return self.state17(input_str)
+            case _:
+                return False, input_str
+            
+    def state17(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim1:
+                return self.state18(input_str)
+        else:
+            return False, input_str
+        
+    # FINAL STATE
+    def state18(self, input_str):
+        return True, Token(TokenType.CHANT.value, input_str)
+    
+    def state19(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "n":
+                return self.state20(input_str)
+            case _:
+                return False, input_str
+    def state20(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "s":
+                return self.state21(input_str)
+            case _:
+                return False, input_str
+            
+    def state21(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "t":
+                return self.state22(input_str)
+            case _:
+                return False, input_str
+            
+    def state22(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim7:
+                return self.state23(input_str)
+        else:
+            return False, input_str
+        
+    # FINAL STATE
+    def state23(self, input_str):
+        return True, Token(TokenType.CONST.value, input_str)
+
+    def state24(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "e":
+                return self.state25(input_str)
+            case "r":
+                return self.state31(input_str)
+            case "u":
+                return self.state39(input_str)
+            case _:
+                return False, input_str
+            
+    def state25(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "f":
+                return self.state26(input_str)
+            case _:
+                return False, input_str
+            
+    def state26(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "a":
+                return self.state27(input_str)
+            case _:
+                return False, input_str
+            
+    def state27(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "u":
+                return self.state28(input_str)
+            case _:
+                return False, input_str
+            
+    def state28(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "l":
+                return self.state29(input_str)
+            case _:
+                return False, input_str
+            
+    def state29(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "t":
+                return self.state30(input_str)
+            case _:
+                return False, input_str
+            
+    def state30(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim1:
+                return self.state31(input_str)
+        else:
+            return False, input_str
+        
+    # FINAL STATE
+    def state31(self, input_str):
+        return True, Token(TokenType.DEFAULT.value, input_str)
+    
+    def state32(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "i":
+                return self.state33(input_str)
+            case _:
+                return False, input_str
+
+    def state33(self, input_str):
+        input_str = self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "b":
+                return self.state34(input_str)
+            case _:
+                return False, input_str
+            
+    def state34(self, input_str):
+        input_str = self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "b":
+                return self.state35(input_str)
+            case _:
+                return False, input_str
+            
+    def state35(self, input_str):
+        input_str = self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "l":
+                return self.state36(input_str)
+            case _:
+                return False, input_str
+            
+    def state36(self, input_str):
+        input_str = self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "e":
+                return self.state37(input_str)
+            case _:
+                return False, input_str
+        
+    def state37(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim1:
+            return self.state38(input_str)
+        else:
+            return False, input_str
+            
+    # FINAL STATE
+    def state38(self, input_str):
+        return True, Token(TokenType.DRIBBLE.value, input_str)
+    
+    def state39(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "n":
+                return self.state40(input_str)
+            case _:
+                return False, input_str
+
+    def state40(self, input_str):
+        input_str = self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "k":
+                return self.state41(input_str)
+            case _:
+                return False, input_str
+            
+    def state41(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim1:
+            return self.state42(input_str)
+        else:
+            return False, input_str
+            
+    # FINAL STATE
+    def state42(self, input_str):
+        return True, Token(TokenType.DUNK.value, input_str)
+
+    def stat43(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "e":
+                return self.state44(input_str)
+            case _:
+                return False, input_str
+
+    def state44(self, input_str):
+        input_str = self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "i":
+                return self.state45(input_str)
+            case _:
+                return False, input_str
+            
+    def state45(self, input_str):
+        input_str = self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "n":
+                return self.state46(input_str)
+            case _:
+                return False, input_str
+            
+    def state46(self, input_str):
+        input_str = self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "t":
+                return self.state47(input_str)
+            case _:
+                return False, input_str
+            
+    def state47(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim1:
+            return self.state48(input_str)
+        else:
+            return False, input_str
+            
+    # FINAL STATE
+    def state48(self, input_str):
+        return True, Token(TokenType.FEINT.value, input_str)
 
 def run(fn, text, ln):
 
     lexer = Lexer(fn, text, ln)
     tokens, errors = lexer.make_tokens()
     return tokens, errors
+
+# python -m Analyzers.lexical_analyzer.lexical
+
+if __name__ == "__main__":
+    import sys
+
+    print("Welcome to the Lexical Analyzer!")
+    print("Type your code below. Type 'exit' to quit.")
+
+    while True:
+        try:
+            # Read input from the terminal
+            input_code = input("\n>> ")
+
+            # Exit condition
+            if input_code.lower() == "exit":
+                print("Exiting Lexical Analyzer. Goodbye!")
+                break
+
+            # Run the lexer
+            tokens, errors = run("stdin", input_code, 1)
+
+            # Display the output
+            if errors:
+                print("\nErrors:")
+                for error in errors:
+                    print(error)
+
+            print("\nLexeme      Token")
+            print("-------------------")
+            for token in tokens:
+                print(f"{token.value:<12} {token.type}")
+
+        except KeyboardInterrupt:
+            print("\nExiting Lexical Analyzer. Goodbye!")
+            break
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
 
