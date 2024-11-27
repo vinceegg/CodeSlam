@@ -2,6 +2,13 @@ import tkinter
 import tkinter.messagebox
 import customtkinter
 import subprocess
+import sys
+import os
+# Add the parent directory (CODESLAM) to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from Analyzers.lexical_analyzer.tokens import Token
+from Analyzers.lexical_analyzer.lexical import run  # Import run function from lexical.py
+from tkinter import END
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue")
@@ -93,8 +100,77 @@ class App(customtkinter.CTk):
         customtkinter.set_widget_scaling(new_scaling_float)
 
     def sidebar_button_lexical(self):
-        self.append_terminal_output("Lexical Button Clicked!")
-    
+        """Trigger lexical analysis for the entered code."""
+        # Clear the scrollable frame for fresh results
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+
+        # Retrieve the code input from the editor
+        code_text = self.codebox.get("1.0", "end-1c").strip()
+
+        # Ensure code is entered before processing
+        if code_text == self.codebox_placeholder or not code_text:
+            self.append_terminal_output("No code entered. Please enter code before running lexical analysis.")
+            return
+
+        try:
+            # Split the code into lines (to handle multi-line input)
+            code_lines = code_text.splitlines()
+
+            # Store the results from the lexical analysis
+            analysis_results = []
+
+            # Call the run function for each line of code
+            for line_number, line_content in enumerate(code_lines, start=1):
+                line_results = run("<stdin>", line_content, line_number)
+                analysis_results.extend(line_results)  # Combine results from all lines
+
+            # Check if any tokens were found
+            if not analysis_results:
+                self.append_terminal_output("No lexemes or tokens were detected.")
+                return
+
+            # Add column headers
+            headers = customtkinter.CTkLabel(
+                self.scrollable_frame,
+                text=f"{'Lexeme':<15}{'Tokens':<15}",
+                font=("Arial", 10, "bold"),
+                anchor="w"
+            )
+            headers.pack(fill="x", padx=10, pady=5)
+
+            # Add a line separator
+            separator = customtkinter.CTkLabel(
+                self.scrollable_frame,
+                text="-" * 30,
+                anchor="w"
+            )
+            separator.pack(fill="x", padx=10, pady=2)
+
+            # Display each lexeme and token pair in the scrollable frame
+            for result in analysis_results:
+                # Handle tuple format (success_flag, Token object)
+                if isinstance(result, tuple) and len(result) == 2:
+                    success, token_obj = result
+                    if success and isinstance(token_obj, Token):
+                        lexeme = getattr(token_obj, "lexeme", "N/A")
+                        token = getattr(token_obj, "token_type", "N/A")
+                    else:
+                        lexeme, token = "Invalid", "Invalid"
+                else:
+                    lexeme, token = "Invalid", "Invalid"
+
+                # Add the lexeme-token row
+                result_label = customtkinter.CTkLabel(
+                    self.scrollable_frame,
+                    text=f"{lexeme:<15}{token:<15}",
+                    anchor="w"
+                )
+                result_label.pack(fill="x", padx=10, pady=5)
+
+        except Exception as e:
+            self.append_terminal_output(f"Error during lexical analysis:\n{e}")
+
     def sidebar_button_syntax(self):
         self.append_terminal_output("Syntax Button Clicked!")
     
@@ -104,33 +180,15 @@ class App(customtkinter.CTk):
     def append_terminal_output(self, text):
         """Append text to the terminal output."""
         self.terminal_output.configure(state="normal")  # Make it editable temporarily
-        self.terminal_output.insert("end", f"{text}\n")  # Add the text to the terminal
-        self.terminal_output.see("end")  # Scroll to the end to show the latest output
-        self.terminal_output.configure(state="disabled")  # Set it back to read-only
+        self.terminal_output.insert(END, f"{text}\n")
+        self.terminal_output.configure(state="disabled")  # Make it read-only again
 
-    def execute_command(self, event):
+    def execute_command(self, event=None):
         """Execute the command entered in the command input field."""
-        command = self.command_input.get()  # Get the command from the input field
-        if command:
-            try:
-                # Run the command using subprocess
-                result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                
-                # Show the command in the terminal
-                self.append_terminal_output(f"$ {command}")
-                
-                # Show the result of the command
-                if result.stdout:
-                    self.append_terminal_output(result.stdout)
-                if result.stderr:
-                    self.append_terminal_output(result.stderr)
-
-            except Exception as e:
-                self.append_terminal_output(f"Error: {e}")
-        
-        # Clear the input field
-        self.command_input.delete(0, 'end')
-
+        command = self.command_input.get()
+        if command.strip():
+            self.append_terminal_output(f"Executing: {command}")
+            subprocess.run(command, shell=True, stdout=sys.stdout, stderr=sys.stderr)
 
 if __name__ == "__main__":
     app = App()

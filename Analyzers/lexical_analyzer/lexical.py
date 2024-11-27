@@ -217,146 +217,258 @@ class Lexer:
                     tokens.append(input_str)
                 else:
                     errors.append(IllegalCharError(
-                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                        pos_start, self.pos, "'" + input_str + "'").as_string())           
+            # Reserved Symbols
+            elif self.current_char == "=":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state124()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+            elif self.current_char == "+":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state128()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+            elif self.current_char == "-":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state132()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+            elif self.current_char == "*":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state136()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                  
+            elif self.current_char == "/":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state140()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+            elif self.current_char == "%":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state144()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                    
+            elif self.current_char == "!":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state148()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+            elif self.current_char == "<":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state151()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+            elif self.current_char == ">":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state155()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                    
+            elif self.current_char == "&":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state159()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                  
+            elif self.current_char == "[":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state161()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+            elif self.current_char == "{":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state165()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                    
+            elif self.current_char == "(":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state169()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+            elif self.current_char == "@":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state173()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())   
+            # Return error
+            else:
+                pos_start = self.pos.copy()
+                errors.append(IllegalCharError(
+                    pos_start, self.pos, "'" + self.current_char + "'").as_string())
+                self.advance()
+        return tokens, errors                        
+    """
+    States 1 - 12 AND - Announce
+
+    Chant - Const
+    Default - Dribble - Dunk
+    Feint - Floater - Forward
+    Inbound 
+    Loss
+    NOT
+    OR
+    Pass - Play
+    Rebound - Resume - Run
+    Shoot - Stat - Switch
+    Team - Timeout
+    Win
+    """
+
+    # STARTING STATE AND - Announce
+    def state1(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "N":
+                return self.state2(input_str)
+            case "n":
+                return self.state5(input_str)
+            case _:
+                return False, input_str
+
+    def state2(self, input_str):
+        input_str = self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "D":
+                return self.state3(input_str)
+            case _:
+                return False, input_str
+        
+    def state3(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim6:
+            return self.state4(input_str)
+        else:
+            return False, input_str
             
-                    
-"""
-States 1 - 12 AND - Announce
+    # FINAL STATE
+    def state4(self, input_str):
+        return True, Token(TokenType.AND_OP.value, input_str)
 
-Chant - Const
-Default - Dribble - Dunk
-Feint - Floater - Forward
-Inbound 
-Loss
-NOT
-OR
-Pass - Play
-Rebound - Resume - Run
-Shoot - Stat - Switch
-Team - Timeout
-Win
-"""
+    def state5(self, input_str):
+        input_str += self.current_char
+        self.advance()
 
-# STARTING STATE
-def state1(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
+        match self.current_char:
+            case "n":
+                return self.state6(input_str)
+            case _:
+                return False, input_str
+            
+    def state6(self, input_str):
+        input_str += self.current_char
+        self.advance()
 
-    match self.current_char:
-        case "N":
-            return self.state2(input_str)
-        case "n":
-            return self.state5(input_str)
-        case _:
+        match self.current_char:
+            case "o":
+                return self.state7(input_str)
+            case _:
+                return False, input_str
+            
+    def state7(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "u":
+                return self.state8(input_str)
+            case _:
+                return False, input_str
+
+    def state8(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "n":
+                return self.state9(input_str)
+            case _:
+                return False, input_str
+            
+    def state9(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "c":
+                return self.state10(input_str)
+            case _:
+                return False, input_str
+
+    def state10(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "e":
+                return self.state11(input_str)
+            case _:
+                return False, input_str
+
+    def state11(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim1:
+                return self.state12(input_str)
+        else:
             return False, input_str
-
-def state2(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "D":
-            return self.state3(input_str)
-        case _:
-            return False, input_str
-    
-def state3(self, input_str):
-    input_str += self.current_char
-    self.advance()
-
-    if self.current_char in delim6:
-        return self.state4(input_str)
-    else:
-        return False, input_str
-        
-# FINAL STATE
-def state4(self, input_str):
-    return True, Token(TokenType.AND_OP.value, input_str)
-
-def state5(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "n":
-            return self.state6(input_str)
-        case _:
-            return False, input_str
-        
-def state6(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "o":
-            return self.state7(input_str)
-        case _:
-            return False, input_str
-        
-def state7(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "u":
-            return self.state8(input_str)
-        case _:
-            return False, input_str
-
-def state8(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "n":
-            return self.state9(input_str)
-        case _:
-            return False, input_str
-        
-def state9(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "c":
-            return self.state10(input_str)
-        case _:
-            return False, input_str
-
-def state10(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "e":
-            return self.state11(input_str)
-        case _:
-            return False, input_str
-
-def state11(self, input_str):
-    input_str += self.current_char
-    self.advance()
-
-    if self.current_char in delim1:
-            return self.state12(input_str)
-    else:
-        return False, input_str
-        
-# FINAL STATE
-def state12(self, input_str):
-    return True, Token(TokenType.ANNOUNCE.value, input_str)
-
+            
+    # FINAL STATE
+    def state12(self, input_str):
+        return True, Token(TokenType.ANNOUNCE.value, input_str)
 
 def run(fn, text, ln):
 
     lexer = Lexer(fn, text, ln)
     tokens, errors = lexer.make_tokens()
     return tokens, errors
+
+
