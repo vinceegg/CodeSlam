@@ -27,10 +27,9 @@ Announce            ANNOUNCE
 """
 class Lexer:
 
-    def __init__(self, fn, text, ln):
-        self.fn = fn
+    def __init__(self, text):
         self.text = text
-        self.pos = Position(-1, ln, -1, fn, text)
+        self.pos = Position(-1, -1, text)
         self.current_char = None
         self.advance()
 
@@ -340,6 +339,7 @@ class Lexer:
         return tokens, errors                        
     """
     States 1 - 12 AND - Announce
+
     Chant - Const
     Default - Dribble - Dunk
     Feint - Floater - Forward
@@ -369,7 +369,7 @@ class Lexer:
                 return False, input_str
 
     def state2(self, input_str):
-        input_str = self.current_char
+        input_str += self.current_char
         self.advance()
 
         match self.current_char:
@@ -520,8 +520,7 @@ class Lexer:
     def state18(self, input_str):
         return True, Token(TokenType.CHANT.value, input_str)
     
-    def state19(self):
-        input_str = ""
+    def state19(self, input_str):
         input_str += self.current_char
         self.advance()
 
@@ -572,7 +571,7 @@ class Lexer:
             case "e":
                 return self.state25(input_str)
             case "r":
-                return self.state31(input_str)
+                return self.state32(input_str)
             case "u":
                 return self.state39(input_str)
             case _:
@@ -641,8 +640,7 @@ class Lexer:
     def state31(self, input_str):
         return True, Token(TokenType.DEFAULT.value, input_str)
     
-    def state32(self):
-        input_str = ""
+    def state32(self, input_str):
         input_str += self.current_char
         self.advance()
 
@@ -653,7 +651,7 @@ class Lexer:
                 return False, input_str
 
     def state33(self, input_str):
-        input_str = self.current_char
+        input_str += self.current_char
         self.advance()
 
         match self.current_char:
@@ -663,7 +661,7 @@ class Lexer:
                 return False, input_str
             
     def state34(self, input_str):
-        input_str = self.current_char
+        input_str += self.current_char
         self.advance()
 
         match self.current_char:
@@ -673,7 +671,7 @@ class Lexer:
                 return False, input_str
             
     def state35(self, input_str):
-        input_str = self.current_char
+        input_str += self.current_char
         self.advance()
 
         match self.current_char:
@@ -683,7 +681,7 @@ class Lexer:
                 return False, input_str
             
     def state36(self, input_str):
-        input_str = self.current_char
+        input_str += self.current_char
         self.advance()
 
         match self.current_char:
@@ -705,8 +703,7 @@ class Lexer:
     def state38(self, input_str):
         return True, Token(TokenType.DRIBBLE.value, input_str)
     
-    def state39(self):
-        input_str = ""
+    def state39(self, input_str):
         input_str += self.current_char
         self.advance()
 
@@ -717,7 +714,7 @@ class Lexer:
                 return False, input_str
 
     def state40(self, input_str):
-        input_str = self.current_char
+        input_str += self.current_char
         self.advance()
 
         match self.current_char:
@@ -739,7 +736,7 @@ class Lexer:
     def state42(self, input_str):
         return True, Token(TokenType.DUNK.value, input_str)
 
-    def stat43(self):
+    def state43(self):
         input_str = ""
         input_str += self.current_char
         self.advance()
@@ -751,7 +748,7 @@ class Lexer:
                 return False, input_str
 
     def state44(self, input_str):
-        input_str = self.current_char
+        input_str += self.current_char
         self.advance()
 
         match self.current_char:
@@ -761,7 +758,7 @@ class Lexer:
                 return False, input_str
             
     def state45(self, input_str):
-        input_str = self.current_char
+        input_str += self.current_char
         self.advance()
 
         match self.current_char:
@@ -771,7 +768,7 @@ class Lexer:
                 return False, input_str
             
     def state46(self, input_str):
-        input_str = self.current_char
+        input_str += self.current_char
         self.advance()
 
         match self.current_char:
@@ -793,48 +790,10 @@ class Lexer:
     def state48(self, input_str):
         return True, Token(TokenType.FEINT.value, input_str)
 
-def run(fn, text, ln):
 
-    lexer = Lexer(fn, text, ln)
+def run(text):
+
+    lexer = Lexer(text)
     tokens, errors = lexer.make_tokens()
     return tokens, errors
-
-# python -m Analyzers.lexical_analyzer.lexical
-
-if __name__ == "__main__":
-    import sys
-
-    print("Welcome to the Lexical Analyzer!")
-    print("Type your code below. Type 'exit' to quit.")
-
-    while True:
-        try:
-            # Read input from the terminal
-            input_code = input("\n>> ")
-
-            # Exit condition
-            if input_code.lower() == "exit":
-                print("Exiting Lexical Analyzer. Goodbye!")
-                break
-
-            # Run the lexer
-            tokens, errors = run("stdin", input_code, 1)
-
-            # Display the output
-            if errors:
-                print("\nErrors:")
-                for error in errors:
-                    print(error)
-
-            print("\nLexeme      Token")
-            print("-------------------")
-            for token in tokens:
-                print(f"{token.value:<12} {token.type}")
-
-        except KeyboardInterrupt:
-            print("\nExiting Lexical Analyzer. Goodbye!")
-            break
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-
 
