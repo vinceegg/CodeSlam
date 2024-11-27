@@ -218,11 +218,6 @@ class Lexer:
                 else:
                     errors.append(IllegalCharError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
-            
-                    
-"""
-States 1 - 12 AND - Announce
-
 
             #Reserved Symbols
             elif self.current_char == "=":
@@ -351,8 +346,8 @@ States 1 - 12 AND - Announce
                     errors.append(IllegalCharError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
 
-
 """
+States 1 - 12 AND - Announce
 # AND state 0-4
 AND - Announce
 Chant - Const
@@ -369,123 +364,296 @@ Team - Timeout
 Win
 """
 
+
 # STARTING STATE
-def state1(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
+    def state1(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
 
-    match self.current_char:
-        case "N":
-            return self.state2(input_str)
-        case "n":
-            return self.state5(input_str)
-        case _:
+        match self.current_char:
+            case "N":
+                return self.state2(input_str)
+            case "n":
+                return self.state5(input_str)
+            case _:
+                return False, input_str
+
+    def state2(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "D":
+                return self.state3(input_str)
+            case _:
+                return False, input_str
+        
+    def state3(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim6:
+            return self.state4(input_str)
+        else:
             return False, input_str
+            
+    # FINAL STATE
+    def state4(self, input_str):
+        return True, Token(TokenType.AND_OP.value, input_str)
 
-def state2(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
+    def state5(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
 
-    match self.current_char:
-        case "D":
-            return self.state3(input_str)
-        case _:
+        match self.current_char:
+            case "n":
+                return self.state6(input_str)
+            case _:
+                return False, input_str
+            
+    def state6(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "o":
+                return self.state7(input_str)
+            case _:
+                return False, input_str
+            
+    def state7(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "u":
+                return self.state8(input_str)
+            case _:
+                return False, input_str
+
+    def state8(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "n":
+                return self.state9(input_str)
+            case _:
+                return False, input_str
+            
+    def state9(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "c":
+                return self.state10(input_str)
+            case _:
+                return False, input_str
+
+    def state10(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "e":
+                return self.state11(input_str)
+            case _:
+                return False, input_str
+
+    def state11(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim1:
+                return self.state12(input_str)
+        else:
             return False, input_str
+            
+    # FINAL STATE
+    def state12(self, input_str):
+        return True, Token(TokenType.ANNOUNCE.value, input_str)
+
+    def state13(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "h":
+                return self.state14(input_str)
+            case "o":
+                return self.state19(input_str)
+            case _:
+                return False, input_str
+    def state14(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "a":
+                return self.state15(input_str)
+            case _:
+                return False, input_str
+    def state15(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "n":
+                return self.state16(input_str)
+            case _:
+                return False, input_str
+    def state16(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "t":
+                return self.state17(input_str)
+            case _:
+                return False, input_str
+    def state17(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim1:
+                return self.state18(input_str)
+        else:
+            return False, input_str
+    # FINAL STATE
+    def state18(self, input_str):
+        return True, Token(TokenType.CHANT.value, input_str)
     
-def state3(self, input_str):
-    input_str += self.current_char
-    self.advance()
+    def state19(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
 
-    if self.current_char in delim6:
-        return self.state4(input_str)
-    else:
-        return False, input_str
-        
-# FINAL STATE
-def state4(self, input_str):
-    return True, Token(TokenType.AND_OP.value, input_str)
+        match self.current_char:
+            case "n":
+                return self.state20(input_str)
+            case _:
+                return False, input_str
+    def state20(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
 
-def state5(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
+        match self.current_char:
+            case "s":
+                return self.state21(input_str)
+            case _:
+                return False, input_str
+    def state21(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
 
-    match self.current_char:
-        case "n":
-            return self.state6(input_str)
-        case _:
+        match self.current_char:
+            case "t":
+                return self.state22(input_str)
+            case _:
+                return False, input_str
+    def state22(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim7:
+                return self.state23(input_str)
+        else:
             return False, input_str
-        
-def state6(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
+    # FINAL STATE
+    def state23(self, input_str):
+        return True, Token(TokenType.CONST.value, input_str)
 
-    match self.current_char:
-        case "o":
-            return self.state7(input_str)
-        case _:
+    def state24(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "e":
+                return self.state25(input_str)
+            case "r":
+                return self.state31(input_str)
+            case "u":
+                return self.state39(input_str)
+            case _:
+                return False, input_str
+    def state25(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "f":
+                return self.state26(input_str)
+            case _:
+                return False, input_str
+    def state26(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "a":
+                return self.state27(input_str)
+            case _:
+                return False, input_str
+    def state27(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "u":
+                return self.state28(input_str)
+            case _:
+                return False, input_str
+    def state28(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "l":
+                return self.state29(input_str)
+            case _:
+                return False, input_str
+    def state29(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "t":
+                return self.state30(input_str)
+            case _:
+                return False, input_str
+    def state30(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim1:
+                return self.state31(input_str)
+        else:
             return False, input_str
-        
-def state7(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "u":
-            return self.state8(input_str)
-        case _:
-            return False, input_str
-
-def state8(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "n":
-            return self.state9(input_str)
-        case _:
-            return False, input_str
-        
-def state9(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "c":
-            return self.state10(input_str)
-        case _:
-            return False, input_str
-
-def state10(self):
-    input_str = ""
-    input_str += self.current_char
-    self.advance()
-
-    match self.current_char:
-        case "e":
-            return self.state11(input_str)
-        case _:
-            return False, input_str
-
-def state11(self, input_str):
-    input_str += self.current_char
-    self.advance()
-
-    if self.current_char in delim1:
-            return self.state12(input_str)
-    else:
-        return False, input_str
-        
-# FINAL STATE
-def state12(self, input_str):
-    return True, Token(TokenType.ANNOUNCE.value, input_str)
-
+    # FINAL STATE
+    def state31(self, input_str):
+        return True, Token(TokenType.DEFAULT.value, input_str)
+    
 
 def run(fn, text, ln):
 
