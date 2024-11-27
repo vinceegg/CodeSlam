@@ -27,10 +27,9 @@ Announce            ANNOUNCE
 """
 class Lexer:
 
-    def __init__(self, fn, text, ln):
-        self.fn = fn
+    def __init__(self, text):
         self.text = text
-        self.pos = Position(-1, ln, -1, fn, text)
+        self.pos = Position(-1, -1, text)
         self.current_char = None
         self.advance()
 
@@ -465,9 +464,9 @@ class Lexer:
     def state12(self, input_str):
         return True, Token(TokenType.ANNOUNCE.value, input_str)
 
-def run(fn, text, ln):
+def run(text):
 
-    lexer = Lexer(fn, text, ln)
+    lexer = Lexer(text)
     tokens, errors = lexer.make_tokens()
     return tokens, errors
 

@@ -16,11 +16,9 @@ class Position:
     - peek(): Returns the next character without changing position.
     """
 
-    def __init__(self, idx, ln, col, fn, ftxt):
+    def __init__(self, idx, col, ftxt):
         self.idx = idx
-        self.ln = ln
         self.col = col
-        self.fn = fn
         self.ftxt = ftxt
 
     def advance(self, current_char):
@@ -31,7 +29,6 @@ class Position:
         self.col += 1
 
         if current_char == "\n":
-            self.ln += 1
             self.col = 0
 
         return self
@@ -40,7 +37,7 @@ class Position:
         '''
         Creates a copy of the current Position object.
         '''
-        return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
+        return Position(self.idx, self.col, self.ftxt)
 
     def reset(self):
         '''

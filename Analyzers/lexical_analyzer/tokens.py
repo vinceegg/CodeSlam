@@ -69,7 +69,7 @@ class TokenType(Enum):
     ARRAY_INDEX_RIGHT = "]"    # Array Size/Index: Used to specify the size or index of an array
     CODE_BLOCK_LEFT = "{"      # Code Blocks: Used to define the start and end points of a programming structure
     CODE_BLOCK_RIGHT = "}"     # Code Blocks: Used to define the start and end points of a programming structure
-    LEFT_PAREN = "("           # Grouping: Used to group values or expressions
+    LEFT_PAREN = "LEFT_PAREN"           # Grouping: Used to group values or expressions
     RIGHT_PAREN = ")"          # Grouping: Used to group values or expressions
     NEGATIVE = "~"             # Negative: Negates the numerical values, making positive negative and vice versa
     VAR_INIT = "@"             # Variable Initialization: Every identifier must start with an "@" sign

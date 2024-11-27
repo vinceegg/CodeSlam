@@ -24,7 +24,7 @@ class Error:
         Generates a formatted error message as a string.
         '''
         result = f"{self.error_name}: {self.details}\n"
-        result += f"File {self.pos_start.fn}, line {self.pos_start.ln + 1}"
+        result += f"Line {self.pos_start.idx + 1}"
         return result
 
 

@@ -7,7 +7,8 @@ import os
 # Add the parent directory (CODESLAM) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Analyzers.lexical_analyzer.tokens import Token
-from Analyzers.lexical_analyzer.lexical import run  # Import run function from lexical.py
+from Analyzers.lexical_analyzer.lexical import *  # Import all function from lexical.py
+from Analyzers.lexical_analyzer.lexical import run
 from tkinter import END
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
@@ -36,9 +37,9 @@ class App(customtkinter.CTk):
         # create sidebar buttons
         self.sideBtnLexical = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_lexical)
         self.sideBtnLexical.grid(row=1, column=0, padx=20, pady=10)
-        self.sideBtnSyntax = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_syntax)
+        self.sideBtnSyntax = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_syntax, state="disabled")
         self.sideBtnSyntax.grid(row=2, column=0, padx=20, pady=10)
-        self.sideBtnSemantic = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_semantic)
+        self.sideBtnSemantic = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_semantic, state="disabled")
         self.sideBtnSemantic.grid(row=3, column=0, padx=20, pady=10)
         
         # create sidebar widgets
@@ -100,76 +101,38 @@ class App(customtkinter.CTk):
         customtkinter.set_widget_scaling(new_scaling_float)
 
     def sidebar_button_lexical(self):
-        """Trigger lexical analysis for the entered code."""
-        # Clear the scrollable frame for fresh results
+        codebox_content = self.codebox.get("1.0", "end-1c")  # Get the content of the codebox
+        self.append_terminal_output(f"Codebox Content:\n{codebox_content}")
+    
+        # Clear the existing content in the scrollable frame
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
-
-        # Retrieve the code input from the editor
-        code_text = self.codebox.get("1.0", "end-1c").strip()
-
-        # Ensure code is entered before processing
-        if code_text == self.codebox_placeholder or not code_text:
-            self.append_terminal_output("No code entered. Please enter code before running lexical analysis.")
-            return
-
-        try:
-            # Split the code into lines (to handle multi-line input)
-            code_lines = code_text.splitlines()
-
-            # Store the results from the lexical analysis
-            analysis_results = []
-
-            # Call the run function for each line of code
-            for line_number, line_content in enumerate(code_lines, start=1):
-                line_results = run("<stdin>", line_content, line_number)
-                analysis_results.extend(line_results)  # Combine results from all lines
-
-            # Check if any tokens were found
-            if not analysis_results:
-                self.append_terminal_output("No lexemes or tokens were detected.")
-                return
-
-            # Add column headers
-            headers = customtkinter.CTkLabel(
-                self.scrollable_frame,
-                text=f"{'Lexeme':<15}{'Tokens':<15}",
-                font=("Arial", 10, "bold"),
-                anchor="w"
-            )
-            headers.pack(fill="x", padx=10, pady=5)
-
-            # Add a line separator
-            separator = customtkinter.CTkLabel(
-                self.scrollable_frame,
-                text="-" * 30,
-                anchor="w"
-            )
-            separator.pack(fill="x", padx=10, pady=2)
-
-            # Display each lexeme and token pair in the scrollable frame
-            for result in analysis_results:
-                # Handle tuple format (success_flag, Token object)
-                if isinstance(result, tuple) and len(result) == 2:
-                    success, token_obj = result
-                    if success and isinstance(token_obj, Token):
-                        lexeme = getattr(token_obj, "lexeme", "N/A")
-                        token = getattr(token_obj, "token_type", "N/A")
-                    else:
-                        lexeme, token = "Invalid", "Invalid"
-                else:
-                    lexeme, token = "Invalid", "Invalid"
-
-                # Add the lexeme-token row
-                result_label = customtkinter.CTkLabel(
-                    self.scrollable_frame,
-                    text=f"{lexeme:<15}{token:<15}",
-                    anchor="w"
-                )
-                result_label.pack(fill="x", padx=10, pady=5)
-
-        except Exception as e:
-            self.append_terminal_output(f"Error during lexical analysis:\n{e}")
+    
+        # Create table headers
+        header_lexeme = customtkinter.CTkLabel(self.scrollable_frame, text="Lexeme", font=customtkinter.CTkFont(size=12, weight="bold"))
+        header_lexeme.grid(row=0, column=0, padx=(20, 10), pady=5)
+        header_token = customtkinter.CTkLabel(self.scrollable_frame, text="Token", font=customtkinter.CTkFont(size=12, weight="bold"), anchor="center")
+        header_token.grid(row=0, column=1, padx=10, pady=5)
+    
+        # Use the Lexer to tokenize the codebox content
+        tokens, errors = run(codebox_content)
+    
+        # Populate the table with tokens
+        for i, token in enumerate(tokens):
+            lexeme_label = customtkinter.CTkLabel(self.scrollable_frame, text=token.value, anchor="center")
+            lexeme_label.grid(row=i+1, column=0, padx=10, pady=10)
+            token_label = customtkinter.CTkLabel(self.scrollable_frame, text=token.type, anchor="center")
+            token_label.grid(row=i+1, column=1, padx=10, pady=10)
+    
+        # Output tokens and errors to the terminal
+        self.append_terminal_output("Tokens:")
+        for token in tokens:
+            self.append_terminal_output(f"{token.value} -> {token.type}")
+    
+        if errors:
+            self.append_terminal_output("Errors:")
+            for error in errors:
+                self.append_terminal_output(error)
 
     def sidebar_button_syntax(self):
         self.append_terminal_output("Syntax Button Clicked!")
