@@ -798,8 +798,16 @@ class Lexer:
 
 
 def run(text):
-
+    # Create a lexer instance with the input text
     lexer = Lexer(text)
+    # Generate tokens and errors by running the lexer
     tokens, errors = lexer.make_tokens()
+    # Return the generated tokens and errors
     return tokens, errors
+
+# Example usage:
+# text = "your input text here"
+# tokens, errors = run(text)
+# print(tokens)
+# print(errors)
 
