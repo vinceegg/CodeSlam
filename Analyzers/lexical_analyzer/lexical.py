@@ -28,15 +28,21 @@ Announce            ANNOUNCE
 class Lexer:
 
     def __init__(self, text):
+        # Initialize the lexer with the input text
         self.text = text
+        # Initialize the position tracker with starting values
         self.pos = Position(-1, -1, text)
+        # Initialize the current character to None
         self.current_char = None
+        # Advance to the first character in the text
         self.advance()
-
+    
     def advance(self):
+        # Update the position tracker with the current character
         self.pos.advance(self.current_char)
-        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(
-            self.text) else None
+        # Update the current character to the next character in the text
+        # If the end of the text is reached, set current_char to None
+        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
 
     def make_tokens(self):
         tokens = []
