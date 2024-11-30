@@ -6,9 +6,7 @@ import sys
 import os
 # Add the parent directory (CODESLAM) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Analyzers.lexical_analyzer.tokens import Token
 from Analyzers.lexical_analyzer.lexical import *  # Import all function from lexical.py
-from Analyzers.lexical_analyzer.lexical import run
 from tkinter import END
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
