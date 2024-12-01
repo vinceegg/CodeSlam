@@ -6,9 +6,7 @@ import sys
 import os
 # Add the parent directory (CODESLAM) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Analyzers.lexical_analyzer.tokens import Token
 from Analyzers.lexical_analyzer.lexical import *  # Import all function from lexical.py
-from Analyzers.lexical_analyzer.lexical import run
 from tkinter import END
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
@@ -123,16 +121,13 @@ class App(customtkinter.CTk):
             lexeme_label.grid(row=i+1, column=0, padx=10, pady=10)
             token_label = customtkinter.CTkLabel(self.scrollable_frame, text=token.type, anchor="center")
             token_label.grid(row=i+1, column=1, padx=10, pady=10)
+            
     
-        # Output tokens and errors to the terminal
-        # self.append_terminal_output("Tokens:")
-        # for token in tokens:
-        #     self.append_terminal_output(f"{token.value} -> {token.type}")
-    
-        # if errors:
-        #     self.append_terminal_output("Errors:")
-        #     for error in errors:
-        #         self.append_terminal_output(error)
+        # Output tokens and errors to the terminal    
+        if errors:
+            self.append_terminal_output("Errors:")
+            for error in errors:
+                self.append_terminal_output(error)
 
     def sidebar_button_syntax(self):
         self.append_terminal_output("Syntax Button Clicked!")

@@ -3,17 +3,9 @@
 class Position:
     """
     Represents a position in the source code.
-
-    Attributes:
-    - text: The source text being processed.
-    - pos: The current character index in the source text.
-    - line: The current line number in the text.
-    - column: The current column number in the text.
-    - current_char: The current character at the `pos` index, or None if at the end.
     
     Methods:
     - advance(): Moves to the next character and updates line and column as needed.
-    - peek(): Returns the next character without changing position.
     """
 
     def __init__(self, idx, col, ftxt):
