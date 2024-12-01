@@ -121,16 +121,17 @@ class App(customtkinter.CTk):
             lexeme_label.grid(row=i+1, column=0, padx=10, pady=10)
             token_label = customtkinter.CTkLabel(self.scrollable_frame, text=token.type, anchor="center")
             token_label.grid(row=i+1, column=1, padx=10, pady=10)
+            
     
         # Output tokens and errors to the terminal
-        # self.append_terminal_output("Tokens:")
-        # for token in tokens:
-        #     self.append_terminal_output(f"{token.value} -> {token.type}")
+        self.append_terminal_output("Tokens:")
+        for token in tokens:
+            self.append_terminal_output(f"{token.value} -> {token.type}")
     
-        # if errors:
-        #     self.append_terminal_output("Errors:")
-        #     for error in errors:
-        #         self.append_terminal_output(error)
+        if errors:
+            self.append_terminal_output("Errors:")
+            for error in errors:
+                self.append_terminal_output(error)
 
     def sidebar_button_syntax(self):
         self.append_terminal_output("Syntax Button Clicked!")

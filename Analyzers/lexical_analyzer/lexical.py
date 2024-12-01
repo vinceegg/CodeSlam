@@ -25,6 +25,21 @@ Announce            ANNOUNCE
 ;                   SEMICOLON
 }                   CODE_BLOCK_RIGHT
 """
+
+'''
+Reserved Words
+Tony Stark - Floater - Play
+Jack of All Trades - Rebound - Win
+
+Reserved Symbols
+Tony Stark - 144 - 166
+Jack of All Trades - 167 - 191
+
+Identifiers
+Tony Stark - 193 - 213 
+Jack of All Trades - 212 - 233
+
+'''
 class Lexer:
 
     def __init__(self, text):
@@ -345,8 +360,7 @@ class Lexer:
         return tokens, errors                        
     """
     States 1 - 12 AND - Announce
-
-    Chant - Const
+    Chant 13 - 23 - Const
     Default - Dribble - Dunk
     Feint - Floater - Forward
     Inbound 
@@ -795,6 +809,15 @@ class Lexer:
     # FINAL STATE
     def state48(self, input_str):
         return True, Token(TokenType.FEINT.value, input_str)
+    
+    '''
+    =, ==
+    +, +=
+    =, -=
+    *, *=
+
+    
+    '''
 
 
 def run(text):
