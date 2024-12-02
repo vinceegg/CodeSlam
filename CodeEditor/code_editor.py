@@ -99,6 +99,7 @@ class App(customtkinter.CTk):
         customtkinter.set_widget_scaling(new_scaling_float)
 
     def sidebar_button_lexical(self):
+        self.clear_terminal_output()  # Clear the terminal output first
         codebox_content = self.codebox.get("1.0", "end-1c")  # Get the content of the codebox
         self.append_terminal_output(f"Codebox Content:\n{codebox_content}")
     
@@ -152,6 +153,13 @@ class App(customtkinter.CTk):
             self.append_terminal_output(f"Executing: {command}")
             subprocess.run(command, shell=True, stdout=sys.stdout, stderr=sys.stderr)
 
+    def clear_terminal_output(self):
+        """Clear the terminal output."""
+        self.terminal_output.configure(state="normal")  # Make it editable temporarily
+        self.terminal_output.delete("1.0", END)  # Clear all text
+        self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
+        self.terminal_output.configure(state="disabled")  # Make it read-only again
+        
 if __name__ == "__main__":
     app = App()
     app.mainloop()
