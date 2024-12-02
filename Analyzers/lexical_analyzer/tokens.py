@@ -52,6 +52,7 @@ class TokenType(Enum):
     MOD = "MOD"             # Modulus: Finds the remainder after division
 
     # Relational Operators
+    EXCLA = "EXCLAMATION"
     EQUAL = "EQUAL"          # Equal to: Checks if two values are equal
     NOT_EQUAL = "NOT_EQUAL"  # Not equal to: Checks if two values are not equal
     LESS_THAN = "LESS_THAN"  # Less than: Checks if one value is smaller than another
