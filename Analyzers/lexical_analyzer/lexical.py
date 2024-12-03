@@ -363,13 +363,66 @@ class Lexer:
                     tokens.append(input_str)
                 else:
                     errors.append(InvalidIdentifierError(
-                        pos_start, self.pos, "'" + input_str + "'").as_string())                      
+                        pos_start, self.pos, "'" + input_str + "'").as_string())   
+                               
             #######################################
             # NUMERIC LITERALS
             #######################################
-            elif self.current_char in num:
+            # elif self.current_char == "~":
+            #     pos_start = self.pos.copy()
+            #     valid, input_str = self.state234()
+            #     if valid:
+            #         tokens.append(input_str)
+            #     elif not valid and "." in input_str:
+            #         periods = input_str.count(".")
+            #         if periods == 1:
+            #             whole, fractional = input_str.split(".")
+            #             # If the number of digits in the fractional part is more than 13, place overflowing digits in another
+            #             # variable
+            #             if len(fractional) > 13:
+            #                 rounded = ""
+            #                 for i, char in enumerate(fractional):
+            #                     if i < 13:
+            #                         rounded += char
+            #                 input_str = f"{whole}.{rounded}"
+            #                 self.text = ""
+            #                 for i, char in enumerate(fractional):
+            #                     if i > 12:
+            #                         self.text += char
+            #                 # Reset current_char
+            #                 self.pos.reset()
+            #                 pos_start = self.pos.copy()
+            #                 self.current_char = self.text[self.pos.idx] if self.pos.idx < len(
+            #                     self.text) else None
+            #                 errors.append(OverflowError(
+            #                     pos_start, self.pos, "'" + input_str + "'").as_string())
+            #             else:
+            #                 errors.append(IllegalCharError(
+            #                     pos_start, self.pos, "'" + input_str + "'").as_string())
+            #         elif periods > 1:
+            #             period_index = input_str.index(".")
+            #             whole_part = input_str[:period_index]
+            #             fractional_part = input_str[period_index +
+            #                                         1:period_index + 14]
+            #             self.text = input_str[period_index + 14:]
+            #             input_str = f"{whole_part}.{fractional_part}"
+            #             # Reset current_char
+            #             self.pos.reset()
+            #             pos_start = self.pos.copy()
+            #             self.current_char = self.text[self.pos.idx] if self.pos.idx < len(
+            #                 self.text) else None
+            #             errors.append(OverflowError(
+            #                 pos_start, self.pos, "'" + input_str + "'").as_string())
+            #     elif not valid and len(input_str) > 12:
+            #         errors.append(OverflowError(
+            #             pos_start, self.pos, "'" + input_str + "'").as_string())
+            #     else:
+            #         errors.append(IllegalCharError(
+            #             pos_start, self.pos, "'" + input_str + "'").as_string())
+            # POSITIVE
+            elif self.current_char == "~" or self.current_char in num:
                 pos_start = self.pos.copy()
-                valid, input_str = self.state235()
+                valid, input_str = self.state234()
                 if valid:
                     tokens.append(input_str)
                 elif not valid and "." in input_str:
@@ -2453,25 +2506,36 @@ class Lexer:
     # NUMERICALS
 
     # STARTING STATE
-    def state235(self):
+    def state234(self):
         input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in num_delim or self.current_char in num:
+            return self.state235(input_str)
+        elif self.current_char == ".":
+            return self.state207(input_str)
+        else:
+            return False, input_str
+
+    def state235(self, input_str):
         zero_count = 0
         if self.current_char == "0":
             zero_count += 1
             self.advance()
-
+    
         # Ignore multiple leading zeroes
         while self.current_char == "0" and zero_count == 1:
             self.advance()
-
+    
         # 00000 = 0; 00000. = 0.
-        if (self.current_char == None or self.current_char == ".") and zero_count == 1:
+        if (self.current_char is None or self.current_char == ".") and zero_count == 1:
             input_str += "0"
         # 06 = 6
-        elif self.current_char != None and self.current_char in digit:
+        elif self.current_char is not None and self.current_char in digit:
             input_str += self.current_char
             self.advance()
-
+    
         if self.current_char in num_delim:
             return self.state236(input_str)
         elif self.current_char in num:
@@ -2480,10 +2544,13 @@ class Lexer:
             return self.state207(input_str)
         else:
             return False, input_str
-
+    
     # FINAL STATE
     def state236(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
 
     def state237(self, input_str):
         input_str += self.current_char
@@ -2500,7 +2567,10 @@ class Lexer:
 
     # FINAL STATE
     def state238(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state239(self, input_str):
@@ -2518,7 +2588,10 @@ class Lexer:
 
     # FINAL STATE
     def state240(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
 
     # STARTING STATE
     def state241(self, input_str):
@@ -2536,7 +2609,10 @@ class Lexer:
 
     # FINAL STATE
     def state242(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state243(self, input_str):
@@ -2554,7 +2630,10 @@ class Lexer:
 
     # FINAL STATE
     def state244(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state245(self, input_str):
@@ -2572,7 +2651,10 @@ class Lexer:
 
     # FINAL STATE
     def state246(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state247(self, input_str):
@@ -2590,7 +2672,10 @@ class Lexer:
 
     # FINAL STATE
     def state248(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state249(self, input_str):
@@ -2608,7 +2693,10 @@ class Lexer:
 
     # FINAL STATE
     def state250(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state251(self, input_str):
@@ -2626,7 +2714,10 @@ class Lexer:
 
     # FINAL STATE
     def state252(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state253(self, input_str):
@@ -2644,7 +2735,10 @@ class Lexer:
 
     # FINAL STATE
     def state254(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state255(self, input_str):
@@ -2662,7 +2756,10 @@ class Lexer:
 
     # FINAL STATE
     def state256(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state257(self, input_str):
@@ -2680,7 +2777,10 @@ class Lexer:
 
     # FINAL STATE
     def state258(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
     
     # STARTING STATE
     def state259(self, input_str):
@@ -2698,7 +2798,10 @@ class Lexer:
 
     # FINAL STATE
     def state260(self, input_str):
-        return True, Token(TokenType.FEINTLIT.value, input_str)
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFEINT.value, input_str)
+        else:
+            return True, Token(TokenType.FEINTLIT.value, input_str)
 
 
 
