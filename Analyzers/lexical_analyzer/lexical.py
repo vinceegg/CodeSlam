@@ -109,9 +109,9 @@ class Lexer:
             elif self.current_char in "&":
                 tokens.append(Token(TokenType.CHANT_CONCAT.value, self.current_char))
                 self.advance()
-            elif self.current_char in "@":
-                tokens.append(Token(TokenType.VAR_INIT.value, self.current_char))
-                self.advance()
+            # elif self.current_char in "@":
+            #     tokens.append(Token(TokenType.VAR_INIT.value, self.current_char))
+            #     self.advance()
             elif self.current_char in "\\":
                 self.advance()
                 match self.current_char:
@@ -362,7 +362,7 @@ class Lexer:
                 if valid:
                     tokens.append(input_str)
                 else:
-                    errors.append(IllegalCharError(
+                    errors.append(InvalidIdentifierError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())                     
             # RETURN ERROR
             else:
@@ -2002,7 +2002,7 @@ class Lexer:
 
     # ARRAY INDEX RIGHT STATE
     def state183(self, input_str):
-        input_str <= self.current_char
+        input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
@@ -2033,7 +2033,7 @@ class Lexer:
 
     # CODE BLOCK RIGHT STATE
     def state187(self, input_str):
-        input_str <= self.current_char
+        input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
@@ -2064,7 +2064,7 @@ class Lexer:
 
     # RIGHT PARENTHESIS STATE
     def state191(self, input_str):
-        input_str <= self.current_char
+        input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
@@ -2073,7 +2073,7 @@ class Lexer:
             return False, input_str
 
     # RIGHT PARENTHESIS FINAL STATE
-    def state193(self, input_str):
+    def state192(self, input_str):
         return True, Token(TokenType.RIGHT_PAREN.value, input_str)
     
     
@@ -2082,6 +2082,46 @@ class Lexer:
     IDENTIFIERS
 
     '''
+
+    # IDENTIFIER STATE
+    def state193(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char.isalpha() and self.current_char.islower():
+            return self.state194(input_str)
+        else:
+            return False, input_str
+
+    def state194(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in idt_delim:
+            return self.state195(input_str)
+        elif self.current_char == "_" or self.current_char.isalnum():
+            return self.state196(input_str)
+        else:
+            return False, input_str
+
+    def state195(self, input_str):
+        return True, Token(TokenType.VAR_INIT.value, input_str)
+
+    def state196(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in idt_delim:
+            return self.state197(input_str)
+        elif self.current_char == "_" or self.current_char.isalnum():
+            return self.state198(input_str)
+        else:
+            return False, input_str
+
+    def state197(self, input_str):
+        return True, Token(TokenType.VAR_INIT.value, input_str)
+
 
 def run(text):
     # Create a lexer instance with the input text
