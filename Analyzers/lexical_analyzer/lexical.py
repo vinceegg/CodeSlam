@@ -95,9 +95,9 @@ class Lexer:
             elif self.current_char in ",":
                 tokens.append(Token(TokenType.COMMA.value, self.current_char))
                 self.advance()
-            elif self.current_char in "~":
-                tokens.append(Token(TokenType.NEGATIVE.value, self.current_char))
-                self.advance()
+            # elif self.current_char in "~":
+            #     tokens.append(Token(TokenType.NEGATIVE.value, self.current_char))
+            #     self.advance()
             elif self.current_char in "_":
                 tokens.append(Token(TokenType.UNDERSCORE.value, self.current_char))
                 self.advance()
@@ -349,15 +349,63 @@ class Lexer:
                 if valid:
                     tokens.append(input_str)
                 else:
-                    errors.append(IllegalCharError(
-                        pos_start, self.pos, "'" + input_str + "'").as_string())   
-            # Return error
-            else:
+                    errors.append(InvalidIdentifierError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+            #######################################
+            # NUMERIC LITERALS
+            #######################################
+            elif self.current_char in num:
                 pos_start = self.pos.copy()
-                errors.append(IllegalCharError(
-                    pos_start, self.pos, "'" + self.current_char + "'").as_string())
-                self.advance()
-        return tokens, errors                        
+                valid, input_str = self.state235()
+                if valid:
+                    tokens.append(input_str)
+                elif not valid and "." in input_str:
+                    periods = input_str.count(".")
+                    if periods == 1:
+                        whole, fractional = input_str.split(".")
+                        # If the number of digits in the fractional part is more than 13, place overflowing digits in another
+                        # variable
+                        if len(fractional) > 13:
+                            rounded = ""
+                            for i, char in enumerate(fractional):
+                                if i < 13:
+                                    rounded += char
+                            input_str = f"{whole}.{rounded}"
+                            self.text = ""
+                            for i, char in enumerate(fractional):
+                                if i > 12:
+                                    self.text += char
+                            # Reset current_char
+                            self.pos.reset()
+                            pos_start = self.pos.copy()
+                            self.current_char = self.text[self.pos.idx] if self.pos.idx < len(
+                                self.text) else None
+                            errors.append(OverflowError(
+                                pos_start, self.pos, "'" + input_str + "'").as_string())
+                        else:
+                            errors.append(IllegalCharError(
+                                pos_start, self.pos, "'" + input_str + "'").as_string())
+                    elif periods > 1:
+                        period_index = input_str.index(".")
+                        whole_part = input_str[:period_index]
+                        fractional_part = input_str[period_index +
+                                                    1:period_index + 14]
+                        self.text = input_str[period_index + 14:]
+                        input_str = f"{whole_part}.{fractional_part}"
+                        # Reset current_char
+                        self.pos.reset()
+                        pos_start = self.pos.copy()
+                        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(
+                            self.text) else None
+                        errors.append(OverflowError(
+                            pos_start, self.pos, "'" + input_str + "'").as_string())
+                elif not valid and len(input_str) > 12:
+                    errors.append(OverflowError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+            return tokens, errors                 
     """
     States 1 - 12 AND - Announce
     Chant 13 - 23 - Const
@@ -1457,6 +1505,88 @@ class Lexer:
     # RIGHT PARENTHESIS FINAL STATE
     def state193(self, input_str):
         return True, Token(TokenType.RIGHT_PAREN.value, input_str)
+    
+    
+    '''
+
+    IDENTIFIERS
+
+    '''
+
+    # IDENTIFIER STATE
+    def state193(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char.isalpha() and self.current_char.islower():
+            return self.state194(input_str)
+        else:
+            return False, input_str
+
+    def state194(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in idt_delim:
+            return self.state195(input_str)
+        elif self.current_char == "_" or self.current_char.isalnum():
+            return self.state196(input_str)
+        else:
+            return False, input_str
+
+    def state195(self, input_str):
+        return True, Token(TokenType.VAR_INIT.value, input_str)
+
+    def state196(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in idt_delim:
+            return self.state197(input_str)
+        elif self.current_char == "_" or self.current_char.isalnum():
+            return self.state198(input_str)
+        else:
+            return False, input_str
+
+    def state197(self, input_str):
+        return True, Token(TokenType.VAR_INIT.value, input_str)
+
+    
+    # numericals 
+    # STARTING STATE
+    def state235(self):
+        input_str = ""
+        zero_count = 0
+        if self.current_char == "0":
+            zero_count += 1
+            self.advance()
+
+        # Ignore multiple leading zeroes
+        while self.current_char == "0" and zero_count == 1:
+            self.advance()
+
+        # 00000 = 0; 00000. = 0.
+        if (self.current_char == None or self.current_char == ".") and zero_count == 1:
+            input_str += "0"
+        # 06 = 6
+        elif self.current_char != None and self.current_char in digit:
+            input_str += self.current_char
+            self.advance()
+
+        if self.current_char in num_delim:
+            return self.state236(input_str)
+        elif self.current_char in num:
+            return self.state237(input_str)
+        elif self.current_char == ".":
+            return self.state207(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state236(self, input_str):
+        return True, Token(TokenType.FEINTLIT.value, input_str)
+
 
 def run(text):
     # Create a lexer instance with the input text
