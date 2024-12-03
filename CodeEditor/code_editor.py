@@ -156,6 +156,13 @@ class App(customtkinter.CTk):
         self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
         self.terminal_output.configure(state="disabled")  # Make it read-only again
 
+    def clear_terminal_output(self):
+        """Clear the terminal output."""
+        self.terminal_output.configure(state="normal")  # Make it editable temporarily
+        self.terminal_output.delete("1.0", END)  # Clear all text
+        self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
+        self.terminal_output.configure(state="disabled")  # Make it read-only again
+        
 if __name__ == "__main__":
     app = App()
     app.mainloop()

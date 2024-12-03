@@ -56,13 +56,12 @@ class TokenType(Enum):
     NEGAFLOATER = "NEGA_FLOATER" # Negative: Negates the numerical values, making positive negative and vice versa
 
     # Relational Operators
-    EXCLA = "EXCLAMATION"
-    EQUAL = "EQUAL"          # Equal to: Checks if two values are equal
-    NOT_EQUAL = "NOT_EQUAL"  # Not equal to: Checks if two values are not equal
-    LESS_THAN = "LESS_THAN"  # Less than: Checks if one value is smaller than another
-    GREATER_THAN = "GREATER_THAN"    # Greater than: Checks if one value is larger than another
-    LESS_EQUAL = "LESS_EQUAL"        # Less than or equal to: Checks if one value is smaller or equal to another
-    GREATER_EQUAL = "GREATER_EQUAL"  # Greater than or equal to: Checks if one value is larger or equal to another
+    EQUAL = "EQUAL"                    # Equal to: Checks if two values are equal
+    NOT_EQUAL = "NOT_EQUAL"            # Not equal to: Checks if two values are not equal
+    LESS_THAN = "LESS_THAN"            # Less than: Checks if one value is smaller than another
+    GREATER_THAN = "GREATER_THAN"      # Greater than: Checks if one value is larger than another
+    LESS_EQUAL = "LESS_EQUAL"          # Less than or equal to: Checks if one value is smaller or equal to another
+    GREATER_EQUAL = "GREATER_EQUAL"    # Greater than or equal to: Checks if one value is larger or equal to another
 
     # Logical Operators
     AND_OP = "AND_OP"        # Logical AND: Returns True if the value of both operands are True
