@@ -1587,6 +1587,23 @@ class Lexer:
     def state236(self, input_str):
         return True, Token(TokenType.FEINTLIT.value, input_str)
 
+    def state237(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in num_delim:
+            return self.state238(input_str)
+        elif self.current_char in num:
+            return self.state239(input_str)
+        elif self.current_char == ".":
+            return self.state207(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state238(self, input_str):
+        return True, Token(TokenType.FEINTLIT.value, input_str)
+
 
 def run(text):
     # Create a lexer instance with the input text
