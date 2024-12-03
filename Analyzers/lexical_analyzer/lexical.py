@@ -297,7 +297,7 @@ class Lexer:
                         pos_start, self.pos, "'" + input_str + "'").as_string())                   
             elif self.current_char == "<":
                 pos_start = self.pos.copy()
-                valid, input_str = self.state172()
+                valid, input_str = self.state171()
                 if valid:
                     tokens.append(input_str)
                 else:
@@ -305,7 +305,7 @@ class Lexer:
                         pos_start, self.pos, "'" + input_str + "'").as_string())                   
             elif self.current_char == ">":
                 pos_start = self.pos.copy()
-                valid, input_str = self.state176()
+                valid, input_str = self.state175()
                 if valid:
                     tokens.append(input_str)
                 else:
@@ -313,7 +313,7 @@ class Lexer:
                         pos_start, self.pos, "'" + input_str + "'").as_string())                    
             elif self.current_char == "&":
                 pos_start = self.pos.copy()
-                valid, input_str = self.state180()
+                valid, input_str = self.state179()
                 if valid:
                     tokens.append(input_str)
                 else:
@@ -321,7 +321,7 @@ class Lexer:
                         pos_start, self.pos, "'" + input_str + "'").as_string())                  
             elif self.current_char == "[":
                 pos_start = self.pos.copy()
-                valid, input_str = self.state182()
+                valid, input_str = self.state181()
                 if valid:
                     tokens.append(input_str)
                 else:
@@ -329,7 +329,7 @@ class Lexer:
                         pos_start, self.pos, "'" + input_str + "'").as_string())                   
             elif self.current_char == "{":
                 pos_start = self.pos.copy()
-                valid, input_str = self.state186()
+                valid, input_str = self.state185()
                 if valid:
                     tokens.append(input_str)
                 else:
@@ -337,7 +337,7 @@ class Lexer:
                         pos_start, self.pos, "'" + input_str + "'").as_string())                    
             elif self.current_char == "(":
                 pos_start = self.pos.copy()
-                valid, input_str = self.state190()
+                valid, input_str = self.state189()
                 if valid:
                     tokens.append(input_str)
                 else:
@@ -345,7 +345,7 @@ class Lexer:
                         pos_start, self.pos, "'" + input_str + "'").as_string())                   
             elif self.current_char == "@":
                 pos_start = self.pos.copy()
-                valid, input_str = self.state194()
+                valid, input_str = self.state193()
                 if valid:
                     tokens.append(input_str)
                 else:
@@ -1263,200 +1263,194 @@ class Lexer:
 
     # RESERVE SYMBOLS NI JACK
 
-    # EXCLAMATION STATE
+    # NOT EQUAL STATE
     def state168(self):
         input_str = ""
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char == "=":
             return self.state169(input_str)
-        elif self.current_char == "=":
+        else:
+            return False, input_str
+
+    # NOT EQUAL STATE
+    def state169(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim6:
             return self.state170(input_str)
         else:
             return False, input_str
 
-    # EXCLAMATION FINAL STATE
-    def state169(self, input_str):
-        return True, Token(TokenType.EXCLA.value, input_str)
-
-    # NOT EQUAL STATE
-    def state170(self, input_str):
-        input_str += self.current_char
-        self.advance()
-
-        if self.current_char in delim6:
-            return self.state171(input_str)
-        else:
-            return False, input_str
-
     # NOT EQUAL FINAL STATE
-    def state171(self, input_str):
+    def state170(self, input_str):
         return True, Token(TokenType.NOT_EQUAL.value, input_str)
 
     # LESS STATE
-    def state172(self):
+    def state171(self):
         input_str = ""
         input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state173(input_str)
+            return self.state172(input_str)
         elif self.current_char == "=":
-            return self.state174(input_str)
+            return self.state173(input_str)
         else:
             return False, input_str
 
     # LESS FINAL STATE
-    def state173(self, input_str):
+    def state172(self, input_str):
         return True, Token(TokenType.LESS_THAN.value, input_str)
 
     # LESS EQUAL STATE
-    def state174(self, input_str):
+    def state173(self, input_str):
         input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state175(input_str)
+            return self.state174(input_str)
         else:
             return False, input_str
 
     # LESS EQUAL FINAL STATE
-    def state175(self, input_str):
+    def state174(self, input_str):
         return True, Token(TokenType.LESS_EQUAL.value, input_str)
 
     # GREATER STATE
-    def state176(self):
+    def state175(self):
         input_str = ""
         input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state177(input_str)
+            return self.state176(input_str)
         elif self.current_char == "=":
-            return self.state178(input_str)
+            return self.state177(input_str)
         else:
             return False, input_str
 
     # GREATER FINAL STATE
-    def state177(self, input_str):
+    def state176(self, input_str):
         return True, Token(TokenType.GREATER_THAN.value, input_str)
 
     # GREATER EQUAL STATE
-    def state178(self, input_str):
+    def state177(self, input_str):
         input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state179(input_str)
+            return self.state178(input_str)
         else:
             return False, input_str
 
     # GREATER EQUAL FINAL STATE
-    def state179(self, input_str):
+    def state178(self, input_str):
         return True, Token(TokenType.GREATER_EQUAL.value, input_str)
     
     # CHANT_CONCAT STATE
-    def state180(self):
+    def state179(self):
         input_str = ""
         input_str += self.current_char
         self.advance()
 
         if self.current_char in delim5:
-            return self.state181(input_str)
+            return self.state180(input_str)
         else:
             return False, input_str
 
     # CHANT_CONCAT FINAL STATE
-    def state181(self, input_str):
+    def state180(self, input_str):
         return True, Token(TokenType.CHANT_CONCAT.value, input_str)
 
     # ARRAY INDEX LEFT STATE
-    def state182(self):
+    def state181(self):
         input_str = ""
         input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state183(input_str)
+            return self.state182(input_str)
         elif self.current_char == "]":
-            return self.state184(input_str)
+            return self.state183(input_str)
         else:
             return False, input_str
 
     # ARRAY INDEX LEFT FINAL STATE
-    def state183(self, input_str):
+    def state182(self, input_str):
         return True, Token(TokenType.ARRAY_INDEX_LEFT.value, input_str)
 
     # ARRAY INDEX RIGHT STATE
-    def state184(self, input_str):
+    def state183(self, input_str):
         input_str <= self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state185(input_str)
+            return self.state184(input_str)
         else:
             return False, input_str
 
     # ARRAY INDEX RIGHT FINAL STATE
-    def state185(self, input_str):
+    def state184(self, input_str):
         return True, Token(TokenType.ARRAY_INDEX_RIGHT.value, input_str)
 
     # CODE BLOCK LEFT STATE
-    def state186(self):
+    def state185(self):
         input_str = ""
         input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state187(input_str)
+            return self.state186(input_str)
         elif self.current_char == "}":
-            return self.state188(input_str)
+            return self.state187(input_str)
         else:
             return False, input_str
 
     # CODE BLOCK LEFT FINAL STATE
-    def state187(self, input_str):
+    def state186(self, input_str):
         return True, Token(TokenType.CODE_BLOCK_LEFT.value, input_str)
 
     # CODE BLOCK RIGHT STATE
-    def state188(self, input_str):
+    def state187(self, input_str):
         input_str <= self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state189(input_str)
+            return self.state188(input_str)
         else:
             return False, input_str
 
     # CODE BLOCK RIGHT FINAL STATE
-    def state189(self, input_str):
+    def state188(self, input_str):
         return True, Token(TokenType.CODE_BLOCK_RIGHT.value, input_str)
 
     # LEFT PARENTHESIS STATE
-    def state190(self):
+    def state189(self):
         input_str = ""
         input_str += self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state191(input_str)
+            return self.state190(input_str)
         elif self.current_char == ")":
-            return self.state192(input_str)
+            return self.state191(input_str)
         else:
             return False, input_str
 
     #  LEFT PARENTHESIS FINAL STATE
-    def state191(self, input_str):
+    def state190(self, input_str):
         return True, Token(TokenType.LEFT_PAREN.value, input_str)
 
     # RIGHT PARENTHESIS STATE
-    def state192(self, input_str):
+    def state191(self, input_str):
         input_str <= self.current_char
         self.advance()
 
         if self.current_char in delim6:
-            return self.state193(input_str)
+            return self.state192(input_str)
         else:
             return False, input_str
 
