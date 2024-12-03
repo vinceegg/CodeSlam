@@ -50,6 +50,10 @@ class TokenType(Enum):
     MUL = "MUL"             # Multiplication: Multiplies two values
     DIV = "DIV"             # Division: Divides one value by another
     MOD = "MOD"             # Modulus: Finds the remainder after division
+    FEINTLIT = "FEINTLIT"   # Integer Literal: Represents an integer value
+    FLOATERLIT = "FLOATERLIT" # Float Literal: Represents a floating-point value
+    NEGAFEINT = "NEGA_FEINT"     # Negative: Negates the numerical values, making positive negative and vice versa
+    NEGAFLOATER = "NEGA_FLOATER" # Negative: Negates the numerical values, making positive negative and vice versa
 
     # Relational Operators
     EQUAL = "EQUAL"                    # Equal to: Checks if two values are equal
