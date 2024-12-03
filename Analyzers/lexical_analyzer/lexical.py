@@ -112,9 +112,6 @@ class Lexer:
             # elif self.current_char in "@":
             #     tokens.append(Token(TokenType.VAR_INIT.value, self.current_char))
             #     self.advance()
-            # elif self.current_char in "@":
-            #     tokens.append(Token(TokenType.VAR_INIT.value, self.current_char))
-            #     self.advance()
             elif self.current_char in "\\":
                 self.advance()
                 match self.current_char:
