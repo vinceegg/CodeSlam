@@ -73,6 +73,12 @@ class Lexer:
             if self.current_char in " ":
                 tokens.append(Token(TokenType.SPACE.value, self.current_char))
                 self.advance()
+            elif self.current_char in "\n":
+                tokens.append(Token(TokenType.NEWLINE.value, self.current_char))
+                self.advance()
+            elif self.current_char in "\t":
+                tokens.append(Token(TokenType.TAB.value, self.current_char))
+                self.advance()
             elif self.current_char in "(":
                 tokens.append(Token(TokenType.LEFT_PAREN.value, self.current_char))
                 self.advance()
@@ -398,7 +404,7 @@ class Lexer:
                             errors.append(OverflowError(
                                 pos_start, self.pos, "'" + input_str + "'").as_string())
                         else:
-                            errors.append(IllegalCharError(
+                            errors.append(OverflowError(
                                 pos_start, self.pos, "'" + input_str + "'").as_string())
                     elif periods > 1:
                         period_index = input_str.index(".")
@@ -418,7 +424,7 @@ class Lexer:
                     errors.append(OverflowError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
                 else:
-                    errors.append(IllegalCharError(
+                    errors.append(OverflowError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
             # POSITIVE
             elif self.current_char in num:
@@ -450,7 +456,7 @@ class Lexer:
                             errors.append(OverflowError(
                                 pos_start, self.pos, "'" + input_str + "'").as_string())
                         else:
-                            errors.append(IllegalCharError(
+                            errors.append(OverflowError(
                                 pos_start, self.pos, "'" + input_str + "'").as_string())
                     elif periods > 1:
                         period_index = input_str.index(".")
@@ -470,7 +476,7 @@ class Lexer:
                     errors.append(OverflowError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
                 else:
-                    errors.append(IllegalCharError(
+                    errors.append(OverflowError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
             # CHANT LITERALS & COMMENTS
             elif self.current_char == '"':
