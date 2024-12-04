@@ -420,6 +420,41 @@ class Lexer:
                 else:
                     errors.append(IllegalCharError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
+            # CHANT LITERALS & COMMENTS
+            elif self.current_char == '"':
+                pos_start = self.pos.copy()
+                valid, input_str = self.state274()
+                
+                if valid:
+                    tokens.append(input_str)
+                elif self.current_char != None: 
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+                else:
+                    errors.append(UnterminatedStringError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+            elif self.current_char == "#":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state284()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(UnterminatedCommentError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+            elif self.current_char == "|":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state287()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(UnterminatedCommentError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+            # Return error
+            else:
+                pos_start = self.pos.copy()
+                errors.append(IllegalCharError(
+                    pos_start, self.pos, "'" + self.current_char + "'").as_string())
+                self.advance()
         return tokens, errors        
                           
     """
@@ -2463,7 +2498,7 @@ class Lexer:
         if self.current_char in num_delim or self.current_char in num:
             return self.state235(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2490,7 +2525,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state237(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
     
@@ -2510,7 +2545,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state239(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2531,7 +2566,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state241(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2552,7 +2587,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state243(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2573,7 +2608,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state245(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2594,7 +2629,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state247(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2615,7 +2650,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state249(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2636,7 +2671,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state251(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2657,7 +2692,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state253(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2678,7 +2713,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state255(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2699,7 +2734,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state257(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2720,7 +2755,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state259(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2741,7 +2776,7 @@ class Lexer:
         elif self.current_char in num:
             return self.state262(input_str)
         elif self.current_char == ".":
-            return self.state207(input_str)
+            return self.state261(input_str)
         else:
             return False, input_str
 
@@ -2751,8 +2786,194 @@ class Lexer:
             return True, Token(TokenType.NEGAFEINT.value, input_str)
         else:
             return True, Token(TokenType.FEINTLIT.value, input_str)
+    
+    # PERIOD
+    def state261(self, input_str):
+        input_str += self.current_char
+        self.advance()
 
+        if self.current_char == None:
+            return False, input_str
+        elif self.current_char in num:
+            return self.state262(input_str)
+        else:
+            return False, input_str
 
+    def state262(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in num_delim:
+            return self.state263(input_str)
+        elif self.current_char in num:
+            return self.state264(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state263(self, input_str):
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFLOATER.value, input_str)
+        else:
+            return True, Token(TokenType.FLOATERLIT.value, input_str)
+
+    def state264(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in num_delim:
+            return self.state265(input_str)
+        elif self.current_char in num:
+            return self.state266(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state265(self, input_str):
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFLOATER.value, input_str)
+        else:
+            return True, Token(TokenType.FLOATERLIT.value, input_str)
+
+    def state266(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in num_delim:
+            return self.state267(input_str)
+        elif self.current_char in num:
+            return self.state268(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state267(self, input_str):
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFLOATER.value, input_str)
+        else:
+            return True, Token(TokenType.FLOATERLIT.value, input_str)
+
+    def state268(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in num_delim:
+            return self.state269(input_str)
+        elif self.current_char in num:
+            return self.state270(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state269(self, input_str):
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFLOATER.value, input_str)
+        else:
+            return True, Token(TokenType.FLOATERLIT.value, input_str)
+
+    def state270(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in num_delim:
+            return self.state271(input_str)
+        elif self.current_char in num:
+            return self.state272(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state271(self, input_str):
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFLOATER.value, input_str)
+        else:
+            return True, Token(TokenType.FLOATERLIT.value, input_str)
+
+    def state272(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in num_delim:
+            return self.state273(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state273(self, input_str):
+        if input_str[0] == "~":
+            return True, Token(TokenType.NEGAFLOATER.value, input_str)
+        else:
+            return True, Token(TokenType.FLOATERLIT.value, input_str)
+    
+    # CHANT LITERAL STATE
+    def state274(self, input_str = ""):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char != None and self.current_char != "\"" and self.current_char != "\\" and self.current_char.isascii():
+            return self.state274(input_str)      
+        elif self.current_char == "\"":
+            return self.state275(input_str)
+        elif self.current_char == "\\":
+            return self.state277(input_str)
+        else:
+            return False, input_str
+
+    def state275(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in chant_delim:
+            return self.state276(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state276(self, input_str):
+        return True, Token(TokenType.QUOTE.value, input_str)
+
+    # \n STATE
+    def state277(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char == "n":
+            return self.state278(input_str)
+        if self.current_char == "t":
+            return self.state278(input_str)
+        if self.current_char == "\\":
+            return self.state278(input_str)
+        if self.current_char == "\"":
+            return self.state278(input_str)
+        if self.current_char == "&":
+            return self.state278(input_str)
+        if self.current_char == "@":
+            return self.state278(input_str)
+        else:
+            return False, input_str
+
+    def state278(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in chant_delim:
+            return self.state274(input_str)
+        else:
+            return False, input_str
+    
+    # SINGLE LINE COMMENT
+    def state284(self, input_str = ""):
+        input_str += self.current_char
+        self.advance()
+        
+        if self.current_char != None:
+            return self.state284(input_str)
+        else:
+            return self.state286(input_str)
+
+    # FINAL STATE
+    def state286(self, input_str):
+        return True, Token(TokenType.COMMENT.value, input_str)
 
 def run(text):
     # Create a lexer instance with the input text
