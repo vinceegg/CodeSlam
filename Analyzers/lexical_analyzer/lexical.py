@@ -2959,8 +2959,10 @@ class Lexer:
             return True, Token(TokenType.FLOATERLIT.value, input_str)
     
     # CHANT LITERAL STATE
+    # STARTING STATE
     def state274(self, input_str = ""):
         input_str += self.current_char
+
         self.advance()
 
         if self.current_char != None and self.current_char != "\"" and self.current_char != "\\" and self.current_char.isascii():
@@ -2985,49 +2987,78 @@ class Lexer:
     def state276(self, input_str):
         return True, Token(TokenType.CHANTLIT.value, input_str)
 
-    # \n STATE
     def state277(self, input_str):
         input_str += self.current_char
         self.advance()
 
-        if self.current_char == "n":
-            return self.state278(input_str)
-        if self.current_char == "t":
-            return self.state278(input_str)
-        if self.current_char == "\\":
-            return self.state278(input_str)
-        if self.current_char == "\"":
-            return self.state278(input_str)
-        if self.current_char == "&":
-            return self.state278(input_str)
-        if self.current_char == "@":
-            return self.state278(input_str)
-        else:
-            return False, input_str
-
-    def state278(self, input_str):
-        input_str += self.current_char
-        self.advance()
-
-        if self.current_char in chant_delim:
+        if self.current_char in "nt\\\"&@":
             return self.state274(input_str)
         else:
             return False, input_str
     
     # SINGLE LINE COMMENT
     def state284(self, input_str = ""):
-        input_str += self.current_char
+        if self.current_char is not None:
+            input_str += self.current_char
         self.advance()
         
-        if self.current_char != None:
-            return self.state284(input_str)
-        else:
+        if self.current_char == "\n" or self.current_char is None:
             return self.state286(input_str)
-
+        else:
+            return self.state284(input_str)
+    
     # FINAL STATE
     def state286(self, input_str):
         return True, Token(TokenType.COMMENT.value, input_str)
+    
+    # MULTI LINE COMMENT
+    def state287(self, input_str = ""):
+        if self.current_char is not None:
+            input_str += self.current_char
+        self.advance()
+        
+        if self.current_char == "*":
+            return self.state288(input_str)
+        else:
+            return False, input_str
+    
+    def state288(self, input_str = ""):
+        if self.current_char is not None:
+            input_str += self.current_char
+        self.advance()
+    
+        if self.current_char == "*":
+            return self.state289(input_str)
+        elif self.current_char is not None:
+            return self.state288(input_str)
+        else:
+            return False, input_str
+    
+    def state289(self, input_str):
+        if self.current_char is not None:
+            input_str += self.current_char
+        self.advance()
+    
+        if self.current_char == "|":
+            return self.state291(input_str)
+        elif self.current_char == "*":
+            return self.state289(input_str)
+        elif self.current_char is not None:
+            return self.state288(input_str)
+        else:
+            return False, input_str
+    
+    def state291(self, input_str):
+        input_str += self.current_char
+        self.advance()
 
+        if self.current_char in whitespace:
+            return self.state292(input_str)
+        else:
+            return False, input_str
+
+    def state292(self, input_str):
+        return True, Token(TokenType.MULTI_COMMENT.value, input_str)
 
 def run(text):
     # Create a lexer instance with the input text
