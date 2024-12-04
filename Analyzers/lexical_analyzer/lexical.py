@@ -3001,18 +3001,20 @@ class Lexer:
     
     # SINGLE LINE COMMENT
     def state284(self, input_str = ""):
-        input_str += self.current_char
+        if self.current_char is not None:
+            input_str += self.current_char
         self.advance()
         
-        if self.current_char != None:
-            return self.state284(input_str)
-        else:
+        if self.current_char == "\n" or self.current_char is None:
             return self.state286(input_str)
-
+        else:
+            return self.state284(input_str)
+    
     # FINAL STATE
     def state286(self, input_str):
         return True, Token(TokenType.COMMENT.value, input_str)
     
+    # MULTI LINE COMMENT
     def state287(self, input_str = ""):
         if self.current_char is not None:
             input_str += self.current_char
