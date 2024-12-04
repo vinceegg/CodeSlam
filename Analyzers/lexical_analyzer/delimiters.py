@@ -26,7 +26,7 @@ relational_op = [None, "==", "!=", "<", ">", "<=", ">="]
 logical_op = [None, "AND", "OR", "NOT"]
 other_op = [None, "&", "[", "]", "{", "}", "(", ")", "~", "@"]
 idt_delim = [None, " ", "+", "-", "/", "*", "%", "=", "<", ">", "!", ",", "[", "(", "]", ";", "&", ")"]
-delim1 = [ None, " ", "(", ]
+delim1 = [ None, " ", "("]
 delim2 = [None, " ", "{"]
 delim3 = [None, ";"]
 delim4 = [

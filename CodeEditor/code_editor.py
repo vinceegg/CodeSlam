@@ -159,7 +159,28 @@ class App(customtkinter.CTk):
         self.terminal_output.delete("1.0", END)  # Clear all text
         self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
         self.terminal_output.configure(state="disabled")  # Make it read-only again
-        
+
+    def execute_command(self, event):
+        command = self.command_input.get()
+        if command.lower() == "clear":
+            self.clear_terminal_output()
+        elif command.strip():
+            self.append_terminal_output(f"Executing: {command}")
+            subprocess.run(command, shell=True, stdout=sys.stdout, stderr=sys.stderr)
+
+    def clear_terminal_output(self):
+        """Clear the terminal output."""
+        self.terminal_output.configure(state="normal")  # Make it editable temporarily
+        self.terminal_output.delete("1.0", END)  # Clear all text
+        self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
+        self.terminal_output.configure(state="disabled")  # Make it read-only again
+
+    def append_terminal_output(self, text):
+        """Append text to the terminal output."""
+        self.terminal_output.configure(state="normal")
+        self.terminal_output.insert(END, text + "\n")
+        self.terminal_output.configure(state="disabled")
+            
 if __name__ == "__main__":
     app = App()
     app.mainloop()

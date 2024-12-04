@@ -52,8 +52,9 @@ class TokenType(Enum):
     MOD = "MOD"             # Modulus: Finds the remainder after division
     FEINTLIT = "FEINTLIT"   # Integer Literal: Represents an integer value
     FLOATERLIT = "FLOATERLIT" # Float Literal: Represents a floating-point value
-    NEGAFEINT = "NEGA_FEINT"     # Negative: Negates the numerical values, making positive negative and vice versa
-    NEGAFLOATER = "NEGA_FLOATER" # Negative: Negates the numerical values, making positive negative and vice versa
+    NEGAFEINT = "NEGAFEINT"     # Negative: Negates the numerical values, making positive negative and vice versa
+    NEGAFLOATER = "NEGAFLOATER" # Negative: Negates the numerical values, making positive negative and vice versa
+    CHANTLIT = "CHANT_LIT"
 
     # Relational Operators
     EQUAL = "EQUAL"                    # Equal to: Checks if two values are equal
