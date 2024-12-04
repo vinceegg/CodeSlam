@@ -368,57 +368,6 @@ class Lexer:
             #######################################
             # NUMERIC LITERALS
             #######################################
-            # elif self.current_char == "~":
-            #     pos_start = self.pos.copy()
-            #     valid, input_str = self.state234()
-            #     if valid:
-            #         tokens.append(input_str)
-            #     elif not valid and "." in input_str:
-            #         periods = input_str.count(".")
-            #         if periods == 1:
-            #             whole, fractional = input_str.split(".")
-            #             # If the number of digits in the fractional part is more than 13, place overflowing digits in another
-            #             # variable
-            #             if len(fractional) > 13:
-            #                 rounded = ""
-            #                 for i, char in enumerate(fractional):
-            #                     if i < 13:
-            #                         rounded += char
-            #                 input_str = f"{whole}.{rounded}"
-            #                 self.text = ""
-            #                 for i, char in enumerate(fractional):
-            #                     if i > 12:
-            #                         self.text += char
-            #                 # Reset current_char
-            #                 self.pos.reset()
-            #                 pos_start = self.pos.copy()
-            #                 self.current_char = self.text[self.pos.idx] if self.pos.idx < len(
-            #                     self.text) else None
-            #                 errors.append(OverflowError(
-            #                     pos_start, self.pos, "'" + input_str + "'").as_string())
-            #             else:
-            #                 errors.append(IllegalCharError(
-            #                     pos_start, self.pos, "'" + input_str + "'").as_string())
-            #         elif periods > 1:
-            #             period_index = input_str.index(".")
-            #             whole_part = input_str[:period_index]
-            #             fractional_part = input_str[period_index +
-            #                                         1:period_index + 14]
-            #             self.text = input_str[period_index + 14:]
-            #             input_str = f"{whole_part}.{fractional_part}"
-            #             # Reset current_char
-            #             self.pos.reset()
-            #             pos_start = self.pos.copy()
-            #             self.current_char = self.text[self.pos.idx] if self.pos.idx < len(
-            #                 self.text) else None
-            #             errors.append(OverflowError(
-            #                 pos_start, self.pos, "'" + input_str + "'").as_string())
-            #     elif not valid and len(input_str) > 12:
-            #         errors.append(OverflowError(
-            #             pos_start, self.pos, "'" + input_str + "'").as_string())
-            #     else:
-            #         errors.append(IllegalCharError(
-            #             pos_start, self.pos, "'" + input_str + "'").as_string())
             # POSITIVE
             elif self.current_char == "~" or self.current_char in num:
                 pos_start = self.pos.copy()
@@ -471,7 +420,7 @@ class Lexer:
                 else:
                     errors.append(IllegalCharError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
-            return tokens, errors        
+        return tokens, errors        
                           
     """
     States AND - Announce       1 - 12
