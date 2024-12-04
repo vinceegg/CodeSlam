@@ -2549,7 +2549,7 @@ class Lexer:
         input_str += self.current_char  
         self.advance()
 
-        if self.current_char in num_delim or self.current_char in num:
+        if self.current_char in num:
             return self.state235(input_str)
         elif self.current_char == ".":
             return self.state261(input_str)

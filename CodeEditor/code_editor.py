@@ -61,7 +61,7 @@ class App(customtkinter.CTk):
         self.codebox.bind("<FocusOut>", self.add_placeholder)
 
         # create scrollable frame
-        self.scrollable_frame = customtkinter.CTkScrollableFrame(self, label_text="Lexical Analyzer", width=300)
+        self.scrollable_frame = customtkinter.CTkScrollableFrame(self, label_text="Lexical Analyzer", width=400)
         self.scrollable_frame.grid(row=0, column=2, rowspan=2, padx=(20, 10), pady=(20, 0), sticky="nsew")
         self.scrollable_frame.grid_columnconfigure(0, weight=1)
 
