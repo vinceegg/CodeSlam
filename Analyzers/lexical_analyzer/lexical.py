@@ -3055,7 +3055,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in space:
+        if self.current_char in whitespace:
             return self.state292(input_str)
         else:
             return False, input_str
