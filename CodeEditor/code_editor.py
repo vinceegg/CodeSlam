@@ -123,7 +123,7 @@ class App(customtkinter.CTk):
             token_label = customtkinter.CTkLabel(self.scrollable_frame, text=token.type, anchor="center")
             token_label.grid(row=i+1, column=1, padx=10, pady=10)
             
-    
+
         # Output tokens and errors to the terminal    
         if errors:
             self.append_terminal_output("Errors:")
