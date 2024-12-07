@@ -50,15 +50,27 @@ class App(customtkinter.CTk):
         self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["80%", "90%", "100%", "110%", "120%"], command=self.change_scaling_event)
         self.scaling_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 20))
 
+        # create frame for code editor and line numbers
+        self.editor_frame = customtkinter.CTkFrame(self)
+        self.editor_frame.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        self.editor_frame.grid_columnconfigure(1, weight=1)
+        self.editor_frame.grid_rowconfigure(0, weight=1)
+
+        # create line number widget
+        self.line_numbers = customtkinter.CTkTextbox(self.editor_frame, width=40, corner_radius=0)
+        self.line_numbers.grid(row=0, column=0, sticky="ns")
+        self.line_numbers.configure(state="disabled")
+
         # create textbox for code editor
-        self.codebox = customtkinter.CTkTextbox(self, width=250)
-        self.codebox.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        self.codebox = customtkinter.CTkTextbox(self.editor_frame, width=250, corner_radius=0)
+        self.codebox.grid(row=0, column=1, sticky="nsew")
         
         # Placeholder text
         self.codebox_placeholder = "Enter your code here..."
         self.codebox.insert("0.0", self.codebox_placeholder)
         self.codebox.bind("<FocusIn>", self.clear_placeholder)
         self.codebox.bind("<FocusOut>", self.add_placeholder)
+        self.codebox.bind("<KeyRelease>", self.update_line_numbers)
 
         # create scrollable frame
         self.scrollable_frame = customtkinter.CTkScrollableFrame(self, label_text="Lexical Analyzer", width=400)
@@ -90,6 +102,14 @@ class App(customtkinter.CTk):
     def add_placeholder(self, event):
         if not self.codebox.get("1.0", "end-1c"):
             self.codebox.insert("1.0", self.codebox_placeholder)
+
+    def update_line_numbers(self, event=None):
+        line_count = int(self.codebox.index('end-1c').split('.')[0])
+        line_numbers_string = "\n".join(str(i) for i in range(1, line_count + 1))
+        self.line_numbers.configure(state="normal")
+        self.line_numbers.delete("1.0", "end")
+        self.line_numbers.insert("1.0", line_numbers_string)
+        self.line_numbers.configure(state="disabled")
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
