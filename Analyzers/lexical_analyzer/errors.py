@@ -23,7 +23,7 @@ class Error:
         '''
         Generates a formatted error message as a string.
         '''
-        result = f"{self.error_name}: {self.details}\n"
+        result = f"{self.error_name}: {self.details} "
         result += f"Line {self.pos_start.idx + 1}"
         return result
 
