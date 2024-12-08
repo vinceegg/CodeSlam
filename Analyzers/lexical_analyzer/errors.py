@@ -23,8 +23,14 @@ class Error:
         '''
         Generates a formatted error message as a string.
         '''
-        result = f"{self.error_name}: {self.details} "
-        result += f"Line {self.pos_start.idx + 1}"
+        # result = f"{self.error_name}: {self.details} "
+        # result += f"Line {self.pos_start.line + 1}, Column {self.pos_start.col + 1}"
+        # return result
+
+        if self.pos_start.col == 0:
+            result = f"{self.error_name}: {self.details} Line {self.pos_start.line + 1}"
+        else:
+            result = f"{self.error_name}: {self.details} Line {self.pos_start.line + 1}, Column {self.pos_start.col + 1}"
         return result
 
 

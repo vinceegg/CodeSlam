@@ -51,7 +51,7 @@ class Lexer:
         # Initialize the lexer with the input text
         self.text = text
         # Initialize the position tracker with starting values
-        self.pos = Position(-1, -1, text)
+        self.pos = Position(-1, 0, -1, text)
         # Initialize the current character to None
         self.current_char = None
         # Advance to the first character in the text
@@ -1456,7 +1456,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim1:
+        if self.current_char in delim9:
             return self.state103(input_str)
         else:
             return False, input_str

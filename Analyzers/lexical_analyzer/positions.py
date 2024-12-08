@@ -8,8 +8,9 @@ class Position:
     - advance(): Moves to the next character and updates line and column as needed.
     """
 
-    def __init__(self, idx, col, ftxt):
+    def __init__(self, idx, line, col, ftxt):
         self.idx = idx
+        self.line = line  # Line number (0-based)
         self.col = col
         self.ftxt = ftxt
 
@@ -21,6 +22,7 @@ class Position:
         self.col += 1
 
         if current_char == "\n":
+            self.line += 1
             self.col = 0
 
         return self
@@ -29,11 +31,12 @@ class Position:
         '''
         Creates a copy of the current Position object.
         '''
-        return Position(self.idx, self.col, self.ftxt)
+        return Position(self.idx, self.line, self.col, self.ftxt)
 
     def reset(self):
         '''
         Resets the position to its initial state by setting the character index and column number to 0.
         '''
         self.idx = 0
+        self.line = 0
         self.col = 0
