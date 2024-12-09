@@ -44,17 +44,17 @@ class TokenType(Enum):
     MOD_ASSIGN = "MOD_ASSIGN"  # Modulus and Assign: Finds modulus and assigns the result to a variable
 
     # Arithmetic Operators
-    ADD = "ADD"             # Addition: Adds two values together
-    SUB = "SUB"             # Subtraction: Finds the difference between two values
-    NEG = "NEG"
-    MUL = "MUL"             # Multiplication: Multiplies two values
-    DIV = "DIV"             # Division: Divides one value by another
-    MOD = "MOD"             # Modulus: Finds the remainder after division
-    FEINTLIT = "FEINTLIT"   # Integer Literal: Represents an integer value
-    FLOATERLIT = "FLOATERLIT" # Float Literal: Represents a floating-point value
-    NEGAFEINT = "NEGAFEINT"     # Negative: Negates the numerical values, making positive negative and vice versa
-    NEGAFLOATER = "NEGAFLOATER" # Negative: Negates the numerical values, making positive negative and vice versa
-    CHANTLIT = "CHANT_LIT"
+    ADD = "ADD"                     # Addition: Adds two values together
+    SUB = "SUB"                     # Subtraction: Finds the difference between two values
+    NEG = "NEG"                     # Negative: Negative Symbol
+    MUL = "MUL"                     # Multiplication: Multiplies two values
+    DIV = "DIV"                     # Division: Divides one value by another
+    MOD = "MOD"                     # Modulus: Finds the remainder after division
+    FEINTLIT = "FEINTLIT"           # Integer Literal: Represents an integer value
+    FLOATERLIT = "FLOATERLIT"       # Float Literal: Represents a floating-point value
+    NEGAFEINT = "NEGAFEINT"         # Negative: Negates the numerical values, making positive negative and vice versa
+    NEGAFLOATER = "NEGAFLOATER"     # Negative: Negates the numerical values, making positive negative and vice versa
+    CHANTLIT = "CHANT_LIT"          # String Literal: Represents a string value
 
     # Relational Operators
     EQUAL = "EQUAL"                    # Equal to: Checks if two values are equal
@@ -70,28 +70,28 @@ class TokenType(Enum):
     NOT_OP = "NOT_OP"        # Logical NOT: Returns the opposite Boolean value of the operand
 
     # Other Operators
-    CHANT_CONCAT = "CHANT_CONCAT"         # Chant Concatenation: Concatenates Chant together when working with Chant data types
-    ARRAY_INDEX_LEFT = "ARRAY_INDEX_LEFT"     # Array Size/Index: Used to specify the size or index of an array
-    ARRAY_INDEX_RIGHT = "ARRAY_INDEX_RIGHT"    # Array Size/Index: Used to specify the size or index of an array
-    CODE_BLOCK_LEFT = "CODE_BLOCK_LEFT"      # Code Blocks: Used to define the start and end points of a programming structure
-    CODE_BLOCK_RIGHT = "CODE_BLOCK_RIGHT"     # Code Blocks: Used to define the start and end points of a programming structure
-    LEFT_PAREN = "LEFT_PAREN"           # Grouping: Used to group values or expressions
-    RIGHT_PAREN = "RIGHT_PAREN"          # Grouping: Used to group values or expressions
-    NEGATIVE = "NEGATIVE"             # Negative: Negates the numerical values, making positive negative and vice versa
-    VAR_INIT = "VAR_INIT"             # Variable Initialization: Every identifier must start with an "@" sign
-    SPACE = "SPACE"            # Space: Used to separate tokens
-    COMMA = "COMMA"                # Comma: Used to separate values in a list
-    COLON = "COLON"                # Colon: Used to separate key-value pairs in a dictionary
-    SEMICOLON = "SEMICOLON"            # Semicolon: Used to terminate statements
-    COMMENT = "SINGLE_COMMENT"              # Comment: Used to add comments in the code
-    MULTI_COMMENT = "MULTI_COMMENT"       # Multi-line Comment: Used to add multi-line comments in the code
-    TAB = "TAB"                # Tab: Used to separate tokens
-    NEWLINE = "NEWLINE"        # New Line: Used to separate tokens
-    UNDERSCORE = "UNDERSCORE"           # Underscore: Used to separate words in identifiers
-    BACKSLASH = "BACKSLASH"           # Backslash: Used to escape special characters
-    QUOTE = "QUOTE"               # Quote: Used to define string literals
-    BACKSLASH_AND = "BACKSLASH_AND"
-    BACKSLASH_AT = "BACKSLASH_AT"
+    CHANT_CONCAT = "CHANT_CONCAT"               # Chant Concatenation: Concatenates Chant together when working with Chant data types
+    ARRAY_INDEX_LEFT = "ARRAY_INDEX_LEFT"       # Array Size/Index: Used to specify the size or index of an array
+    ARRAY_INDEX_RIGHT = "ARRAY_INDEX_RIGHT"     # Array Size/Index: Used to specify the size or index of an array
+    CODE_BLOCK_LEFT = "CODE_BLOCK_LEFT"         # Code Blocks: Used to define the start and end points of a programming structure
+    CODE_BLOCK_RIGHT = "CODE_BLOCK_RIGHT"       # Code Blocks: Used to define the start and end points of a programming structure
+    LEFT_PAREN = "LEFT_PAREN"                   # Grouping: Used to group values or expressions
+    RIGHT_PAREN = "RIGHT_PAREN"                 # Grouping: Used to group values or expressions
+    NEGATIVE = "NEGATIVE"                       # Negative: Negates the numerical values, making positive negative and vice versa
+    VAR_INIT = "VAR_INIT"                       # Variable Initialization: Every identifier must start with an "@" sign
+    SPACE = "SPACE"                             # Space: Used to separate tokens
+    COMMA = "COMMA"                             # Comma: Used to separate values in a list
+    COLON = "COLON"                             # Colon: Used to separate key-value pairs in a dictionary
+    SEMICOLON = "SEMICOLON"                     # Semicolon: Used to terminate statements
+    COMMENT = "SINGLE_COMMENT"                  # Comment: Used to add comments in the code
+    MULTI_COMMENT = "MULTI_COMMENT"             # Multi-line Comment: Used to add multi-line comments in the code
+    TAB = "TAB"                                 # Tab: Used to separate tokens
+    NEWLINE = "NEWLINE"                         # New Line: Used to separate tokens
+    UNDERSCORE = "UNDERSCORE"                   # Underscore: Used to separate words in identifiers
+    BACKSLASH = "BACKSLASH"                     # Backslash: Used to escape special characters
+    QUOTE = "QUOTE"                             # Quote: Used to define string literals
+    BACKSLASH_AND = "BACKSLASH_AND"             # Backslash And: Used to escape special characters
+    BACKSLASH_AT = "BACKSLASH_AT"               # Backslash At: Used to escape special characters
 
 class Token:
     """

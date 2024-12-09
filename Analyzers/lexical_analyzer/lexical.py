@@ -48,25 +48,25 @@ Comment and Chant
 class Lexer:
 
     def __init__(self, text):
-        # Initialize the lexer with the input text
+        # The lexer is initialized with some text.
         self.text = text
-        # Initialize the position tracker with starting values
+        # It sets up a position tracker to keep track of where it is in the text.
         self.pos = Position(-1, 0, -1, text)
-        # Initialize the current character to None
+        # It starts with no current character.
         self.current_char = None
-        # Advance to the first character in the text
+        # It then moves to the first character in the text.
         self.advance()
     
     def advance(self):
-        # Update the position tracker with the current character
+        # This method updates the position tracker based on the current character.
         self.pos.advance(self.current_char)
-        # Update the current character to the next character in the text
-        # If the end of the text is reached, set current_char to None
+        # It then moves to the next character in the text.
+        # If it reaches the end of the text, it sets the current character to None.
         self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
 
     def make_tokens(self):
-        tokens = []
-        errors = []
+        tokens = [] # is an empty list that will eventually hold the tokens created from the text.
+        errors = [] # is an empty list that will store any errors found during the tokenization
 
         while self.current_char is not None:
             # SYMBOLS

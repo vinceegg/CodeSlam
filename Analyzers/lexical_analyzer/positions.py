@@ -9,10 +9,10 @@ class Position:
     """
 
     def __init__(self, idx, line, col, ftxt):
-        self.idx = idx
-        self.line = line  # Line number (0-based)
-        self.col = col
-        self.ftxt = ftxt
+        self.idx = idx # is the current index in the text, indicating the position of the character within the entire string.
+        self.line = line  # is the current line number in the text, starting from 0.
+        self.col = col # is the current column number within the line, indicating the position of the character within the line.
+        self.ftxt = ftxt #  is the full text being processed
 
     def advance(self, current_char):
         '''
