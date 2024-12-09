@@ -40,10 +40,16 @@ Tony Stark - 193 - 213
 Jack of All Trades - 212 - 233
 
 Numeric Literals (Positive and Negative Feint)
+Tony Stark
+Jack of All Trades
 
 Floater Literals (Positive and Negative)
+Tony Stark
+Jack of All Trades
 
 Comment and Chant
+Tony Stark
+Jack of All Trades
 '''
 class Lexer:
 
