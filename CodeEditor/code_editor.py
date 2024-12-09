@@ -72,6 +72,9 @@ class App(customtkinter.CTk):
         self.codebox.bind("<FocusOut>", self.add_placeholder)
         self.codebox.bind("<KeyRelease>", self.update_line_numbers)
 
+        # Set tab width to 1 character
+        self.codebox.configure(tabs=("1c"))
+
         # create scrollable frame
         self.scrollable_frame = customtkinter.CTkScrollableFrame(self, label_text="Lexical Analyzer", width=400)
         self.scrollable_frame.grid(row=0, column=2, rowspan=2, padx=(20, 10), pady=(20, 0), sticky="nsew")
@@ -94,6 +97,10 @@ class App(customtkinter.CTk):
         self.sideBtnSemantic.configure(text="Semantic")
         self.appearance_mode_optionemenu.set("Dark")
         self.scaling_optionemenu.set("100%")
+
+    def insert_tab(self, event):
+        self.codebox.insert("insert", "\t")  # Insert a tab character
+        return "break"  # Prevent the default behavior of the Tab key
 
     def clear_placeholder(self, event):
         if self.codebox.get("1.0", "end-1c") == self.codebox_placeholder:
