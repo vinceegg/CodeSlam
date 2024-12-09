@@ -43,9 +43,6 @@ class IllegalCharError(Error):
     # Example Code:
     # Feint Main() { Announce("Hello$World"); }
 
-    # Error Message:
-    # LexerError: Illegal character '$' at line 1, column 24
-
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, "Lexical error: Illegal character/s", details)
 
@@ -60,8 +57,6 @@ class UnterminatedStringError(Error):
     # Example Code:
     # Feint Main() { Announce("Hello World; }
 
-    # Error Message:
-    # LexerError: Unterminated string literal at line 1, column 24
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, "Lexical error: Unterminated string error", details)
 
@@ -76,8 +71,6 @@ class UnterminatedCommentError(Error):
     # || This is an unterminated comment
     # Feint Main() { Announce("Hello World"); }
 
-    # Error Message:
-    # LexerError: Unterminated comment at line 1, column 1
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, "Lexical error: Unterminated comment error", details)
 
@@ -91,8 +84,6 @@ class OverflowError(Error):
     # Example Code:
     # Feint Main() { Announce(99999999999999999999); }
 
-    # Error Message:
-    # LexerError: Overflow error with number '99999999999999999999' at line 1, column 23
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, "Lexical error: Overflow error", details)
 
@@ -106,7 +97,5 @@ class InvalidIdentifierError(Error):
     # Example Code:
     # Feint Main() { x = 5; }
 
-    # Error Message:
-    # LexerError: Invalid identifier 'x' at line 1, column 13
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, "Lexical error: Invalid identifier error", details)
