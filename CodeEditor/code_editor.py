@@ -160,6 +160,8 @@ class App(customtkinter.CTk):
             self.append_terminal_output("Errors:")
             for error in errors:
                 self.append_terminal_output(error)
+        else:
+            self.append_terminal_output("No Lexical/s Error")
 
     def sidebar_button_syntax(self):
         self.append_terminal_output("Syntax Button Clicked!")
