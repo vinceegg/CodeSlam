@@ -9,6 +9,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Analyzers.lexical_analyzer.lexical import *  # Import all function from lexical.py
 from tkinter import END
 
+from customtkinter import CTkImage
+from PIL import Image
+
+# Load the image
+image_path = "assets/icons/CodeSLAM-LOGO.png"
+image = Image.open(image_path)
+
+# Create CTkImage with a specified size
+logo_image = CTkImage(image, size=(100, 100))  # Set desired width and height here
+
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue")
 
@@ -29,8 +39,10 @@ class App(customtkinter.CTk):
         self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(4, weight=1)
-        self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="CodeSlam", font=customtkinter.CTkFont(size=20, weight="bold"))
+        # Replace the "CodeSlam" text with the image
+        self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, image=logo_image, text="")
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+
         
         # create sidebar buttons
         self.sideBtnLexical = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_lexical)
@@ -128,7 +140,7 @@ class App(customtkinter.CTk):
     def sidebar_button_lexical(self):
         self.clear_terminal_output()  # Clear the terminal output first
         codebox_content = self.codebox.get("1.0", "end-1c")  # Get the content of the codebox
-        self.append_terminal_output(f"Codebox Content:\n{codebox_content}")
+        # self.append_terminal_output(f"Codebox Content:\n{codebox_content}")
     
         # Clear the existing content in the scrollable frame
         for widget in self.scrollable_frame.winfo_children():
@@ -152,16 +164,16 @@ class App(customtkinter.CTk):
             
     
         # Output tokens and errors to the terminal
-        self.append_terminal_output("Tokens:")
-        for token in tokens:
-            self.append_terminal_output(f"{token.value} -> {token.type}")
+        # self.append_terminal_output("Tokens:")
+        # for token in tokens:
+        #     self.append_terminal_output(f"{token.value} -> {token.type}")
     
         if errors:
-            self.append_terminal_output("Errors:")
+            self.append_terminal_output("Errors:", text_color="red")
             for error in errors:
-                self.append_terminal_output(error)
+                self.append_terminal_output(str(error), text_color="red")
         else:
-            self.append_terminal_output("No Lexical/s Error")
+            self.append_terminal_output("No Lexical/s Error", text_color="green")
 
     def sidebar_button_syntax(self):
         self.append_terminal_output("Syntax Button Clicked!")
@@ -204,10 +216,17 @@ class App(customtkinter.CTk):
         self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
         self.terminal_output.configure(state="disabled")  # Make it read-only again
 
-    def append_terminal_output(self, text):
+    def append_terminal_output(self, text, text_color=None):
         """Append text to the terminal output."""
         self.terminal_output.configure(state="normal")
-        self.terminal_output.insert(END, text + "\n")
+        # self.terminal_output.insert(END, text + "\n")
+        # self.terminal_output.configure(state="disabled")     
+        if text_color:
+            self.terminal_output.insert(END, text + "\n", text_color)
+            self.terminal_output.tag_config(text_color, foreground=text_color)  # Configure the color
+        else:
+            self.terminal_output.insert(END, text + "\n")
+        
         self.terminal_output.configure(state="disabled")
             
 if __name__ == "__main__":
