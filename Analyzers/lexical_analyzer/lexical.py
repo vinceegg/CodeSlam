@@ -564,7 +564,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in delim1:
             return self.state4(input_str)
         else:
             return False, input_str
@@ -813,7 +813,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim1:
+        if self.current_char in delim8:
                 return self.state31(input_str)
         else:
             return False, input_str
@@ -909,7 +909,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim1:
+        if self.current_char in delim7:
             return self.state42(input_str)
         else:
             return False, input_str
@@ -1245,7 +1245,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim3:
+        if self.current_char in stat_delim:
             return self.state79(input_str)
         else:
             return False, input_str
@@ -1280,7 +1280,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in delim1:
             return self.state83(input_str)
         else:
             return False, input_str
@@ -1304,7 +1304,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in delim1:
             return self.state86(input_str)
         else:
             return False, input_str
@@ -1462,7 +1462,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim9:
+        if self.current_char in delim7:
             return self.state103(input_str)
         else:
             return False, input_str
@@ -1824,7 +1824,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim3:
+        if self.current_char in stat_delim:
             return self.state143(input_str)
         else:
             return False, input_str
@@ -1857,7 +1857,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim5:
+        if self.current_char in equal_delim:
             return self.state145(input_str)
         elif self.current_char == "=":
             return self.state146(input_str)
@@ -1872,7 +1872,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim4:
+        if self.current_char in equal_delim:
             return self.state147(input_str)
         else:
             return False, input_str
@@ -1901,7 +1901,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim4:
+        if self.current_char in asval_delim:
             return self.state151(input_str)
         else:
             return False, input_str
@@ -1930,7 +1930,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim4:
+        if self.current_char in asval_delim:
             return self.state155(input_str)
         else:
             return False, input_str
@@ -1959,7 +1959,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim4:
+        if self.current_char in asval_delim:
             return self.state159(input_str)
         else:
             return False, input_str
@@ -1988,7 +1988,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim4:
+        if self.current_char in asval_delim:
             return self.state163(input_str)
         else:
             return False, input_str
@@ -2017,7 +2017,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim4:
+        if self.current_char in asval_delim:
             return self.state167(input_str)
         else:
             return False, input_str
@@ -2044,7 +2044,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in asval_delim:
             return self.state170(input_str)
         else:
             return False, input_str
@@ -2059,7 +2059,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in asval_delim:
             return self.state172(input_str)
         elif self.current_char == "=":
             return self.state173(input_str)
@@ -2075,7 +2075,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in asval_delim:
             return self.state174(input_str)
         else:
             return False, input_str
@@ -2090,7 +2090,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in asval_delim:
             return self.state176(input_str)
         elif self.current_char == "=":
             return self.state177(input_str)
@@ -2106,7 +2106,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in asval_delim:
             return self.state178(input_str)
         else:
             return False, input_str
@@ -2121,7 +2121,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim5:
+        if self.current_char in delim7:
             return self.state180(input_str)
         else:
             return False, input_str
@@ -2136,7 +2136,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in other_delim1:
             return self.state182(input_str)
         elif self.current_char == "]":
             return self.state183(input_str)
@@ -2152,7 +2152,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in other_delim2:
             return self.state184(input_str)
         else:
             return False, input_str
@@ -2167,7 +2167,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in delim5:
             return self.state186(input_str)
         elif self.current_char == "}":
             return self.state187(input_str)
@@ -2183,7 +2183,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in other_delim3:
             return self.state188(input_str)
         else:
             return False, input_str
@@ -2198,7 +2198,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in other_delim4:
             return self.state190(input_str)
         elif self.current_char == ")":
             return self.state191(input_str)
@@ -2214,7 +2214,7 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim6:
+        if self.current_char in other_delim5:
             return self.state192(input_str)
         else:
             return False, input_str
