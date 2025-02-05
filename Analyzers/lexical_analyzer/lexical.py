@@ -512,7 +512,7 @@ class Lexer:
                     errors.append(UnterminatedCommentError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
                     
-            # DAGDAGAN
+            # DAGDAG
             elif self.current_char == "'":
                 pos_start = self.pos.copy()
                 valid, input_str = self.state293()
@@ -3097,7 +3097,7 @@ class Lexer:
     def state292(self, input_str):
         return True, Token(TokenType.MULTI_COMMENT.value, input_str)
     
-    # DAGDAG
+    # DAGDAG 
     def state293(self, input_str = ""):
         input_str += self.current_char
         self.advance()
