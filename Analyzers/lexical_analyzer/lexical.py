@@ -375,16 +375,7 @@ class Lexer:
                     tokens.append(input_str)
                 else:
                     errors.append(InvalidIdentifierError(
-                        pos_start, self.pos, "'" + input_str + "'").as_string())   
-            # DAGDAG
-            elif self.current_char == "'":
-                pos_start = self.pos.copy()
-                valid, input_str = self.state293()
-                if valid:
-                    tokens.append(input_str)
-                else:
-                    errors.append(IllegalCharError(
-                        pos_start, self.pos, "'" + input_str + "'").as_string())                    
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                      
             #######################################
             # NUMERIC LITERALS
             #######################################
@@ -520,6 +511,21 @@ class Lexer:
                 else:
                     errors.append(UnterminatedCommentError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())
+                    
+            # DAGDAGAN
+            elif self.current_char == "'":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state293()
+                
+                if valid:
+                    tokens.append(input_str)
+                elif self.current_char != None: 
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, '"' + input_str + '"').as_string())
+                else:
+                    errors.append(UnterminatedStringError(
+                        pos_start, self.pos, '"' + input_str + '"').as_string())
+                    
             # Return error
             else:
                 pos_start = self.pos.copy()
@@ -3091,19 +3097,31 @@ class Lexer:
     def state292(self, input_str):
         return True, Token(TokenType.MULTI_COMMENT.value, input_str)
     
-    def state293(self):
-        input_str = ""
+    # DAGDAG
+    def state293(self, input_str = ""):
         input_str += self.current_char
         self.advance()
 
-        if self.current_char in delim8:
+        if self.current_char.isascii() and self.current_char != "'":
             return self.state294(input_str)
         else:
             return False, input_str
 
-    # FINAL STATE
     def state294(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char == "'":
+            return self.state295(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE
+    def state295(self, input_str):
+        input_str += self.current_char
+        self.advance()
         return True, Token(TokenType.GET.value, input_str)
+        
 
 def run(text):
     # Create a lexer instance with the input text
