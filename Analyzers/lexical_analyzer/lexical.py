@@ -2236,6 +2236,10 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
+        # FIXED ERROR
+        if self.current_char is None:
+            return False, input_str
+
         if self.current_char.isalpha() and self.current_char.islower():
             return self.state194(input_str)
         else:
@@ -2580,7 +2584,19 @@ class Lexer:
             input_str += self.current_char
             self.advance()
     
+        # if self.current_char in num_delim:
+        #     return self.state236(input_str)
+        # elif self.current_char in num:
+        #     return self.state237(input_str)
+        # elif self.current_char == ".":
+        #     return self.state261(input_str)
+        # else:
+        #     return False, input_str
+
+        # CHANGES FIX ERRORS 0
         if self.current_char in num_delim:
+            if zero_count == 1 and not input_str:
+                input_str += "0"
             return self.state236(input_str)
         elif self.current_char in num:
             return self.state237(input_str)
@@ -2998,7 +3014,9 @@ class Lexer:
         self.advance()
 
         if self.current_char in "nt\\\"&@":
-            return self.state274(input_str)
+            input_str += self.current_char  # This is the character after the backslash
+            self.advance()
+            return True, Token(TokenType.ESCAPE_SEQUENCE.value, input_str)
         else:
             return False, input_str
     

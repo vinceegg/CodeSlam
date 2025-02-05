@@ -92,6 +92,7 @@ class TokenType(Enum):
     QUOTE = "QUOTE"                             # Quote: Used to define string literals
     BACKSLASH_AND = "BACKSLASH_AND"             # Backslash And: Used to escape special characters
     BACKSLASH_AT = "BACKSLASH_AT"               # Backslash At: Used to escape special characters
+    ESCAPE_SEQUENCE = "ESCAPE_SEQUENCE"         # Escape Sequence: Used to escape special characters
 
 class Token:
     """
