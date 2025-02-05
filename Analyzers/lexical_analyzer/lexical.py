@@ -3014,9 +3014,7 @@ class Lexer:
         self.advance()
 
         if self.current_char in "nt\\\"&@":
-            input_str += self.current_char  # This is the character after the backslash
-            self.advance()
-            return True, Token(TokenType.ESCAPE_SEQUENCE.value, input_str)
+            return self.state274(input_str)
         else:
             return False, input_str
     
