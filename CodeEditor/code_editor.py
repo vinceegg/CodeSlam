@@ -7,6 +7,7 @@ import os
 # Add the parent directory (CODESLAM) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Analyzers.lexical_analyzer.lexical import *  # Import all function from lexical.py
+from Analyzers.syntax_analyzer import parse  # Import the parser
 from tkinter import END
 
 from customtkinter import CTkImage
@@ -82,7 +83,7 @@ class App(customtkinter.CTk):
         self.codebox.insert("0.0", self.codebox_placeholder)
         self.codebox.bind("<FocusIn>", self.clear_placeholder)
         self.codebox.bind("<FocusOut>", self.add_placeholder)
-        self.codebox.bind("<KeyRelease>", self.update_line_numbers)
+        self.codebox.bind("<KeyRelease>", self.on_code_change)
 
         # Set tab width to 1 character
         self.codebox.configure(tabs=("1c"))
@@ -137,47 +138,80 @@ class App(customtkinter.CTk):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
         customtkinter.set_widget_scaling(new_scaling_float)
 
+    def on_code_change(self, event=None):
+        """Handle code changes and reset button states"""
+        self.update_line_numbers()  # Keep existing line number update
+        
+        # Reset buttons to initial state
+        self.sideBtnSyntax.configure(state="disabled")
+        self.sideBtnSemantic.configure(state="disabled")
+        
+        # Clear the scrollable frame
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+            
+        # Reset terminal if it's not empty
+        if self.terminal_output.get("1.0", END).strip() != "Terminal Output:":
+            self.clear_terminal_output()
+
     def sidebar_button_lexical(self):
         self.clear_terminal_output()  # Clear the terminal output first
         codebox_content = self.codebox.get("1.0", "end-1c")  # Get the content of the codebox
-        # self.append_terminal_output(f"Codebox Content:\n{codebox_content}")
-    
+
         # Clear the existing content in the scrollable frame
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
-    
+
         # Create table headers
-        header_lexeme = customtkinter.CTkLabel(self.scrollable_frame, text="Lexeme", font=customtkinter.CTkFont(size=12, weight="bold"))
+        header_lexeme = customtkinter.CTkLabel(self.scrollable_frame, text="Lexeme", 
+            font=customtkinter.CTkFont(size=12, weight="bold"))
         header_lexeme.grid(row=0, column=0, padx=(20, 10), pady=5)
-        header_token = customtkinter.CTkLabel(self.scrollable_frame, text="Token", font=customtkinter.CTkFont(size=12, weight="bold"), anchor="center")
+        header_token = customtkinter.CTkLabel(self.scrollable_frame, text="Token", 
+            font=customtkinter.CTkFont(size=12, weight="bold"), anchor="center")
         header_token.grid(row=0, column=1, padx=10, pady=5)
-    
+
         # Use the Lexer to tokenize the codebox content
         tokens, errors = run(codebox_content)
-    
+
         # Populate the table with tokens
         for i, token in enumerate(tokens):
             lexeme_label = customtkinter.CTkLabel(self.scrollable_frame, text=token.value, anchor="center")
             lexeme_label.grid(row=i+1, column=0, padx=10, pady=10)
             token_label = customtkinter.CTkLabel(self.scrollable_frame, text=token.type, anchor="center")
             token_label.grid(row=i+1, column=1, padx=10, pady=10)
-            
-    
-        # Output tokens and errors to the terminal
-        # self.append_terminal_output("Tokens:")
-        # for token in tokens:
-        #     self.append_terminal_output(f"{token.value} -> {token.type}")
-    
+
         if errors:
             self.append_terminal_output("Errors:", text_color="red")
             for error in errors:
                 self.append_terminal_output(str(error), text_color="red")
+            self.sideBtnSyntax.configure(state="disabled")
         else:
             self.append_terminal_output("No Lexical/s Error", text_color="green")
+            self.sideBtnSyntax.configure(state="normal")
 
     def sidebar_button_syntax(self):
-        self.append_terminal_output("Syntax Button Clicked!")
-    
+        self.clear_terminal_output()  # Clear the terminal output first
+        codebox_content = self.codebox.get("1.0", "end-1c")  # Get the content of the codebox
+        
+        # First do lexical analysis
+        tokens, lexical_errors = run(codebox_content)
+        
+        # If no lexical errors, proceed with syntax analysis
+        try:
+            syntax_result = parse(tokens)
+            if isinstance(syntax_result, str) and "Error" in syntax_result:
+                self.append_terminal_output(syntax_result, text_color="red")
+                # Disable semantic button if there are syntax errors
+                self.sideBtnSemantic.configure(state="disabled")
+            else:
+                self.append_terminal_output("No Syntax Errors", text_color="green")
+                # Enable semantic button only if there are no syntax errors
+                self.sideBtnSemantic.configure(state="normal")
+        except Exception as e:
+            self.append_terminal_output(f"Syntax Error: {str(e)}", text_color="red")
+            # Disable semantic button if there are syntax errors
+            self.sideBtnSemantic.configure(state="disabled")
+
     def sidebar_button_semantic(self):
         self.append_terminal_output("Semantic Button Clicked!")
 
