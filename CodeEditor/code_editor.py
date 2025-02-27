@@ -140,6 +140,7 @@ class App(customtkinter.CTk):
         customtkinter.set_widget_scaling(new_scaling_float)
 
     def on_code_change(self, event=None):
+        
         """Handle code changes and reset button states"""
         self.update_line_numbers()  # Keep existing line number update
         

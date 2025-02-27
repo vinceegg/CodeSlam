@@ -861,6 +861,43 @@ class Parser:
         
         return self.error("Invalid array element type")
 
+    def data_type(self):
+        """
+        <data_type> → Feint
+        <data_type> → Floater
+        <data_type> → Chant
+        <data_type> → Stat
+        """
+        if self.current_token.type in ['Feint', 'Floater', 'Chant', 'Stat']:
+            self.advance()
+        else:
+            raise SyntaxError(
+                f"Expected data type (Feint, Floater, Chant, Stat), got {self.current_token.type}",
+                self.current_token.line,
+                self.current_token.column
+            )
+
+    def initialize_end(self):
+        """
+        <initialize_end> → = <global_value> <decls_end>
+        <initialize_end> → λ
+        """
+        if self.current_token.type == 'EQUALS':
+            self.advance()  # consume '='
+            self.global_value()
+            self.decls_end()
+
+    def decls_end(self):
+        """
+        <decls_end> → , identifier <initialize_end> <decls_end>
+        <decls_end> → λ
+        """
+        if self.current_token.type == 'COMMA':
+            self.advance()  # consume ','
+            self.match('IDENTIFIER')
+            self.initialize_end()
+            self.decls_end()
+
 def parse(tokens):
     """Main entry point for parsing"""
     parser = Parser(tokens)
