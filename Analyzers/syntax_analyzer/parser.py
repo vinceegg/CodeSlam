@@ -30,7 +30,7 @@ class Parser:
             else:
                 self.current_column += len(str(self.current_token.value)) if hasattr(self.current_token, 'value') else 0
                 
-            # Only skip spaces and tabs, not newlines (newlines are important for line counting)
+            # Skip spaces and tabs
             if self.current_token.type in [TokenType.SPACE.value, TokenType.TAB.value]:
                 self.current_token_index += 1
                 continue
@@ -52,25 +52,38 @@ class Parser:
     def parse(self):
         """Entry point for parsing according to CFG rule 1"""
         try:
-            # Parse global declarations
-            global_declarations = self.parse_global_declarations()
-            if isinstance(global_declarations, SyntaxError):
-                return global_declarations
-
-            # Parse function declarations
-            function_declarations = self.parse_function_declarations()
-            if isinstance(function_declarations, SyntaxError):
-                return function_declarations
-
-            # Parse function definitions
-            function_definitions = self.parse_function_definitions()
-            if isinstance(function_definitions, SyntaxError):
-                return function_definitions
-
+            # Skip any initial whitespace, newlines, and comments
+            self.skip_whitespace_and_comments()
+            
+            # Parse any global declarations that come before Team block
+            global_declarations = []
+            while self.current_token and (self.is_data_type(self.current_token.type) or 
+                                        self.current_token.type == TokenType.CONST.value):
+                # Check if next token indicates this is the Team block
+                next_token = self.peek()
+                if next_token and next_token.type == TokenType.TEAM.value:
+                    break
+                    
+                # Handle Const declarations
+                if self.current_token.type == TokenType.CONST.value:
+                    declaration = self.parse_constant_declaration()
+                else:
+                    declaration = self.parse_variable_declaration(is_global=True)
+                    
+                if isinstance(declaration, SyntaxError):
+                    return declaration
+                global_declarations.append(declaration)
+                
+                # Skip any whitespace, newlines, and comments between declarations
+                self.skip_whitespace_and_comments()
+            
             # Parse Team block (required)
             team_block = self.parse_team_block()
             if isinstance(team_block, SyntaxError):
                 return team_block
+
+            # Skip any trailing whitespace, newlines, and comments
+            self.skip_whitespace_and_comments()
 
             # Check that we've reached the end of the file
             if self.current_token is not None:
@@ -79,15 +92,84 @@ class Parser:
             return {
                 'type': 'program',
                 'global_declarations': global_declarations,
-                'function_declarations': function_declarations, 
-                'function_definitions': function_definitions,
                 'team_block': team_block,
                 'line': 1,
                 'column': 0
             }
         except Exception as e:
             return self.error(str(e))
+
+    def skip_whitespace_and_comments(self):
+        """Helper method to skip whitespace, newlines and comments"""
+        while self.current_token and self.current_token.type in [
+            TokenType.SPACE.value,
+            TokenType.TAB.value,
+            TokenType.NEWLINE.value,
+            TokenType.COMMENT.value
+        ]:
+            self.advance()
+
+    def parse_team_block(self):
+        """Parse Team() { statements }"""
+        # Skip any whitespace and comments before Team
+        self.skip_whitespace_and_comments()
+
+        if not self.current_token or self.current_token.type != TokenType.TEAM.value:
+            return self.error("Expected 'Team' block")
+
+        # Store initial position
+        start_line = self.current_line
+        start_column = self.current_column
+        
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
+            return self.error("Expected '(' after 'Team'")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+            return self.error("Expected ')' after 'Team('")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
+            return self.error("Expected '{' after 'Team()'")
+        self.advance()
+
+        # Skip any whitespace and comments inside the block
+        self.skip_whitespace_and_comments()
+
+        statements = self.parse_statements()
+        if isinstance(statements, SyntaxError):
+            return statements
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            return self.error("Expected '}' at end of Team block")
+        self.advance()
+
+        return {
+            'type': 'team_block',
+            'statements': statements,
+            'line': start_line,
+            'column': start_column
+        }
+
+    def parse_statements(self):
+        """Parse multiple statements"""
+        statements = []
+        
+        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            # Skip whitespace, newlines, and comments between statements
+            self.skip_whitespace_and_comments()
             
+            if self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+                statement = self.parse_statement()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                if statement:  # Skip None results from empty statements
+                    statements.append(statement)
+                
+        return statements
+
     def skip_whitespace_and_newlines(self):
         """Helper method to skip whitespace and newlines"""
         while self.current_token and self.current_token.type in [
@@ -139,7 +221,7 @@ class Parser:
             
         return declarations
 
-    def parse_function_declaration(self):
+    def parse_function_declaration(self):   
         """Parse a single function declaration"""
         start_line = self.current_line
         start_column = self.current_column
@@ -317,62 +399,6 @@ class Parser:
             TokenType.STAT.value
         ]
 
-    def parse_team_block(self):
-        """Parse Team() { statements }"""
-        if not self.current_token or self.current_token.type != TokenType.TEAM.value:
-            return self.error("Expected 'Team' block")
-
-        # Store initial position
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after 'Team'")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after 'Team('")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' after 'Team()'")
-        self.advance()
-
-        statements = self.parse_statements()
-        if isinstance(statements, SyntaxError):
-            return statements
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' at end of Team block")
-        self.advance()
-
-        return {
-            'type': 'team_block',
-            'statements': statements,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_statements(self):
-        """Parse multiple statements"""
-        statements = []
-        
-        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            # Skip newlines between statements
-            if self.current_token.type == TokenType.NEWLINE.value:
-                self.advance()
-                continue
-                
-            statement = self.parse_statement()
-            if isinstance(statement, SyntaxError):
-                return statement
-            if statement:  # Skip None results from empty statements
-                statements.append(statement)
-                
-        return statements
-
     def parse_statement(self):
         """Parse individual statements"""
         if not self.current_token:
@@ -395,64 +421,36 @@ class Parser:
             return self.error(f"Unexpected token: {self.current_token.value}")
 
     def parse_variable_declaration(self, is_global=False):
-        """Parse variable declaration and initialization according to CFG rules 11-14"""
+        """Parse variable declaration and initialization"""
         start_line = self.current_line
         start_column = self.current_column
         data_type = self.current_token.value
         self.advance()
 
-        declarations = []
-        
-        # Parse first variable declaration
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
             return self.error(f"Expected variable name after {data_type}")
         
-        while True:
-            var_name = self.current_token.value
+        var_name = self.current_token.value
+        self.advance()
+
+        # Handle initialization if present
+        value = None
+        if self.current_token and self.current_token.type == TokenType.ASSIGN.value:
             self.advance()
+            value = self.parse_expression()
+            if isinstance(value, SyntaxError):
+                return value
 
-            # Handle initialization if present
-            value = None
-            if self.current_token and self.current_token.type == TokenType.ASSIGN.value:
-                self.advance()
-                value = self.parse_expression()
-                if isinstance(value, SyntaxError):
-                    return value
-
-            declarations.append({
-                'type': 'variable_declaration',
-                'data_type': data_type,
-                'name': var_name,
-                'value': value,
-                'is_global': is_global,
-                'line': self.current_line,
-                'column': self.current_column
-            })
-
-            # Check for comma indicating another declaration
-            if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                self.advance()
-                # After comma, expect another variable name
-                if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-                    return self.error("Expected variable name after ','")
-                continue
-            break
-
-        # Expect semicolon at the end of declaration(s)
         if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
             return self.error("Expected ';' after variable declaration")
         self.advance()
 
-        # If only one declaration, return it directly
-        if len(declarations) == 1:
-            declarations[0].update({'line': start_line, 'column': start_column})
-            return declarations[0]
-        
-        # If multiple declarations, return as a group
         return {
-            'type': 'multiple_declaration',
+            'type': 'variable_declaration',
             'data_type': data_type,
-            'declarations': declarations,
+            'name': var_name,
+            'value': value,
+            'is_global': is_global,
             'line': start_line,
             'column': start_column
         }
@@ -685,20 +683,20 @@ class Parser:
         }
 
     def parse_constant_declaration(self):
-        """Parse constant declaration according to CFG rule 37"""
+        """Parse constant declaration"""
         start_line = self.current_line
         start_column = self.current_column
         
         # Skip 'Const' keyword
         self.advance()
         
-        if not self.is_data_type(self.current_token.type):
+        if not self.current_token or not self.is_data_type(self.current_token.type):
             return self.error("Expected data type after 'Const'")
         data_type = self.current_token.value
         self.advance()
 
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected identifier after data type")
+            return self.error("Expected variable name after data type")
         const_name = self.current_token.value
         self.advance()
 
@@ -719,6 +717,7 @@ class Parser:
             'data_type': data_type,
             'name': const_name,
             'value': value,
+            'is_global': True,
             'line': start_line,
             'column': start_column
         }
