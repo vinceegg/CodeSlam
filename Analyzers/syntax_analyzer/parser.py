@@ -55,26 +55,48 @@ class Parser:
             # Skip any initial whitespace, newlines, and comments
             self.skip_whitespace_and_comments()
             
-            # Parse any global declarations that come before Team block
+            # Parse global declarations (rules 2-6)
             global_declarations = []
             while self.current_token and (self.is_data_type(self.current_token.type) or 
                                         self.current_token.type == TokenType.CONST.value):
-                # Check if next token indicates this is the Team block
+                # Check if next token indicates this is a function declaration/definition
                 next_token = self.peek()
-                if next_token and next_token.type == TokenType.TEAM.value:
+                if next_token and next_token.type == TokenType.LEFT_PAREN.value:
                     break
                     
-                # Handle Const declarations
-                if self.current_token.type == TokenType.CONST.value:
-                    declaration = self.parse_constant_declaration()
-                else:
-                    declaration = self.parse_variable_declaration(is_global=True)
-                    
+                declaration = self.parse_global_declared()
                 if isinstance(declaration, SyntaxError):
                     return declaration
                 global_declarations.append(declaration)
                 
-                # Skip any whitespace, newlines, and comments between declarations
+                self.skip_whitespace_and_comments()
+
+            # Parse function declarations (rules 7-8)
+            function_declarations = []
+            while self.current_token and self.is_data_type(self.current_token.type):
+                next_token = self.peek()
+                if not (next_token and next_token.type == TokenType.LEFT_PAREN.value):
+                    break
+                    
+                declaration = self.parse_function_decls()
+                if isinstance(declaration, SyntaxError):
+                    return declaration
+                function_declarations.append(declaration)
+                
+                self.skip_whitespace_and_comments()
+
+            # Parse function definitions (rules 9-10)
+            function_definitions = []
+            while self.current_token and self.is_data_type(self.current_token.type):
+                next_token = self.peek()
+                if not (next_token and next_token.type == TokenType.LEFT_PAREN.value):
+                    break
+                    
+                definition = self.parse_function_definition()
+                if isinstance(definition, SyntaxError):
+                    return definition
+                function_definitions.append(definition)
+                
                 self.skip_whitespace_and_comments()
             
             # Parse Team block (required)
@@ -82,7 +104,6 @@ class Parser:
             if isinstance(team_block, SyntaxError):
                 return team_block
 
-            # Skip any trailing whitespace, newlines, and comments
             self.skip_whitespace_and_comments()
 
             # Check that we've reached the end of the file
@@ -92,6 +113,8 @@ class Parser:
             return {
                 'type': 'program',
                 'global_declarations': global_declarations,
+                'function_declarations': function_declarations,
+                'function_definitions': function_definitions,
                 'team_block': team_block,
                 'line': 1,
                 'column': 0
@@ -130,6 +153,8 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
             return self.error("Expected ')' after 'Team('")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after 'Team()'")
@@ -179,61 +204,33 @@ class Parser:
         ]:
             self.advance()
 
-    def parse_global_declarations(self):
-        """Parse global variable declarations according to CFG rules 2-6"""
-        declarations = []
-        
-        while self.current_token and self.is_data_type(self.current_token.type):
-            # Skip if we hit a function declaration
-            next_token = self.peek()
-            if next_token and (next_token.type == TokenType.LEFT_PAREN.value or next_token.type == TokenType.TEAM.value):
-                break
-            
-            # Handle global variable, array or constant declaration
-            if self.peek() and self.peek().type == TokenType.CONST.value:
-                decl = self.parse_constant_declaration()
-            elif self.peek() and self.peek().type == TokenType.LEFT_BRACKET.value:
-                decl = self.parse_array_declaration(is_global=True)
-            else:
-                decl = self.parse_variable_declaration(is_global=True)
-            
-            if isinstance(decl, SyntaxError):
-                return decl
-            declarations.append(decl)
-            
-            # Skip any whitespace/newlines between declarations
-            self.skip_whitespace_and_newlines()
-            
-        return declarations
+    def parse_global_declared(self):
+        """Parse global declarations according to rules 4-6"""
+        if self.current_token.type == TokenType.CONST.value:
+            return self.parse_constant_declaration()
+        elif self.peek() and self.peek().type == TokenType.LEFT_BRACKET.value:
+            return self.parse_array_declaration(is_global=True)
+        else:
+            return self.parse_variable_declaration(is_global=True)
 
-    def parse_function_declarations(self):
-        """Parse function declarations"""
-        declarations = []
-        
-        while self.current_token and self.is_data_type(self.current_token.type):
-            if not (self.peek() and self.peek().type == TokenType.LEFT_PAREN.value):
-                break
-                
-            decl = self.parse_function_declaration()
-            if isinstance(decl, SyntaxError):
-                return decl
-            declarations.append(decl)
-            
-        return declarations
-
-    def parse_function_declaration(self):   
-        """Parse a single function declaration"""
+    def parse_function_decls(self):
+        """Parse function declarations according to rule 38"""
         start_line = self.current_line
         start_column = self.current_column
         
+        # Parse return type
+        if not self.is_data_type(self.current_token.type):
+            return self.error("Expected return type for function declaration")
         return_type = self.current_token.value
         self.advance()
 
+        # Parse function name (must be VAR_INIT with @ prefix)
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected function name")
+            return self.error("Expected function name with @ prefix")
         function_name = self.current_token.value
         self.advance()
 
+        # Parse parameters
         if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
             return self.error("Expected '(' after function name")
         self.advance()
@@ -246,6 +243,7 @@ class Parser:
             return self.error("Expected ')' after parameters")
         self.advance()
 
+        # Function declarations must end with semicolon
         if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
             return self.error("Expected ';' after function declaration")
         self.advance()
@@ -275,18 +273,23 @@ class Parser:
         return definitions
 
     def parse_function_definition(self):
-        """Parse a single function definition"""
+        """Parse function definition according to rules 44-45"""
         start_line = self.current_line
         start_column = self.current_column
         
+        # Parse return type
+        if not self.is_data_type(self.current_token.type):
+            return self.error("Expected return type for function definition")
         return_type = self.current_token.value
         self.advance()
 
+        # Parse function name (must be VAR_INIT with @ prefix)
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected function name")
+            return self.error("Expected function name with @ prefix")
         function_name = self.current_token.value
         self.advance()
 
+        # Parse parameters
         if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
             return self.error("Expected '(' after function name")
         self.advance()
@@ -299,13 +302,32 @@ class Parser:
             return self.error("Expected ')' after parameters")
         self.advance()
 
+        # Function definition must have a body
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after function header")
         self.advance()
 
-        body = self.parse_function_body()
-        if isinstance(body, SyntaxError):
-            return body
+        # Parse function body (team_statements followed by optional rebound)
+        statements = []
+        rebound_statement = None
+        
+        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            # Check for Rebound statement
+            if self.current_token.type == TokenType.REBOUND.value:
+                if rebound_statement:
+                    return self.error("Multiple Rebound statements not allowed")
+                rebound_statement = self.parse_rebound()
+                if isinstance(rebound_statement, SyntaxError):
+                    return rebound_statement
+                break  # Rebound must be the last statement
+            
+            statement = self.parse_statement()
+            if isinstance(statement, SyntaxError):
+                return statement
+            if statement:  # Skip None results from empty statements
+                statements.append(statement)
+            
+            self.skip_whitespace_and_comments()
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' at end of function")
@@ -316,13 +338,14 @@ class Parser:
             'return_type': return_type,
             'name': function_name,
             'parameters': parameters,
-            'body': body,
+            'body': statements,
+            'rebound': rebound_statement,
             'line': start_line,
             'column': start_column
         }
 
     def parse_parameters(self):
-        """Parse function parameters"""
+        """Parse function parameters with @ prefix support"""
         parameters = []
         
         while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
@@ -333,8 +356,8 @@ class Parser:
             self.advance()
 
             if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-                return self.error("Expected parameter name")
-            param_name = self.current_token.value
+                return self.error("Expected parameter name with @ prefix")
+            param_name = self.current_token.value  # Already includes @ prefix
             self.advance()
 
             parameters.append({
@@ -400,7 +423,7 @@ class Parser:
         ]
 
     def parse_statement(self):
-        """Parse individual statements"""
+        """Parse individual statements according to rules 56-65"""
         if not self.current_token:
             return self.error("Unexpected end of file")
 
@@ -410,10 +433,22 @@ class Parser:
             return self.parse_variable_declaration()
         elif token_type == TokenType.ANNOUNCE.value:
             return self.parse_announce()
-        elif token_type == TokenType.DRIBBLE.value:
-            return self.parse_dribble()
+        elif token_type == TokenType.INBOUND.value:
+            return self.parse_inbound()
+        elif token_type == TokenType.FORWARD.value:
+            return self.parse_forward()
+        elif token_type == TokenType.PLAY.value:
+            return self.parse_play()
+        elif token_type == TokenType.RUN.value:
+            return self.parse_run_play()
         elif token_type == TokenType.VAR_INIT.value:
+            # Check next token to determine if it's a function call or assignment
+            next_token = self.peek()
+            if next_token and next_token.type == TokenType.LEFT_PAREN.value:
+                return self.parse_function_call()
             return self.parse_assignment()
+        elif token_type == TokenType.SWITCH.value:
+            return self.parse_switch()
         elif token_type == TokenType.COMMENT.value:
             self.advance()
             return None
@@ -421,25 +456,43 @@ class Parser:
             return self.error(f"Unexpected token: {self.current_token.value}")
 
     def parse_variable_declaration(self, is_global=False):
-        """Parse variable declaration and initialization"""
+        """Parse variable declarations according to rules 11-14"""
         start_line = self.current_line
         start_column = self.current_column
+        
         data_type = self.current_token.value
         self.advance()
 
+        declarations = []
+        
+        # Parse first variable
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
             return self.error(f"Expected variable name after {data_type}")
         
-        var_name = self.current_token.value
-        self.advance()
-
-        # Handle initialization if present
-        value = None
-        if self.current_token and self.current_token.type == TokenType.ASSIGN.value:
+        while True:
+            var_name = self.current_token.value
             self.advance()
-            value = self.parse_expression()
-            if isinstance(value, SyntaxError):
-                return value
+
+            # Handle initialization if present
+            value = None
+            if self.current_token and self.current_token.type == TokenType.ASSIGN.value:
+                self.advance()
+                value = self.parse_expression()
+                if isinstance(value, SyntaxError):
+                    return value
+
+            declarations.append({
+                'name': var_name,
+                'value': value
+            })
+
+            # Check for more variables (,)
+            if self.current_token and self.current_token.type == TokenType.COMMA.value:
+                self.advance()
+                if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+                    return self.error("Expected variable name after comma")
+                continue
+            break
 
         if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
             return self.error("Expected ';' after variable declaration")
@@ -448,8 +501,7 @@ class Parser:
         return {
             'type': 'variable_declaration',
             'data_type': data_type,
-            'name': var_name,
-            'value': value,
+            'declarations': declarations,
             'is_global': is_global,
             'line': start_line,
             'column': start_column
@@ -524,8 +576,19 @@ class Parser:
         start_column = self.current_column
         token = self.current_token
         
+        # Handle variables with @ prefix
+        if token.type == TokenType.VAR_INIT.value:
+            var_name = token.value
+            self.advance()
+            return {
+                'type': 'variable',
+                'name': var_name,
+                'line': start_line,
+                'column': start_column
+            }
+            
         # Handle string literals
-        if token.type == TokenType.CHANTLIT.value:
+        elif token.type == TokenType.CHANTLIT.value:
             self.advance()
             return {
                 'type': 'string_literal',
@@ -554,19 +617,19 @@ class Parser:
                 'column': start_column
             }
             
-        # Handle variables
-        elif token.type == TokenType.VAR_INIT.value:
+        # Handle binary operations
+        elif token.type == TokenType.AMPERSAND.value:
             self.advance()
+            right = self.parse_expression()
+            if isinstance(right, SyntaxError):
+                return right
             return {
-                'type': 'variable',
-                'name': token.value,
+                'type': 'concatenation',
+                'operator': '&',
+                'right': right,
                 'line': start_line,
                 'column': start_column
             }
-            
-        # Handle function calls
-        elif token.type == TokenType.IDENTIFIER.value:
-            return self.parse_function_call()
             
         else:
             return self.error(f"Unexpected token in expression: {token.value}")
@@ -605,61 +668,6 @@ class Parser:
             'type': 'function_call',
             'name': function_name,
             'arguments': arguments,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_dribble(self):
-        """Parse Dribble (if) statement"""
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after Dribble")
-        self.advance()
-
-        condition = self.parse_expression()
-        if isinstance(condition, SyntaxError):
-            return condition
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after condition")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' after Dribble condition")
-        self.advance()
-
-        then_block = self.parse_statements()
-        if isinstance(then_block, SyntaxError):
-            return then_block
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' after Dribble block")
-        self.advance()
-
-        else_block = None
-        if self.current_token and self.current_token.type == TokenType.SHOOT.value:
-            self.advance()
-            
-            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-                return self.error("Expected '{' after Shoot")
-            self.advance()
-
-            else_block = self.parse_statements()
-            if isinstance(else_block, SyntaxError):
-                return else_block
-
-            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-                return self.error("Expected '}' after Shoot block")
-            self.advance()
-
-        return {
-            'type': 'dribble',
-            'condition': condition,
-            'then_block': then_block,
-            'else_block': else_block,
             'line': start_line,
             'column': start_column
         }
@@ -897,6 +905,346 @@ class Parser:
             self.match('IDENTIFIER')
             self.initialize_end()
             self.decls_end()
+
+    def parse_switch(self):
+        """Parse Switch statement according to rules 71-81"""
+        start_line = self.current_line
+        start_column = self.current_column
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
+            return self.error("Expected '(' after Switch")
+        self.advance()
+
+        # Parse switch expression (rules 72-74)
+        switch_expr = None
+        if self.current_token.type == TokenType.VAR_INIT.value:
+            switch_expr = {'type': 'identifier', 'value': self.current_token.value}
+        elif self.current_token.type == TokenType.FEINTLIT.value:
+            switch_expr = {'type': 'feint_literal', 'value': self.current_token.value}
+        elif self.current_token.type == TokenType.CHANTLIT.value:
+            switch_expr = {'type': 'chant_literal', 'value': self.current_token.value}
+        else:
+            return self.error("Invalid switch expression")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+            return self.error("Expected ')' after switch expression")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
+            return self.error("Expected '{' after switch header")
+        self.advance()
+
+        # Parse case list (rules 75-80)
+        cases = []
+        while self.current_token and self.current_token.type == TokenType.GET.value:
+            self.advance()
+            
+            # Parse case value
+            if not self.current_token:
+                return self.error("Expected case value")
+            
+            if self.current_token.type in [TokenType.ARITH_OP.value, TokenType.ALPHABET.value,
+                                         TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value]:
+                case_value = self.current_token.value
+                self.advance()
+            else:
+                return self.error("Invalid case value")
+
+            if not self.current_token or self.current_token.type != TokenType.COLON.value:
+                return self.error("Expected ':' after case value")
+            self.advance()
+
+            # Parse case statements
+            case_statements = self.parse_statements()
+            if isinstance(case_statements, SyntaxError):
+                return case_statements
+
+            cases.append({
+                'value': case_value,
+                'statements': case_statements
+            })
+
+        # Parse default case (rule 81)
+        default_case = None
+        if self.current_token and self.current_token.type == TokenType.DEFAULT.value:
+            self.advance()
+            
+            if not self.current_token or self.current_token.type != TokenType.COLON.value:
+                return self.error("Expected ':' after Default")
+            self.advance()
+
+            default_statements = self.parse_statements()
+            if isinstance(default_statements, SyntaxError):
+                return default_statements
+            default_case = default_statements
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            return self.error("Expected '}' at end of switch")
+        self.advance()
+
+        return {
+            'type': 'switch',
+            'expression': switch_expr,
+            'cases': cases,
+            'default': default_case,
+            'line': start_line,
+            'column': start_column
+        }
+
+    def parse_binary_operation(self):
+        """Parse binary operations like addition, comparison, etc."""
+        left = self.parse_expression()
+        if isinstance(left, SyntaxError):
+            return left
+        
+        while self.current_token and self.current_token.type in [
+            TokenType.PLUS.value,
+            TokenType.MINUS.value,
+            TokenType.MULTIPLY.value,
+            TokenType.DIVIDE.value,
+            TokenType.GT.value,
+            TokenType.LT.value,
+            TokenType.GTE.value,
+            TokenType.LTE.value,
+            TokenType.EQUALS.value,
+            TokenType.NOT_EQUALS.value
+        ]:
+            operator = self.current_token.value
+            self.advance()
+            
+            right = self.parse_expression()
+            if isinstance(right, SyntaxError):
+                return right
+            
+            left = {
+                'type': 'binary_operation',
+                'operator': operator,
+                'left': left,
+                'right': right
+            }
+            
+        return left
+
+    def parse_forward(self):
+        """Parse Forward statement according to rules 201-213"""
+        start_line = self.current_line
+        start_column = self.current_column
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
+            return self.error("Expected '(' after Forward")
+        self.advance()
+
+        # Parse initialization (rules 202-205)
+        if not self.is_data_type(self.current_token.type):
+            return self.error("Expected numeric data type in Forward initialization")
+        data_type = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+            return self.error("Expected variable name in Forward initialization")
+        var_name = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN.value:
+            return self.error("Expected '=' in Forward initialization")
+        self.advance()
+
+        initial_value = self.parse_expression()
+        if isinstance(initial_value, SyntaxError):
+            return initial_value
+
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after Forward initialization")
+        self.advance()
+
+        # Parse condition (rules 206-210)
+        condition = self.parse_binary_operation()
+        if isinstance(condition, SyntaxError):
+            return condition
+
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after Forward condition")
+        self.advance()
+
+        # Parse increment/decrement (rules 211-213)
+        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+            return self.error("Expected variable in Forward increment/decrement")
+        inc_var = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type not in [TokenType.PLUS_ASSIGN.value, TokenType.MINUS_ASSIGN.value]:
+            return self.error("Expected '+=' or '-=' in Forward increment/decrement")
+        inc_op = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.FEINTLIT.value:
+            return self.error("Expected numeric literal in Forward increment/decrement")
+        inc_value = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+            return self.error("Expected ')' after Forward increment/decrement")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
+            return self.error("Expected '{' after Forward header")
+        self.advance()
+
+        # Parse loop body
+        body = self.parse_statements()
+        if isinstance(body, SyntaxError):
+            return body
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            return self.error("Expected '}' at end of Forward block")
+        self.advance()
+
+        return {
+            'type': 'forward',
+            'initialization': {
+                'data_type': data_type,
+                'name': var_name,
+                'value': initial_value
+            },
+            'condition': condition,
+            'update': {
+                'variable': inc_var,
+                'operator': inc_op,
+                'value': inc_value
+            },
+            'body': body,
+            'line': start_line,
+            'column': start_column
+        }
+
+    def parse_play(self):
+        """Parse Play statement according to rule 226"""
+        start_line = self.current_line
+        start_column = self.current_column
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
+            return self.error("Expected '(' after Play")
+        self.advance()
+
+        condition = self.parse_expression()
+        if isinstance(condition, SyntaxError):
+            return condition
+
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+            return self.error("Expected ')' after Play condition")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
+            return self.error("Expected '{' after Play condition")
+        self.advance()
+
+        body = self.parse_statements()
+        if isinstance(body, SyntaxError):
+            return body
+
+        # Parse increment/decrement
+        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+            return self.error("Expected variable for Play increment/decrement")
+        inc_var = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type not in [TokenType.PLUS_ASSIGN.value, TokenType.MINUS_ASSIGN.value]:
+            return self.error("Expected '+=' or '-=' in Play increment/decrement")
+        inc_op = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.FEINTLIT.value:
+            return self.error("Expected numeric literal in Play increment/decrement")
+        inc_value = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            return self.error("Expected '}' at end of Play block")
+        self.advance()
+
+        return {
+            'type': 'play',
+            'condition': condition,
+            'body': body,
+            'update': {
+                'variable': inc_var,
+                'operator': inc_op,
+                'value': inc_value
+            },
+            'line': start_line,
+            'column': start_column
+        }
+
+    def parse_run_play(self):
+        """Parse Run-Play statement according to rule 227"""
+        start_line = self.current_line
+        start_column = self.current_column
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
+            return self.error("Expected '{' after Run")
+        self.advance()
+
+        body = self.parse_statements()
+        if isinstance(body, SyntaxError):
+            return body
+
+        # Parse increment/decrement
+        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+            return self.error("Expected variable for Run-Play increment/decrement")
+        inc_var = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type not in [TokenType.PLUS_ASSIGN.value, TokenType.MINUS_ASSIGN.value]:
+            return self.error("Expected '+=' or '-=' in Run-Play increment/decrement")
+        inc_op = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.FEINTLIT.value:
+            return self.error("Expected numeric literal in Run-Play increment/decrement")
+        inc_value = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            return self.error("Expected '}' after Run block")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.PLAY.value:
+            return self.error("Expected 'Play' after Run block")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
+            return self.error("Expected '(' after Play")
+        self.advance()
+
+        condition = self.parse_expression()
+        if isinstance(condition, SyntaxError):
+            return condition
+
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+            return self.error("Expected ')' after Play condition")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after Run-Play statement")
+        self.advance()
+
+        return {
+            'type': 'run_play',
+            'body': body,
+            'update': {
+                'variable': inc_var,
+                'operator': inc_op,
+                'value': inc_value
+            },
+            'condition': condition,
+            'line': start_line,
+            'column': start_column
+        }
 
 def parse(tokens):
     """Main entry point for parsing"""
