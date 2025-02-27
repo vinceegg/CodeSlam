@@ -28,12 +28,14 @@ class Parser:
                 self.current_line += 1
                 self.current_column = 0
             else:
-                self.current_column += len(str(self.current_token.value))
+                self.current_column += len(str(self.current_token.value)) if hasattr(self.current_token, 'value') else 0
                 
-            if self.current_token.type not in [TokenType.SPACE.value, TokenType.TAB.value]:
-                return self.current_token
+            # Only skip spaces and tabs, not newlines (newlines are important for line counting)
+            if self.current_token.type in [TokenType.SPACE.value, TokenType.TAB.value]:
+                self.current_token_index += 1
+                continue
                 
-            self.current_token_index += 1
+            return self.current_token
             
         self.current_token = None
         return None
@@ -65,15 +67,19 @@ class Parser:
             if isinstance(function_definitions, SyntaxError):
                 return function_definitions
 
-            # Parse Team block
+            # Parse Team block (required)
             team_block = self.parse_team_block()
             if isinstance(team_block, SyntaxError):
                 return team_block
 
+            # Check that we've reached the end of the file
+            if self.current_token is not None:
+                return self.error("Unexpected content after Team block")
+
             return {
                 'type': 'program',
                 'global_declarations': global_declarations,
-                'function_declarations': function_declarations,
+                'function_declarations': function_declarations, 
                 'function_definitions': function_definitions,
                 'team_block': team_block,
                 'line': 1,
@@ -81,19 +87,40 @@ class Parser:
             }
         except Exception as e:
             return self.error(str(e))
+            
+    def skip_whitespace_and_newlines(self):
+        """Helper method to skip whitespace and newlines"""
+        while self.current_token and self.current_token.type in [
+            TokenType.SPACE.value, 
+            TokenType.TAB.value,
+            TokenType.NEWLINE.value
+        ]:
+            self.advance()
 
     def parse_global_declarations(self):
-        """Parse global variable declarations"""
+        """Parse global variable declarations according to CFG rules 2-6"""
         declarations = []
         
         while self.current_token and self.is_data_type(self.current_token.type):
-            if self.peek() and self.peek().type == TokenType.LEFT_PAREN.value:
-                break  # Stop if we hit a function declaration
-                
-            decl = self.parse_variable_declaration(is_global=True)
+            # Skip if we hit a function declaration
+            next_token = self.peek()
+            if next_token and (next_token.type == TokenType.LEFT_PAREN.value or next_token.type == TokenType.TEAM.value):
+                break
+            
+            # Handle global variable, array or constant declaration
+            if self.peek() and self.peek().type == TokenType.CONST.value:
+                decl = self.parse_constant_declaration()
+            elif self.peek() and self.peek().type == TokenType.LEFT_BRACKET.value:
+                decl = self.parse_array_declaration(is_global=True)
+            else:
+                decl = self.parse_variable_declaration(is_global=True)
+            
             if isinstance(decl, SyntaxError):
                 return decl
             declarations.append(decl)
+            
+            # Skip any whitespace/newlines between declarations
+            self.skip_whitespace_and_newlines()
             
         return declarations
 
@@ -293,7 +320,7 @@ class Parser:
     def parse_team_block(self):
         """Parse Team() { statements }"""
         if not self.current_token or self.current_token.type != TokenType.TEAM.value:
-            return self.error("Program must start with 'Team'")
+            return self.error("Expected 'Team' block")
 
         # Store initial position
         start_line = self.current_line
@@ -318,11 +345,11 @@ class Parser:
             return statements
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' at end of program")
+            return self.error("Expected '}' at end of Team block")
         self.advance()
 
         return {
-            'type': 'program',
+            'type': 'team_block',
             'statements': statements,
             'line': start_line,
             'column': start_column
@@ -368,35 +395,64 @@ class Parser:
             return self.error(f"Unexpected token: {self.current_token.value}")
 
     def parse_variable_declaration(self, is_global=False):
-        """Parse variable declaration and initialization"""
+        """Parse variable declaration and initialization according to CFG rules 11-14"""
         start_line = self.current_line
         start_column = self.current_column
         data_type = self.current_token.value
         self.advance()
 
+        declarations = []
+        
+        # Parse first variable declaration
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
             return self.error(f"Expected variable name after {data_type}")
         
-        var_name = self.current_token.value
-        self.advance()
+        while True:
+            var_name = self.current_token.value
+            self.advance()
 
-        if not self.current_token or self.current_token.type != TokenType.ASSIGN.value:
-            return self.error(f"Expected '=' after variable name {var_name}")
-        self.advance()
+            # Handle initialization if present
+            value = None
+            if self.current_token and self.current_token.type == TokenType.ASSIGN.value:
+                self.advance()
+                value = self.parse_expression()
+                if isinstance(value, SyntaxError):
+                    return value
 
-        value = self.parse_expression()
-        if isinstance(value, SyntaxError):
-            return value
+            declarations.append({
+                'type': 'variable_declaration',
+                'data_type': data_type,
+                'name': var_name,
+                'value': value,
+                'is_global': is_global,
+                'line': self.current_line,
+                'column': self.current_column
+            })
 
+            # Check for comma indicating another declaration
+            if self.current_token and self.current_token.type == TokenType.COMMA.value:
+                self.advance()
+                # After comma, expect another variable name
+                if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+                    return self.error("Expected variable name after ','")
+                continue
+            break
+
+        # Expect semicolon at the end of declaration(s)
         if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
             return self.error("Expected ';' after variable declaration")
         self.advance()
 
+        # If only one declaration, return it directly
+        if len(declarations) == 1:
+            declarations[0].update({'line': start_line, 'column': start_column})
+            return declarations[0]
+        
+        # If multiple declarations, return as a group
         return {
-            'type': 'variable_declaration',
+            'type': 'multiple_declaration',
             'data_type': data_type,
-            'name': var_name,
-            'value': value,
+            'declarations': declarations,
             'line': start_line,
             'column': start_column
         }
@@ -628,7 +684,175 @@ class Parser:
             'column': start_column
         }
 
+    def parse_constant_declaration(self):
+        """Parse constant declaration according to CFG rule 37"""
+        start_line = self.current_line
+        start_column = self.current_column
+        
+        # Skip 'Const' keyword
+        self.advance()
+        
+        if not self.is_data_type(self.current_token.type):
+            return self.error("Expected data type after 'Const'")
+        data_type = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+            return self.error("Expected identifier after data type")
+        const_name = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN.value:
+            return self.error("Expected '=' after constant name")
+        self.advance()
+
+        value = self.parse_expression()
+        if isinstance(value, SyntaxError):
+            return value
+
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after constant declaration")
+        self.advance()
+
+        return {
+            'type': 'constant_declaration',
+            'data_type': data_type,
+            'name': const_name,
+            'value': value,
+            'line': start_line,
+            'column': start_column
+        }
+
+    def parse_array_declaration(self, is_global=False):
+        """Parse array declaration according to CFG rules 21-36"""
+        start_line = self.current_line
+        start_column = self.current_column
+        
+        data_type = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+            return self.error("Expected array name")
+        array_name = self.current_token.value
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.LEFT_BRACKET.value:
+            return self.error("Expected '[' after array name")
+        self.advance()
+
+        # Parse array size
+        size = self.parse_array_size()
+        if isinstance(size, SyntaxError):
+            return size
+
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_BRACKET.value:
+            return self.error("Expected ']' after array size")
+        self.advance()
+
+        # Check for optional second dimension
+        dimensions = [size]
+        if self.current_token and self.current_token.type == TokenType.LEFT_BRACKET.value:
+            self.advance()
+            size2 = self.parse_array_size()
+            if isinstance(size2, SyntaxError):
+                return size2
+            dimensions.append(size2)
+            
+            if not self.current_token or self.current_token.type != TokenType.RIGHT_BRACKET.value:
+                return self.error("Expected ']' after second dimension size")
+            self.advance()
+
+        # Parse optional initialization
+        initialization = None
+        if self.current_token and self.current_token.type == TokenType.ASSIGN.value:
+            self.advance()
+            initialization = self.parse_array_initialization(len(dimensions))
+            if isinstance(initialization, SyntaxError):
+                return initialization
+
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after array declaration")
+        self.advance()
+
+        return {
+            'type': 'array_declaration',
+            'data_type': data_type,
+            'name': array_name,
+            'dimensions': dimensions,
+            'initialization': initialization,
+            'is_global': is_global,
+            'line': start_line,
+            'column': start_column
+        }
+
+    def parse_array_size(self):
+        """Parse array size expression"""
+        if not self.current_token:
+            return self.error("Expected array size")
+        
+        if self.current_token.type != TokenType.FEINTLIT.value:
+            return self.error("Array size must be a Feint literal")
+        
+        size = int(self.current_token.value)
+        self.advance()
+        return size
+
+    def parse_array_initialization(self, dimensions):
+        """Parse array initialization values"""
+        if not self.current_token or self.current_token.type != TokenType.LEFT_BRACE.value:
+            return self.error("Expected '{' for array initialization")
+        self.advance()
+
+        values = []
+        while self.current_token and self.current_token.type != TokenType.RIGHT_BRACE.value:
+            if dimensions == 2:
+                # Parse nested array for 2D
+                if not self.current_token or self.current_token.type != TokenType.LEFT_BRACE.value:
+                    return self.error("Expected '{' for nested array")
+                self.advance()
+                
+                row = []
+                while self.current_token and self.current_token.type != TokenType.RIGHT_BRACE.value:
+                    value = self.parse_array_element()
+                    if isinstance(value, SyntaxError):
+                        return value
+                    row.append(value)
+                    
+                values.append(row)
+                
+                if not self.current_token or self.current_token.type != TokenType.RIGHT_BRACE.value:
+                    return self.error("Expected '}' after nested array")
+                self.advance()
+                
+            else:
+                # Parse 1D array elements
+                value = self.parse_array_element()
+                if isinstance(value, SyntaxError):
+                    return value
+                values.append(value)
+                
+            if self.current_token and self.current_token.type == TokenType.COMMA.value:
+                self.advance()
+                
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_BRACE.value:
+            return self.error("Expected '}' after array initialization")
+        self.advance()
+        
+        return values
+
+    def parse_array_element(self):
+        """Parse single array element according to CFG rules 32-34"""
+        if not self.current_token:
+            return self.error("Expected array element")
+        
+        if self.current_token.type in [TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value, TokenType.CHANTLIT.value]:
+            value = self.current_token.value
+            self.advance()
+            return value
+        
+        return self.error("Invalid array element type")
+
 def parse(tokens):
     """Main entry point for parsing"""
     parser = Parser(tokens)
-    return parser.parse() 
+    return parser.parse()
