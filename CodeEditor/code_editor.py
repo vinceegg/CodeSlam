@@ -12,6 +12,7 @@ from tkinter import END
 
 from customtkinter import CTkImage
 from PIL import Image
+from Analyzers.syntax_analyzer.errors import SyntaxError
 
 # Load the image
 image_path = "assets/icons/CodeSLAM-LOGO.png"
@@ -196,21 +197,42 @@ class App(customtkinter.CTk):
         # First do lexical analysis
         tokens, lexical_errors = run(codebox_content)
         
-        # If no lexical errors, proceed with syntax analysis
-        try:
-            syntax_result = parse(tokens)
-            if isinstance(syntax_result, str) and "Error" in syntax_result:
-                self.append_terminal_output(syntax_result, text_color="red")
-                # Disable semantic button if there are syntax errors
-                self.sideBtnSemantic.configure(state="disabled")
-            else:
-                self.append_terminal_output("No Syntax Errors", text_color="green")
-                # Enable semantic button only if there are no syntax errors
-                self.sideBtnSemantic.configure(state="normal")
-        except Exception as e:
-            self.append_terminal_output(f"Syntax Error: {str(e)}", text_color="red")
-            # Disable semantic button if there are syntax errors
+        if lexical_errors:
+            self.append_terminal_output("Cannot perform syntax analysis due to lexical errors:", text_color="red")
+            for error in lexical_errors:
+                self.append_terminal_output(str(error), text_color="red")
             self.sideBtnSemantic.configure(state="disabled")
+            return
+
+        # If no lexical errors, proceed with syntax analysis
+        syntax_result = parse(tokens)
+        
+        if isinstance(syntax_result, SyntaxError):
+            self.append_terminal_output(str(syntax_result), text_color="red")
+            # Highlight the error in the code editor
+            self.highlight_error(syntax_result.line_number, syntax_result.column)
+            self.sideBtnSemantic.configure(state="disabled")
+        else:
+            self.append_terminal_output("No Syntax Errors", text_color="green")
+            self.sideBtnSemantic.configure(state="normal")
+
+    def highlight_error(self, line_num, column):
+        """Highlight the error location in the code editor"""
+        # Remove any existing highlights
+        self.codebox.tag_remove("error", "1.0", "end")
+        
+        # Create a tag for error highlighting
+        self.codebox.tag_config("error", background="red", foreground="white")
+        
+        # Calculate the position to highlight
+        start_pos = f"{line_num}.{column}"
+        end_pos = f"{line_num}.{column + 1}"
+        
+        # Apply the highlight
+        self.codebox.tag_add("error", start_pos, end_pos)
+        
+        # Scroll to the error position
+        self.codebox.see(start_pos)
 
     def sidebar_button_semantic(self):
         self.append_terminal_output("Semantic Button Clicked!")
@@ -225,21 +247,6 @@ class App(customtkinter.CTk):
         """Execute the command entered in the command input field."""
         command = self.command_input.get()
         if command.strip():
-            self.append_terminal_output(f"Executing: {command}")
-            subprocess.run(command, shell=True, stdout=sys.stdout, stderr=sys.stderr)
-
-    def clear_terminal_output(self):
-        """Clear the terminal output."""
-        self.terminal_output.configure(state="normal")  # Make it editable temporarily
-        self.terminal_output.delete("1.0", END)  # Clear all text
-        self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
-        self.terminal_output.configure(state="disabled")  # Make it read-only again
-
-    def execute_command(self, event):
-        command = self.command_input.get()
-        if command.lower() == "clear":
-            self.clear_terminal_output()
-        elif command.strip():
             self.append_terminal_output(f"Executing: {command}")
             subprocess.run(command, shell=True, stdout=sys.stdout, stderr=sys.stderr)
 

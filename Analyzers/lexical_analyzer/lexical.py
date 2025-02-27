@@ -119,7 +119,7 @@ class Lexer:
                 tokens.append(Token(TokenType.UNDERSCORE.value, self.current_char))
                 self.advance()
             elif self.current_char in "&":
-                tokens.append(Token(TokenType.CHANT_CONCAT.value, self.current_char))
+                tokens.append(Token(TokenType.AMPERSAND.value, self.current_char))
                 self.advance()
             # elif self.current_char in "@":
             #     tokens.append(Token(TokenType.VAR_INIT.value, self.current_char))
