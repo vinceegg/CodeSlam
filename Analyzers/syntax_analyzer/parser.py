@@ -544,6 +544,16 @@ class Parser:
                 'column': start_column
             }
             
+        # Handle boolean literals (Win/Loss)
+        elif token.type in [TokenType.WIN.value, TokenType.LOSS.value]:
+            self.advance()
+            return {
+                'type': 'boolean_literal',
+                'value': token.value,
+                'line': start_line,
+                'column': start_column
+            }
+            
         # Handle variables
         elif token.type == TokenType.VAR_INIT.value:
             self.advance()
