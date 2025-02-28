@@ -571,6 +571,53 @@ class Parser:
                 
         return args
 
+    """Inbound Syntax : Inbound("String", @id);"""
+    def parse_inbound(self):
+        """Parse Inbound statement"""
+        start_line = self.current_line
+        start_column = self.current_column
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
+            return self.error("Expected '(' after 'Inbound'")
+        self.advance()
+
+        args = self.parse_inbound_args()
+        if isinstance(args, SyntaxError):
+            return args
+
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+            return self.error("Expected ')' after Inbound arguments")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after Inbound statement")
+        self.advance()
+
+        return {
+            'type': 'inbound',
+            'arguments': args,
+            'line': start_line,
+            'column': start_column
+        }
+    
+    def parse_inbound_args(self):
+        """Parse Inbound statement arguments"""
+        args = []
+
+        while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
+            expr = self.parse_expression()
+            if isinstance(expr, SyntaxError):
+                return expr
+            args.append(expr)
+            
+            if self.current_token and self.current_token.type == TokenType.COMMA.value:
+                self.advance()
+                continue
+            break
+
+        return args
+        
     def parse_expression(self):
         """Parse expressions including literals, variables, and string concatenation"""
         if not self.current_token:
