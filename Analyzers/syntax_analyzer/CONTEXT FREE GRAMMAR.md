@@ -41,7 +41,7 @@
 | 35 | \<elements\> | → | , \<array\_elem\>\<elements\> |
 | 36 | \<elements\> | → | λ |
 | 37 | \<constant\_dec\> | → | Const \<data\_type\> identifier \= \<literal\>; |
-| 38 | \<function\_decls\> | → | \<data\_type\> identifier(\<parameters\>) \<function\_definition\>; |
+| 38 | \<function\_decls\> | → | Wilt \<data\_type\> identifier(\<parameters\>) \<function\_definition\>; |
 | 39 | \<parameters\> | → | \<parameter\>\<parameters\_end\> |
 | 40 | \<parameters\> | → | λ |
 | 41 | \<parameter\> | → | \<data\_type\> identifier |

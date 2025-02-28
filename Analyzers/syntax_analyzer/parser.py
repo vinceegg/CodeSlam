@@ -59,15 +59,21 @@ class Parser:
             if isinstance(global_declarations, SyntaxError):
                 return global_declarations
             
+            self.skip_whitespace_and_comments()
+            
             # Parse function declarations
             function_declarations = self.parse_function_decls()
             if isinstance(function_declarations, SyntaxError):
                 return function_declarations
             
+            self.skip_whitespace_and_comments()
+            
             # Parse function definitions
             function_definitions = self.parse_function_definitions()
             if isinstance(function_definitions, SyntaxError):
                 return function_definitions
+            
+            self.skip_whitespace_and_comments()
             
             # Parse Team block
             if not self.current_token or self.current_token.type != TokenType.TEAM.value:
@@ -173,6 +179,8 @@ class Parser:
                                     self.current_token.type == TokenType.CONST.value):
             # Skip if we hit Team block
             next_token = self.peek()
+            if next_token and next_token.type == TokenType.WILT.value:
+                break
             if next_token and next_token.type == TokenType.TEAM.value:
                 break
             
@@ -233,11 +241,11 @@ class Parser:
         """Parse function declarations"""
         declarations = []
         
-        while self.current_token and self.is_data_type(self.current_token.type):
-            # Check if next token is VAR_INIT (function name with @)
+        while self.current_token and self.current_token.type == TokenType.WILT.value:
+            # Peek ahead to check if this is a declaration (has return type) or definition
             next_token = self.peek()
-            if not next_token or next_token.type != TokenType.VAR_INIT.value:
-                break
+            if not next_token or not self.is_data_type(next_token.type):
+                break  # This is a definition, not a declaration
             
             # Parse function declaration
             declaration = self.parse_function_declaration()
@@ -253,6 +261,11 @@ class Parser:
         """Parse function declaration"""
         start_line = self.current_line
         start_column = self.current_column
+        
+        # Check for Wilt keyword
+        if not self.current_token or self.current_token.type != TokenType.WILT.value:
+            return self.error("Expected 'Wilt' keyword for function declaration")
+        self.advance()
         
         # Parse return type
         if not self.is_data_type(self.current_token.type):
@@ -297,10 +310,12 @@ class Parser:
         """Parse function definitions"""
         definitions = []
         
-        while self.current_token and self.is_data_type(self.current_token.type):
-            if not (self.peek() and self.peek().type == TokenType.LEFT_PAREN.value):
-                break
-                
+        while self.current_token and self.current_token.type == TokenType.WILT.value:
+            # Peek ahead to check if this is a definition (no return type)
+            next_token = self.peek()
+            if next_token and self.is_data_type(next_token.type):
+                break  # This is a declaration, not a definition
+            
             defn = self.parse_function_definition()
             if isinstance(defn, SyntaxError):
                 return defn
@@ -313,12 +328,11 @@ class Parser:
         start_line = self.current_line
         start_column = self.current_column
         
-        # Parse return type
-        if not self.is_data_type(self.current_token.type):
-            return self.error("Expected return type for function definition")
-        return_type = self.current_token.value
+        # Check for Wilt keyword
+        if not self.current_token or self.current_token.type != TokenType.WILT.value:
+            return self.error("Expected 'Wilt' keyword for function definition")
         self.advance()
-
+        
         # Parse function name (must be VAR_INIT with @ prefix)
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
             return self.error("Expected function name with @ prefix")
@@ -330,7 +344,8 @@ class Parser:
             return self.error("Expected '(' after function name")
         self.advance()
 
-        parameters = self.parse_parameters()
+        # Parse simplified parameters (just variable names)
+        parameters = self.parse_simple_parameters()
         if isinstance(parameters, SyntaxError):
             return parameters
 
@@ -346,6 +361,8 @@ class Parser:
         # Parse statements
         statements = []
         rebound_statement = None
+        
+        self.skip_whitespace_and_comments()
         
         while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             # Check for Rebound statement
@@ -364,6 +381,8 @@ class Parser:
                 statements.append(statement)
             
             self.skip_whitespace_and_comments()
+        
+        self.skip_whitespace_and_comments()
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' at end of function")
@@ -371,7 +390,6 @@ class Parser:
 
         return {
             'type': 'function_definition',
-            'return_type': return_type,
             'name': function_name,
             'parameters': parameters,
             'body': statements,
@@ -379,6 +397,29 @@ class Parser:
             'line': start_line,
             'column': start_column
         }
+
+    def parse_simple_parameters(self):
+        """Parse function parameters without types"""
+        parameters = []
+        
+        while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
+            # Parse parameter name (must be VAR_INIT with @ prefix)
+            if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+                return self.error("Expected parameter name with @ prefix")
+            param_name = self.current_token.value
+            self.advance()
+
+            parameters.append({
+                'name': param_name
+            })
+
+            # Check for more parameters
+            if self.current_token and self.current_token.type == TokenType.COMMA.value:
+                self.advance()
+                continue
+            break
+
+        return parameters
 
     def parse_parameters(self):
         """Parse function parameters"""
