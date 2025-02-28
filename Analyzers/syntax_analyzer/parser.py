@@ -445,6 +445,8 @@ class Parser:
             return self.parse_play()
         elif token_type == TokenType.RUN.value:
             return self.parse_run_play()
+        elif token_type == TokenType.DRIBBLE.value:  # Add Dribble statement support
+            return self.parse_dribble()
         elif token_type == TokenType.VAR_INIT.value:
             # Check next token to determine if it's a function call or assignment
             next_token = self.peek()
@@ -619,7 +621,48 @@ class Parser:
         return args
         
     def parse_expression(self):
-        """Parse expressions including literals, variables, and string concatenation"""
+        """Parse expressions including literals, variables, and comparisons"""
+        if not self.current_token:
+            return self.error("Expected expression")
+
+        start_line = self.current_line
+        start_column = self.current_column
+        
+        # Parse left side of expression
+        left = self.parse_primary()
+        if isinstance(left, SyntaxError):
+            return left
+        
+        # Look for comparison operators
+        while self.current_token and self.current_token.type in [
+            TokenType.GREATER_THAN.value,      # >
+            TokenType.LESS_THAN.value,      # <
+            TokenType.GREATER_EQUAL.value,     # >=
+            TokenType.LESS_EQUAL.value,     # <=
+            TokenType.EQUAL.value,  # ==
+            TokenType.NOT_EQUAL.value  # !=
+        ]:
+            operator = self.current_token.value
+            self.advance()
+            
+            # Parse right side of comparison
+            right = self.parse_primary()
+            if isinstance(right, SyntaxError):
+                return right
+            
+            left = {
+                'type': 'comparison',
+                'operator': operator,
+                'left': left,
+                'right': right,
+                'line': start_line,
+                'column': start_column
+            }
+        
+        return left
+
+    def parse_primary(self):
+        """Parse primary expressions (variables, literals)"""
         if not self.current_token:
             return self.error("Expected expression")
 
@@ -637,51 +680,52 @@ class Parser:
                 'line': start_line,
                 'column': start_column
             }
-            
-        # Handle string literals
-        elif token.type == TokenType.CHANTLIT.value:
-            self.advance()
-            return {
-                'type': 'string_literal',
-                'value': token.value,
-                'line': start_line,
-                'column': start_column
-            }
-            
+        
         # Handle numeric literals
         elif token.type in [TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value]:
+            value = token.value
             self.advance()
             return {
                 'type': 'numeric_literal',
-                'value': token.value,
+                'value': value,
                 'line': start_line,
                 'column': start_column
             }
-            
-        # Handle boolean literals (Win/Loss)
+        
+        # Handle string literals
+        elif token.type == TokenType.CHANTLIT.value:
+            value = token.value
+            self.advance()
+            return {
+                'type': 'string_literal',
+                'value': value,
+                'line': start_line,
+                'column': start_column
+            }
+        
+        # Handle boolean literals
         elif token.type in [TokenType.WIN.value, TokenType.LOSS.value]:
+            value = token.value
             self.advance()
             return {
                 'type': 'boolean_literal',
-                'value': token.value,
+                'value': value,
                 'line': start_line,
                 'column': start_column
             }
-            
-        # Handle binary operations
-        elif token.type == TokenType.AMPERSAND.value:
+        
+        # Handle parenthesized expressions
+        elif token.type == TokenType.LEFT_PAREN.value:
             self.advance()
-            right = self.parse_expression()
-            if isinstance(right, SyntaxError):
-                return right
-            return {
-                'type': 'concatenation',
-                'operator': '&',
-                'right': right,
-                'line': start_line,
-                'column': start_column
-            }
+            expr = self.parse_expression()
+            if isinstance(expr, SyntaxError):
+                return expr
             
+            if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+                return self.error("Expected ')'")
+            self.advance()
+            return expr
+        
         else:
             return self.error(f"Unexpected token in expression: {token.value}")
 
@@ -1293,6 +1337,99 @@ class Parser:
                 'value': inc_value
             },
             'condition': condition,
+            'line': start_line,
+            'column': start_column
+        }
+
+    def parse_dribble(self):
+        """Parse Dribble-Pass-Shoot (if-elseif-else) statement"""
+        start_line = self.current_line
+        start_column = self.current_column
+        self.advance()  # Move past 'Dribble'
+
+        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
+            return self.error("Expected '(' after Dribble")
+        self.advance()
+
+        # Parse condition
+        condition = self.parse_expression()
+        if isinstance(condition, SyntaxError):
+            return condition
+
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+            return self.error("Expected ')' after condition")
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
+            return self.error("Expected '{' after Dribble condition")
+        self.advance()
+
+        # Parse if block statements
+        if_statements = self.parse_statements()
+        if isinstance(if_statements, SyntaxError):
+            return if_statements
+
+        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            return self.error("Expected '}' after Dribble block")
+        self.advance()
+
+        # Parse Pass (else if) blocks
+        pass_blocks = []
+        while self.current_token and self.current_token.type == TokenType.PASS.value:
+            self.advance()  # Move past 'Pass'
+
+            if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
+                return self.error("Expected '(' after Pass")
+            self.advance()
+
+            pass_condition = self.parse_expression()
+            if isinstance(pass_condition, SyntaxError):
+                return pass_condition
+
+            if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+                return self.error("Expected ')' after Pass condition")
+            self.advance()
+
+            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
+                return self.error("Expected '{' after Pass condition")
+            self.advance()
+
+            pass_statements = self.parse_statements()
+            if isinstance(pass_statements, SyntaxError):
+                return pass_statements
+
+            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+                return self.error("Expected '}' after Pass block")
+            self.advance()
+
+            pass_blocks.append({
+                'condition': pass_condition,
+                'statements': pass_statements
+            })
+
+        # Parse optional Shoot (else) block
+        shoot_statements = None
+        if self.current_token and self.current_token.type == TokenType.SHOOT.value:
+            self.advance()  # Move past 'Shoot'
+
+            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
+                return self.error("Expected '{' after Shoot")
+            self.advance()
+
+            shoot_statements = self.parse_statements()
+            if isinstance(shoot_statements, SyntaxError):
+                return shoot_statements
+
+            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+                return self.error("Expected '}' after Shoot block")
+            self.advance()
+
+        return {
+            'type': 'dribble',
+            'condition': condition,
+            'if_statements': if_statements,
+            'pass_blocks': pass_blocks,
+            'shoot_statements': shoot_statements,
             'line': start_line,
             'column': start_column
         }
