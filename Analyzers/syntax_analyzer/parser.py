@@ -59,6 +59,16 @@ class Parser:
             if isinstance(global_declarations, SyntaxError):
                 return global_declarations
             
+            # Parse function declarations
+            function_declarations = self.parse_function_decls()
+            if isinstance(function_declarations, SyntaxError):
+                return function_declarations
+            
+            # Parse function definitions
+            function_definitions = self.parse_function_definitions()
+            if isinstance(function_definitions, SyntaxError):
+                return function_definitions
+            
             # Parse Team block
             if not self.current_token or self.current_token.type != TokenType.TEAM.value:
                 return self.error("Expected 'Team' block")
@@ -70,6 +80,8 @@ class Parser:
             return {
                 'type': 'program',
                 'global_declarations': global_declarations,
+                'function_declarations': function_declarations,
+                'function_definitions': function_definitions,
                 'team_block': team_block
             }
             
@@ -218,7 +230,27 @@ class Parser:
             return self.parse_variable_declaration(is_global=False)
 
     def parse_function_decls(self):
-        """Parse function declarations according to rule 38"""
+        """Parse function declarations"""
+        declarations = []
+        
+        while self.current_token and self.is_data_type(self.current_token.type):
+            # Check if next token is VAR_INIT (function name with @)
+            next_token = self.peek()
+            if not next_token or next_token.type != TokenType.VAR_INIT.value:
+                break
+            
+            # Parse function declaration
+            declaration = self.parse_function_declaration()
+            if isinstance(declaration, SyntaxError):
+                return declaration
+            declarations.append(declaration)
+            
+            self.skip_whitespace_and_comments()
+            
+        return declarations
+
+    def parse_function_declaration(self):
+        """Parse function declaration"""
         start_line = self.current_line
         start_column = self.current_column
         
@@ -234,7 +266,7 @@ class Parser:
         function_name = self.current_token.value
         self.advance()
 
-        # Parse parameters
+        # Parse parameter list
         if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
             return self.error("Expected '(' after function name")
         self.advance()
@@ -277,7 +309,7 @@ class Parser:
         return definitions
 
     def parse_function_definition(self):
-        """Parse function definition according to rules 44-45"""
+        """Parse function definition"""
         start_line = self.current_line
         start_column = self.current_column
         
@@ -293,7 +325,7 @@ class Parser:
         function_name = self.current_token.value
         self.advance()
 
-        # Parse parameters
+        # Parse parameter list
         if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
             return self.error("Expected '(' after function name")
         self.advance()
@@ -306,12 +338,12 @@ class Parser:
             return self.error("Expected ')' after parameters")
         self.advance()
 
-        # Function definition must have a body
+        # Parse function body
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after function header")
         self.advance()
 
-        # Parse function body (team_statements followed by optional rebound)
+        # Parse statements
         statements = []
         rebound_statement = None
         
@@ -349,19 +381,20 @@ class Parser:
         }
 
     def parse_parameters(self):
-        """Parse function parameters with @ prefix support"""
+        """Parse function parameters"""
         parameters = []
         
         while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
+            # Parse parameter type
             if not self.is_data_type(self.current_token.type):
                 return self.error("Expected parameter type")
-                
             param_type = self.current_token.value
             self.advance()
 
+            # Parse parameter name (must be VAR_INIT with @ prefix)
             if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
                 return self.error("Expected parameter name with @ prefix")
-            param_name = self.current_token.value  # Already includes @ prefix
+            param_name = self.current_token.value
             self.advance()
 
             parameters.append({
@@ -369,6 +402,7 @@ class Parser:
                 'name': param_name
             })
 
+            # Check for more parameters
             if self.current_token and self.current_token.type == TokenType.COMMA.value:
                 self.advance()
                 continue
@@ -814,25 +848,28 @@ class Parser:
             return self.error(f"Unexpected token in expression: {token.value}")
 
     def parse_function_call(self):
-        """Parse function call expression"""
+        """Parse function call"""
         start_line = self.current_line
         start_column = self.current_column
         
+        # Get function name
         function_name = self.current_token.value
         self.advance()
 
+        # Parse argument list
         if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error(f"Expected '(' after function name {function_name}")
+            return self.error("Expected '(' after function name")
         self.advance()
 
-        # Parse arguments
         arguments = []
         while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-            arg = self.parse_expression()
-            if isinstance(arg, SyntaxError):
-                return arg
-            arguments.append(arg)
+            # Parse argument expression
+            argument = self.parse_expression()
+            if isinstance(argument, SyntaxError):
+                return argument
+            arguments.append(argument)
 
+            # Check for more arguments
             if self.current_token and self.current_token.type == TokenType.COMMA.value:
                 self.advance()
                 continue
@@ -841,6 +878,11 @@ class Parser:
 
         if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
             return self.error("Expected ')' after function arguments")
+        self.advance()
+
+        # Function calls in statements must end with semicolon
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after function call")
         self.advance()
 
         return {

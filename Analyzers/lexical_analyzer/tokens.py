@@ -94,6 +94,9 @@ class TokenType(Enum):
     COMMENT = "COMMENT"               # Single line comment
     MULTI_COMMENT = "MULTI_COMMENT"   # Multi-line comment
 
+    # Function Declarations
+    WILT = "WILT"
+
 
 class Token:
     """
