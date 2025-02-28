@@ -50,75 +50,29 @@ class Parser:
         return None
 
     def parse(self):
-        """Entry point for parsing according to CFG rule 1"""
+        """Entry point for parsing using predictive parsing"""
         try:
-            # Skip any initial whitespace, newlines, and comments
             self.skip_whitespace_and_comments()
             
-            # Parse global declarations (rules 2-6)
-            global_declarations = []
-            while self.current_token and (self.is_data_type(self.current_token.type) or 
-                                        self.current_token.type == TokenType.CONST.value):
-                # Check if next token indicates this is a function declaration/definition
-                next_token = self.peek()
-                if next_token and next_token.type == TokenType.LEFT_PAREN.value:
-                    break
-                    
-                declaration = self.parse_global_declared()
-                if isinstance(declaration, SyntaxError):
-                    return declaration
-                global_declarations.append(declaration)
-                
-                self.skip_whitespace_and_comments()
-
-            # Parse function declarations (rules 7-8)
-            function_declarations = []
-            while self.current_token and self.is_data_type(self.current_token.type):
-                next_token = self.peek()
-                if not (next_token and next_token.type == TokenType.LEFT_PAREN.value):
-                    break
-                    
-                declaration = self.parse_function_decls()
-                if isinstance(declaration, SyntaxError):
-                    return declaration
-                function_declarations.append(declaration)
-                
-                self.skip_whitespace_and_comments()
-
-            # Parse function definitions (rules 9-10)
-            function_definitions = []
-            while self.current_token and self.is_data_type(self.current_token.type):
-                next_token = self.peek()
-                if not (next_token and next_token.type == TokenType.LEFT_PAREN.value):
-                    break
-                    
-                definition = self.parse_function_definition()
-                if isinstance(definition, SyntaxError):
-                    return definition
-                function_definitions.append(definition)
-                
-                self.skip_whitespace_and_comments()
+            # Parse global declarations first
+            global_declarations = self.parse_global_declarations()
+            if isinstance(global_declarations, SyntaxError):
+                return global_declarations
             
-            # Parse Team block (required)
+            # Parse Team block
+            if not self.current_token or self.current_token.type != TokenType.TEAM.value:
+                return self.error("Expected 'Team' block")
+            
             team_block = self.parse_team_block()
             if isinstance(team_block, SyntaxError):
                 return team_block
-
-            self.skip_whitespace_and_comments()
-
-            # Check that we've reached the end of the file
-            if self.current_token is not None:
-                return self.error("Unexpected content after Team block")
-
+            
             return {
                 'type': 'program',
                 'global_declarations': global_declarations,
-                'function_declarations': function_declarations,
-                'function_definitions': function_definitions,
-                'team_block': team_block,
-                'line': 1,
-                'column': 0
+                'team_block': team_block
             }
+            
         except Exception as e:
             return self.error(str(e))
 
@@ -133,18 +87,11 @@ class Parser:
             self.advance()
 
     def parse_team_block(self):
-        """Parse Team() { statements }"""
-        # Skip any whitespace and comments before Team
-        self.skip_whitespace_and_comments()
-
-        if not self.current_token or self.current_token.type != TokenType.TEAM.value:
-            return self.error("Expected 'Team' block")
-
-        # Store initial position
+        """Parse Team block including local declarations"""
         start_line = self.current_line
         start_column = self.current_column
         
-        self.advance()
+        self.advance()  # Move past Team
 
         if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
             return self.error("Expected '(' after 'Team'")
@@ -153,16 +100,17 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
             return self.error("Expected ')' after 'Team('")
         self.advance()
-        
-        self.skip_whitespace_and_comments()
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after 'Team()'")
         self.advance()
 
-        # Skip any whitespace and comments inside the block
-        self.skip_whitespace_and_comments()
+        # Parse local declarations first
+        local_declarations = self.parse_local_declarations()
+        if isinstance(local_declarations, SyntaxError):
+            return local_declarations
 
+        # Parse statements
         statements = self.parse_statements()
         if isinstance(statements, SyntaxError):
             return statements
@@ -173,6 +121,7 @@ class Parser:
 
         return {
             'type': 'team_block',
+            'local_declarations': local_declarations,
             'statements': statements,
             'line': start_line,
             'column': start_column
@@ -204,14 +153,69 @@ class Parser:
         ]:
             self.advance()
 
+    def parse_global_declarations(self):
+        """Parse global declarations according to rules 2-6"""
+        declarations = []
+        
+        while self.current_token and (self.is_data_type(self.current_token.type) or 
+                                    self.current_token.type == TokenType.CONST.value):
+            # Skip if we hit Team block
+            next_token = self.peek()
+            if next_token and next_token.type == TokenType.TEAM.value:
+                break
+            
+            # Parse global declaration based on type
+            declaration = self.parse_global_declared()
+            if isinstance(declaration, SyntaxError):
+                return declaration
+            declarations.append(declaration)
+            
+            self.skip_whitespace_and_comments()
+            
+        return declarations
+
     def parse_global_declared(self):
-        """Parse global declarations according to rules 4-6"""
+        """Parse individual global declaration according to rules 4-6"""
         if self.current_token.type == TokenType.CONST.value:
             return self.parse_constant_declaration()
         elif self.peek() and self.peek().type == TokenType.LEFT_BRACKET.value:
             return self.parse_array_declaration(is_global=True)
         else:
             return self.parse_variable_declaration(is_global=True)
+
+    def parse_local_declarations(self):
+        """Parse local declarations according to rules 46-49"""
+        declarations = []
+        
+        while self.current_token and self.is_data_type(self.current_token.type):
+            # Check if this is the start of a statement
+            next_token = self.peek()
+            if next_token and next_token.type in [
+                TokenType.ANNOUNCE.value,
+                TokenType.INBOUND.value,
+                TokenType.FORWARD.value,
+                TokenType.PLAY.value,
+                TokenType.RUN.value,
+                TokenType.SWITCH.value
+            ]:
+                break
+            
+            # Parse local declaration
+            declaration = self.parse_local_declared()
+            if isinstance(declaration, SyntaxError):
+                return declaration
+            declarations.append(declaration)
+            
+            self.skip_whitespace_and_comments()
+            
+        return declarations
+
+    def parse_local_declared(self):
+        """Parse individual local declaration according to rules 48-49"""
+        if self.peek() and self.peek().type == TokenType.LEFT_BRACKET.value:
+            return self.parse_array_declaration(is_global=False)
+        else:
+            return self.parse_variable_declaration(is_global=False)
 
     def parse_function_decls(self):
         """Parse function declarations according to rule 38"""
@@ -1245,6 +1249,66 @@ class Parser:
             'line': start_line,
             'column': start_column
         }
+
+    def is_in_first_set(self, token_type, non_terminal):
+        """Check if token is in FIRST set of given non-terminal"""
+        first_sets = {
+            'program': {TokenType.FEINT.value, TokenType.FLOATER.value, TokenType.CHANT.value, 
+                       TokenType.STAT.value, TokenType.CONST.value, TokenType.TEAM.value},
+            'global_decl': {TokenType.FEINT.value, TokenType.FLOATER.value, TokenType.CHANT.value, 
+                           TokenType.STAT.value, TokenType.CONST.value},
+            'function_decls': {TokenType.FEINT.value, TokenType.FLOATER.value, TokenType.CHANT.value, 
+                              TokenType.STAT.value},
+            'team_statements': {TokenType.FEINT.value, TokenType.FLOATER.value, TokenType.CHANT.value,
+                              TokenType.STAT.value, TokenType.ANNOUNCE.value, TokenType.INBOUND.value,
+                              TokenType.FORWARD.value, TokenType.PLAY.value, TokenType.RUN.value,
+                              TokenType.SWITCH.value, TokenType.VAR_INIT.value},
+            'expression': {TokenType.VAR_INIT.value, TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value,
+                          TokenType.CHANTLIT.value, TokenType.WIN.value, TokenType.LOSS.value,
+                          TokenType.LEFT_PAREN.value}
+        }
+        return token_type in first_sets.get(non_terminal, set())
+
+    def is_in_follow_set(self, token_type, non_terminal):
+        """Check if token is in FOLLOW set of given non-terminal"""
+        follow_sets = {
+            'global_decl': {TokenType.TEAM.value, TokenType.FEINT.value, TokenType.FLOATER.value,
+                           TokenType.CHANT.value, TokenType.STAT.value},
+            'function_decls': {TokenType.TEAM.value},
+            'team_statements': {TokenType.CODE_BLOCK_RIGHT.value, TokenType.REBOUND.value},
+            'expression': {TokenType.SEMICOLON.value, TokenType.RIGHT_PAREN.value, TokenType.COMMA.value,
+                          TokenType.AMPERSAND.value}
+        }
+        return token_type in follow_sets.get(non_terminal, set())
+
+    def predict(self, productions):
+        """Use predict sets to determine which production to use"""
+        if not self.current_token:
+            return None
+        
+        token_type = self.current_token.type
+        
+        predict_sets = {
+            'variable_declaration': {TokenType.FEINT.value, TokenType.FLOATER.value, 
+                                   TokenType.CHANT.value, TokenType.STAT.value},
+            'constant_declaration': {TokenType.CONST.value},
+            'array_declaration': {TokenType.FEINT.value, TokenType.FLOATER.value, 
+                                TokenType.CHANT.value, TokenType.STAT.value},
+            'function_declaration': {TokenType.FEINT.value, TokenType.FLOATER.value, 
+                                   TokenType.CHANT.value, TokenType.STAT.value},
+            'team_block': {TokenType.TEAM.value}
+        }
+        
+        for production, predict_set in predict_sets.items():
+            if token_type in predict_set:
+                return production
+            
+        return None
+
+    def sync(self, sync_set):
+        """Synchronize parser after error by skipping tokens until sync point"""
+        while self.current_token and self.current_token.type not in sync_set:
+            self.advance()
 
 def parse(tokens):
     """Main entry point for parsing"""
