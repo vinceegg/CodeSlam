@@ -621,32 +621,53 @@ class Parser:
         return args
         
     def parse_expression(self):
-        """Parse expressions including literals, variables, and comparisons"""
-        if not self.current_token:
-            return self.error("Expected expression")
+        """Parse expressions including arithmetic, relational, and logical operations"""
+        return self.parse_logical()
 
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        # Parse left side of expression
-        left = self.parse_primary()
+    def parse_logical(self):
+        """Parse logical operations (AND, OR)"""
+        left = self.parse_relational()
         if isinstance(left, SyntaxError):
             return left
         
-        # Look for comparison operators
         while self.current_token and self.current_token.type in [
-            TokenType.GREATER_THAN.value,      # >
-            TokenType.LESS_THAN.value,      # <
-            TokenType.GREATER_EQUAL.value,     # >=
-            TokenType.LESS_EQUAL.value,     # <=
-            TokenType.EQUAL.value,  # ==
-            TokenType.NOT_EQUAL.value  # !=
+            TokenType.AND.value,
+            TokenType.OR.value
         ]:
             operator = self.current_token.value
             self.advance()
             
-            # Parse right side of comparison
-            right = self.parse_primary()
+            right = self.parse_relational()
+            if isinstance(right, SyntaxError):
+                return right
+            
+            left = {
+                'type': 'logical_operation',
+                'operator': operator,
+                'left': left,
+                'right': right
+            }
+        
+        return left
+
+    def parse_relational(self):
+        """Parse relational operations (>, <, >=, <=, ==, !=)"""
+        left = self.parse_arithmetic()
+        if isinstance(left, SyntaxError):
+            return left
+        
+        while self.current_token and self.current_token.type in [
+            TokenType.GREATER_THAN.value,
+            TokenType.LESS_THAN.value,
+            TokenType.GREATER_EQUAL.value,
+            TokenType.LESS_EQUAL.value,
+            TokenType.EQUAL.value,
+            TokenType.NOT_EQUAL.value
+        ]:
+            operator = self.current_token.value
+            self.advance()
+            
+            right = self.parse_arithmetic()
             if isinstance(right, SyntaxError):
                 return right
             
@@ -654,20 +675,91 @@ class Parser:
                 'type': 'comparison',
                 'operator': operator,
                 'left': left,
-                'right': right,
-                'line': start_line,
-                'column': start_column
+                'right': right
             }
         
         return left
 
+    def parse_arithmetic(self):
+        """Parse arithmetic operations (+, -, *, /, %)"""
+        left = self.parse_term()
+        if isinstance(left, SyntaxError):
+            return left
+        
+        while self.current_token and self.current_token.type in [
+            TokenType.ADD.value,
+            TokenType.SUB.value
+        ]:
+            operator = self.current_token.value
+            self.advance()
+            
+            right = self.parse_term()
+            if isinstance(right, SyntaxError):
+                return right
+            
+            left = {
+                'type': 'arithmetic_operation',
+                'operator': operator,
+                'left': left,
+                'right': right
+            }
+        
+        return left
+
+    def parse_term(self):
+        """Parse term operations (*, /, %)"""
+        left = self.parse_factor()
+        if isinstance(left, SyntaxError):
+            return left
+        
+        while self.current_token and self.current_token.type in [
+            TokenType.MUL.value,
+            TokenType.DIV.value,
+            TokenType.MOD.value
+        ]:
+            operator = self.current_token.value
+            self.advance()
+            
+            right = self.parse_factor()
+            if isinstance(right, SyntaxError):
+                return right
+            
+            left = {
+                'type': 'arithmetic_operation',
+                'operator': operator,
+                'left': left,
+                'right': right
+            }
+        
+        return left
+
+    def parse_factor(self):
+        """Parse factors (primary expressions and unary operations)"""
+        if not self.current_token:
+            return self.error("Expected expression")
+        
+        # Handle unary operations
+        if self.current_token.type in [TokenType.ADD.value, TokenType.SUB.value, TokenType.NOT.value]:
+            operator = self.current_token.value
+            self.advance()
+            
+            operand = self.parse_factor()
+            if isinstance(operand, SyntaxError):
+                return operand
+            
+            return {
+                'type': 'unary_operation',
+                'operator': operator,
+                'operand': operand
+            }
+        
+        return self.parse_primary()
+
     def parse_primary(self):
-        """Parse primary expressions (variables, literals)"""
+        """Parse primary expressions (variables, literals, parenthesized expressions)"""
         if not self.current_token:
             return self.error("Expected expression")
 
-        start_line = self.current_line
-        start_column = self.current_column
         token = self.current_token
         
         # Handle variables with @ prefix
@@ -676,9 +768,7 @@ class Parser:
             self.advance()
             return {
                 'type': 'variable',
-                'name': var_name,
-                'line': start_line,
-                'column': start_column
+                'name': var_name
             }
         
         # Handle numeric literals
@@ -687,9 +777,7 @@ class Parser:
             self.advance()
             return {
                 'type': 'numeric_literal',
-                'value': value,
-                'line': start_line,
-                'column': start_column
+                'value': value
             }
         
         # Handle string literals
@@ -698,9 +786,7 @@ class Parser:
             self.advance()
             return {
                 'type': 'string_literal',
-                'value': value,
-                'line': start_line,
-                'column': start_column
+                'value': value
             }
         
         # Handle boolean literals
@@ -709,9 +795,7 @@ class Parser:
             self.advance()
             return {
                 'type': 'boolean_literal',
-                'value': value,
-                'line': start_line,
-                'column': start_column
+                'value': value
             }
         
         # Handle parenthesized expressions
@@ -1095,16 +1179,17 @@ class Parser:
             return left
         
         while self.current_token and self.current_token.type in [
-            TokenType.PLUS.value,
-            TokenType.MINUS.value,
-            TokenType.MULTIPLY.value,
-            TokenType.DIVIDE.value,
-            TokenType.GT.value,
-            TokenType.LT.value,
-            TokenType.GTE.value,
-            TokenType.LTE.value,
-            TokenType.EQUALS.value,
-            TokenType.NOT_EQUALS.value
+            TokenType.ADD.value,
+            TokenType.SUB.value,
+            TokenType.MUL.value,
+            TokenType.DIV.value,
+            TokenType.MOD.value,
+            TokenType.GREATER_THAN.value,
+            TokenType.LESS_THAN.value,
+            TokenType.GREATER_EQUAL.value,
+            TokenType.LESS_EQUAL.value,
+            TokenType.EQUAL.value,
+            TokenType.NOT_EQUAL.value
         ]:
             operator = self.current_token.value
             self.advance()
@@ -1117,9 +1202,11 @@ class Parser:
                 'type': 'binary_operation',
                 'operator': operator,
                 'left': left,
-                'right': right
+                'right': right,
+                'line': self.current_line,
+                'column': self.current_column
             }
-            
+        
         return left
 
     def parse_forward(self):
