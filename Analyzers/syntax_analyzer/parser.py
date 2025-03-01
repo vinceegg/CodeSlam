@@ -537,7 +537,7 @@ class Parser:
             return self.error(f"Unexpected token: {self.current_token.value}")
 
     def parse_variable_declaration(self, is_global=False):
-        """Parse variable declarations according to rules 11-14"""
+        """Parse variable declarations according to rules 11-14 and 82"""
         start_line = self.current_line
         start_column = self.current_column
         
@@ -558,6 +558,8 @@ class Parser:
             value = None
             if self.current_token and self.current_token.type == TokenType.ASSIGN.value:
                 self.advance()
+                
+                # Parse the initialization value - can be an expression, function call, etc.
                 value = self.parse_expression()
                 if isinstance(value, SyntaxError):
                     return value
@@ -831,16 +833,46 @@ class Parser:
         return self.parse_primary()
 
     def parse_primary(self):
-        """Parse primary expressions (variables, literals, parenthesized expressions)"""
+        """Parse primary expressions (variables, literals, parenthesized expressions, function calls)"""
         if not self.current_token:
             return self.error("Expected expression")
 
         token = self.current_token
         
-        # Handle variables with @ prefix
+        # Handle variables with @ prefix and function calls
         if token.type == TokenType.VAR_INIT.value:
             var_name = token.value
             self.advance()
+            
+            # Check if this is a function call
+            if self.current_token and self.current_token.type == TokenType.LEFT_PAREN.value:
+                self.advance()  # Move past (
+                
+                # Parse arguments
+                arguments = []
+                while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
+                    argument = self.parse_expression()
+                    if isinstance(argument, SyntaxError):
+                        return argument
+                    arguments.append(argument)
+                    
+                    # Check for more arguments
+                    if self.current_token and self.current_token.type == TokenType.COMMA.value:
+                        self.advance()
+                        continue
+                    elif self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
+                        return self.error("Expected ',' or ')' in function arguments")
+                
+                if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+                    return self.error("Expected ')' after function arguments")
+                self.advance()
+                
+                return {
+                    'type': 'function_call',
+                    'name': var_name,
+                    'arguments': arguments
+                }
+            
             return {
                 'type': 'variable',
                 'name': var_name
@@ -889,7 +921,7 @@ class Parser:
             return self.error(f"Unexpected token in expression: {token.value}")
 
     def parse_function_call(self):
-        """Parse function call"""
+        """Parse function call as a statement according to rule 228"""
         start_line = self.current_line
         start_column = self.current_column
         
@@ -904,11 +936,46 @@ class Parser:
 
         arguments = []
         while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-            # Parse argument expression
-            argument = self.parse_expression()
-            if isinstance(argument, SyntaxError):
-                return argument
-            arguments.append(argument)
+            # Parse argument according to rules 233-237
+            if self.current_token.type in [TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value, TokenType.CHANTLIT.value, TokenType.WIN.value, TokenType.LOSS.value]:
+                # Literal argument
+                arguments.append({
+                    'type': 'literal',
+                    'value': self.current_token.value
+                })
+                self.advance()
+            elif self.current_token.type == TokenType.VAR_INIT.value:
+                # Variable or array element argument
+                var_name = self.current_token.value
+                self.advance()
+                
+                # Check for array access
+                if self.current_token and self.current_token.type == TokenType.LEFT_BRACKET.value:
+                    self.advance()
+                    index = self.parse_expression()
+                    if isinstance(index, SyntaxError):
+                        return index
+                        
+                    if not self.current_token or self.current_token.type != TokenType.RIGHT_BRACKET.value:
+                        return self.error("Expected ']' after array index")
+                    self.advance()
+                    
+                    arguments.append({
+                        'type': 'array_element',
+                        'name': var_name,
+                        'index': index
+                    })
+                else:
+                    arguments.append({
+                        'type': 'variable',
+                        'name': var_name
+                    })
+            else:
+                # Expression argument
+                argument = self.parse_expression()
+                if isinstance(argument, SyntaxError):
+                    return argument
+                arguments.append(argument)
 
             # Check for more arguments
             if self.current_token and self.current_token.type == TokenType.COMMA.value:
@@ -927,7 +994,7 @@ class Parser:
         self.advance()
 
         return {
-            'type': 'function_call',
+            'type': 'function_call_statement',
             'name': function_name,
             'arguments': arguments,
             'line': start_line,
