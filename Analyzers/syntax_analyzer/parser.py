@@ -1009,8 +1009,16 @@ class Parser:
         var_name = self.current_token.value
         self.advance()
 
-        if not self.current_token or self.current_token.type != TokenType.ASSIGN.value:
-            return self.error(f"Expected '=' after variable name {var_name}")
+        if not self.current_token or self.current_token.type not in [
+            TokenType.ASSIGN.value,
+            TokenType.ADD_ASSIGN.value,
+            TokenType.SUB_ASSIGN.value,
+            TokenType.MUL_ASSIGN.value,
+            TokenType.DIV_ASSIGN.value,
+            TokenType.MOD_ASSIGN.value
+        ]:
+            return self.error(f"Expected '=', '+=', '-=', '*=', '/=', or '%=' after variable name {var_name}")
+        operator = self.current_token.value
         self.advance()
 
         value = self.parse_expression()
@@ -1024,6 +1032,7 @@ class Parser:
         return {
             'type': 'assignment',
             'name': var_name,
+            'operator': operator,
             'value': value,
             'line': start_line,
             'column': start_column
@@ -1370,11 +1379,6 @@ class Parser:
         self.advance()
 
         # Parse initialization (rules 202-205)
-        if not self.is_data_type(self.current_token.type):
-            return self.error("Expected numeric data type in Forward initialization")
-        data_type = self.current_token.value
-        self.advance()
-
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
             return self.error("Expected variable name in Forward initialization")
         var_name = self.current_token.value
@@ -1407,8 +1411,14 @@ class Parser:
         inc_var = self.current_token.value
         self.advance()
 
-        if not self.current_token or self.current_token.type not in [TokenType.PLUS_ASSIGN.value, TokenType.MINUS_ASSIGN.value]:
-            return self.error("Expected '+=' or '-=' in Forward increment/decrement")
+        if not self.current_token or self.current_token.type not in [
+            TokenType.ADD_ASSIGN.value,
+            TokenType.SUB_ASSIGN.value,
+            TokenType.MUL_ASSIGN.value,
+            TokenType.DIV_ASSIGN.value,
+            TokenType.MOD_ASSIGN.value
+        ]:
+            return self.error("Expected '+=', '-=', '*=', '/=', or '%=' in Forward increment/decrement")
         inc_op = self.current_token.value
         self.advance()
 
@@ -1437,7 +1447,6 @@ class Parser:
         return {
             'type': 'forward',
             'initialization': {
-                'data_type': data_type,
                 'name': var_name,
                 'value': initial_value
             },
@@ -1484,8 +1493,14 @@ class Parser:
         inc_var = self.current_token.value
         self.advance()
 
-        if not self.current_token or self.current_token.type not in [TokenType.PLUS_ASSIGN.value, TokenType.MINUS_ASSIGN.value]:
-            return self.error("Expected '+=' or '-=' in Play increment/decrement")
+        if not self.current_token or self.current_token.type not in [
+            TokenType.ADD_ASSIGN.value,
+            TokenType.SUB_ASSIGN.value,
+            TokenType.MUL_ASSIGN.value,
+            TokenType.DIV_ASSIGN.value,
+            TokenType.MOD_ASSIGN.value
+        ]:
+            return self.error("Expected '+=', '-=', '*=', '/=', or '%=' in Play increment/decrement")
         inc_op = self.current_token.value
         self.advance()
 
@@ -1531,8 +1546,14 @@ class Parser:
         inc_var = self.current_token.value
         self.advance()
 
-        if not self.current_token or self.current_token.type not in [TokenType.PLUS_ASSIGN.value, TokenType.MINUS_ASSIGN.value]:
-            return self.error("Expected '+=' or '-=' in Run-Play increment/decrement")
+        if not self.current_token or self.current_token.type not in [
+            TokenType.ADD_ASSIGN.value,
+            TokenType.SUB_ASSIGN.value,
+            TokenType.MUL_ASSIGN.value,
+            TokenType.DIV_ASSIGN.value,
+            TokenType.MOD_ASSIGN.value
+        ]:
+            return self.error("Expected '+=', '-=', '*=', '/=', or '%=' in Run-Play increment/decrement")
         inc_op = self.current_token.value
         self.advance()
 
