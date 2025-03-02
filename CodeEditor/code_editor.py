@@ -70,21 +70,33 @@ class App(customtkinter.CTk):
         self.editor_frame.grid_columnconfigure(1, weight=1)
         self.editor_frame.grid_rowconfigure(0, weight=1)
 
+        # Create scrollbar first
+        self.scrollbar = customtkinter.CTkScrollbar(self.editor_frame)
+        self.scrollbar.grid(row=0, column=2, sticky="ns")
+
         # create line number widget
-        self.line_numbers = customtkinter.CTkTextbox(self.editor_frame, width=40, corner_radius=0)
+        self.line_numbers = customtkinter.CTkTextbox(self.editor_frame, width=40, corner_radius=0, yscrollcommand=self.sync_scroll)
         self.line_numbers.grid(row=0, column=0, sticky="ns")
         self.line_numbers.configure(state="disabled")
 
         # create textbox for code editor
-        self.codebox = customtkinter.CTkTextbox(self.editor_frame, width=250, corner_radius=0)
+        self.codebox = customtkinter.CTkTextbox(self.editor_frame, width=250, corner_radius=0, yscrollcommand=self.sync_scroll)
         self.codebox.grid(row=0, column=1, sticky="nsew")
-        
+
+        # Configure scrollbar to work with both text widgets
+        self.scrollbar.configure(command=self.scroll_both)
+
+        # Bind all scroll events
+        self.codebox.bind("<Key>", self.on_code_change)
+        self.codebox.bind("<KeyRelease>", self.on_code_change)
+        self.codebox.bind("<<Modified>>", self.on_modified)
+        self.codebox.bind("<Configure>", self.on_configure)
+
         # Placeholder text
         self.codebox_placeholder = "Enter your code here..."
         self.codebox.insert("0.0", self.codebox_placeholder)
         self.codebox.bind("<FocusIn>", self.clear_placeholder)
         self.codebox.bind("<FocusOut>", self.add_placeholder)
-        self.codebox.bind("<KeyRelease>", self.on_code_change)
 
         # Set tab width to 1 character
         self.codebox.configure(tabs=("1c"))
@@ -124,13 +136,34 @@ class App(customtkinter.CTk):
         if not self.codebox.get("1.0", "end-1c"):
             self.codebox.insert("1.0", self.codebox_placeholder)
 
+    def sync_scroll(self, *args):
+        """Synchronize scrolling between widgets"""
+        # Update scrollbar
+        self.scrollbar.set(*args)
+        # Sync the line numbers with code editor
+        self.line_numbers.yview_moveto(args[0])
+        
+    def scroll_both(self, *args):
+        """Scroll both text widgets when scrollbar is moved"""
+        self.codebox.yview(*args)
+        self.line_numbers.yview(*args)
+        
+    def on_modified(self, event=None):
+        """Handle text modifications"""
+        self.codebox.edit_modified(False)  # Reset modified flag
+        self.update_line_numbers()
+        
     def update_line_numbers(self, event=None):
+        """Update line numbers and keep scroll position"""
+        current_scroll = self.codebox.yview()[0]  # Save current scroll position
         line_count = int(self.codebox.index('end-1c').split('.')[0])
         line_numbers_string = "\n".join(str(i) for i in range(1, line_count + 1))
         self.line_numbers.configure(state="normal")
         self.line_numbers.delete("1.0", "end")
         self.line_numbers.insert("1.0", line_numbers_string)
         self.line_numbers.configure(state="disabled")
+        # Restore scroll position
+        self.line_numbers.yview_moveto(current_scroll)
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -271,6 +304,11 @@ class App(customtkinter.CTk):
         
         self.terminal_output.configure(state="disabled")
             
+    def on_configure(self, event):
+        """Update line numbers when code editor is configured/resized"""
+        self.update_line_numbers()
+        self.line_numbers.yview_moveto(self.codebox.yview()[0])
+
 if __name__ == "__main__":
     app = App()
     app.mainloop()
