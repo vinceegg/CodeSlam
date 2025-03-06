@@ -33,8 +33,6 @@ class LineNumbers(tk.Text):
     def __init__(self, master, text_widget, **kwargs):
         super().__init__(master, **kwargs)
         self.text_widget = text_widget
-        self.text_widget.bind('<KeyPress>', self._on_key_press)
-        self.text_widget.bind('<KeyRelease>', self._on_key_release)
         
         # Configure the line numbers appearance
         self.configure(width=4)
@@ -42,19 +40,72 @@ class LineNumbers(tk.Text):
         self.configure(foreground='#606366')  # Grayish line numbers
         self.configure(borderwidth=0)
         self.configure(highlightthickness=0)
+        self.configure(state='disabled')  # Make it read-only
+        self.configure(padx=8)  # Add padding to align numbers better
         
-    def _on_key_press(self, event=None):
-        self.redraw()
+        # Match the font and spacing of the main editor
+        self.configure(font=text_widget.cget("font"))
+        self.configure(spacing1=text_widget.cget("spacing1"))
+        self.configure(spacing2=text_widget.cget("spacing2"))
+        self.configure(spacing3=text_widget.cget("spacing3"))
         
-    def _on_key_release(self, event=None):
-        self.redraw()
+        # Bind text widget scroll events
+        self.text_widget.bind('<MouseWheel>', self._on_mousewheel)
+        self.text_widget.bind('<Button-4>', self._on_mousewheel)
+        self.text_widget.bind('<Button-5>', self._on_mousewheel)
+        self.text_widget.bind('<Key>', self._on_key_event)
         
-    def redraw(self):
+        # Bind the text widget's vertical scrollbar
+        if hasattr(self.text_widget, 'yview'):
+            text_scroll = self.text_widget.vbar  # Get ScrolledText's scrollbar
+            text_scroll.configure(command=self._on_text_scroll)
+            self.text_widget.configure(yscrollcommand=self._on_text_yview)
+        
+    def _on_mousewheel(self, event):
+        """Handle mouse wheel scrolling"""
+        if event.num == 4:  # Linux scroll up
+            self.yview_scroll(-1, "units")
+            self.text_widget.yview_scroll(-1, "units")
+        elif event.num == 5:  # Linux scroll down
+            self.yview_scroll(1, "units")
+            self.text_widget.yview_scroll(1, "units")
+        else:  # Windows/MacOS
+            delta = -1 * (event.delta // 120)
+            self.yview_scroll(delta, "units")
+            self.text_widget.yview_scroll(delta, "units")
+        return "break"
+        
+    def _on_text_scroll(self, *args):
+        """Handle scrollbar movement"""
+        self.yview(*args)
+        self.text_widget.yview(*args)
+        
+    def _on_text_yview(self, *args):
+        """Sync line numbers when text widget is scrolled"""
+        self.yview_moveto(args[0])
+        return args
+        
+    def _on_key_event(self, event=None):
+        """Update line numbers on key events"""
+        self.update_line_numbers()
+        
+    def update_line_numbers(self):
+        """Update the line numbers"""
+        self.configure(state='normal')
         self.delete('1.0', tk.END)
-        line_count = self.text_widget.get('1.0', tk.END).count('\n')
-        for line in range(1, line_count + 1):
-            self.insert(tk.END, f"{line:3d}\n")
-        self.configure(state='disabled')  # Make line numbers read-only
+        
+        # Get the total number of lines
+        text_content = self.text_widget.get('1.0', tk.END)
+        line_count = text_content.count('\n') + (not text_content.endswith('\n'))
+        
+        # Generate line numbers with proper padding
+        line_numbers = '\n'.join(str(i).rjust(3) for i in range(1, line_count + 1))
+        self.insert('1.0', line_numbers)
+        
+        # Sync scroll position
+        if hasattr(self.text_widget, 'yview'):
+            self.yview_moveto(self.text_widget.yview()[0])
+        self.configure(state='disabled')
 
 class SyntaxHighlighter:
     def __init__(self, text_widget):
@@ -98,46 +149,53 @@ class SyntaxHighlighter:
 class ModernCodeEditor(tk.Frame):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
-        self.configure(background='#2b2b2b')  # Dark theme background
+        self.configure(background='#2b2b2b')
         self.create_widgets()
         
     def create_widgets(self):
-        # Create main editor frame
-        editor_frame = tk.Frame(self, background='#2b2b2b')
-        editor_frame.pack(fill=tk.BOTH, expand=True)
+        # Create main editor frame with grid
+        self.grid(row=0, column=0, sticky="nsew") 
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         
         # Create text widget with custom font and colors
         editor_font = font.Font(family='Consolas', size=11)
         self.text = ScrolledText(
-            editor_frame,
+            self,
             wrap=tk.NONE,
             font=editor_font,
-            background='#2b2b2b',  # Dark background
-            foreground='#a9b7c6',  # Light text
-            insertbackground='white',  # White cursor
-            selectbackground='#214283',  # Selection color
+            background='#2b2b2b',
+            foreground='#a9b7c6',
+            insertbackground='white',
+            selectbackground='#214283',
             selectforeground='#a9b7c6',
-            spacing1=2,  # Add some line spacing
-            spacing2=2,
-            spacing3=2
-        )
-        
-        # Create line numbers
-        self.line_numbers = LineNumbers(
-            editor_frame, 
-            self.text,
-            font=editor_font,
-            padx=5,
+            spacing1=4,  # Adjusted spacing
+            spacing2=0,
+            spacing3=4,
+            padx=8,  # Added padding
             pady=4
         )
         
-        # Pack widgets
-        self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
-        self.text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Create line numbers with matching style
+        self.line_numbers = LineNumbers(
+            self, 
+            self.text,
+            font=editor_font,
+            padx=8,
+            pady=4,
+            width=4,
+            spacing1=4,  # Match text widget spacing
+            spacing2=0,
+            spacing3=4
+        )
+        
+        # Grid layout for better control
+        self.line_numbers.grid(row=0, column=0, sticky="nsew")
+        self.text.grid(row=0, column=1, sticky="nsew")
         
         # Initialize syntax highlighter
         self.highlighter = SyntaxHighlighter(self.text)
-        self.text.bind('<KeyRelease>', self.on_key_release)
+        self.text.bind('<KeyRelease>', self._on_text_change)
         
         # Add auto-indentation
         self.text.bind('<Return>', self.auto_indent)
@@ -148,9 +206,21 @@ class ModernCodeEditor(tk.Frame):
         self.text.bind('<KeyRelease-parenleft>', self.insert_matching_bracket)
         self.text.bind('<KeyRelease-braceleft>', self.insert_matching_bracket)
         
-    def on_key_release(self, event):
+        # Initial line numbers
+        self.line_numbers.update_line_numbers()
+        
+        # Add binding for any modifications to reset buttons
+        self.text.bind('<<Modified>>', self._on_modify)
+        self.text.bind('<KeyPress>', self._on_modify)
+        
+        # Create error highlight tag
+        self.text.tag_configure("error_line", background="#4B1515")  # Dark red background
+        self.text.tag_configure("error_highlight", background="#662222")  # Brighter red for specific error
+        
+    def _on_text_change(self, event=None):
+        """Handle text changes"""
         self.highlighter.highlight()
-        self.line_numbers.redraw()
+        self.line_numbers.update_line_numbers()
         
     def auto_indent(self, event):
         # Get current line's indentation
@@ -188,7 +258,41 @@ class ModernCodeEditor(tk.Frame):
         self.text.delete('1.0', tk.END)
         self.text.insert('1.0', text)
         self.highlighter.highlight()
-        self.line_numbers.redraw()
+        self.line_numbers.update_line_numbers()
+
+    def _on_modify(self, event=None):
+        """Handle any modifications to the text"""
+        if hasattr(self, 'master') and hasattr(self.master, 'reset_analyzer_buttons'):
+            self.master.reset_analyzer_buttons()
+        self.clear_error_highlights()
+        
+        # Reset the modified flag
+        if event and event.widget.edit_modified():
+            event.widget.edit_modified(False)
+            
+    def clear_error_highlights(self):
+        """Clear all error highlights"""
+        self.text.tag_remove("error_line", "1.0", "end")
+        self.text.tag_remove("error_highlight", "1.0", "end")
+        
+    def highlight_error(self, line_num, column=None):
+        """Highlight the error line and specific position"""
+        # Clear previous highlights
+        self.clear_error_highlights()
+        
+        # Highlight the entire line
+        line_start = f"{line_num}.0"
+        line_end = f"{line_num}.end"
+        self.text.tag_add("error_line", line_start, line_end)
+        
+        # Highlight specific error position if column is provided
+        if column is not None:
+            error_start = f"{line_num}.{column}"
+            error_end = f"{line_num}.{column + 1}"
+            self.text.tag_add("error_highlight", error_start, error_end)
+        
+        # Ensure the error is visible
+        self.text.see(line_start)
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -212,12 +316,42 @@ class App(customtkinter.CTk):
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
         
-        # create sidebar buttons
-        self.sideBtnLexical = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_lexical)
+        # create sidebar buttons with improved styling
+        button_font = customtkinter.CTkFont(size=13)
+        
+        self.sideBtnLexical = customtkinter.CTkButton(
+            self.sidebar_frame,
+            text="Lexical",
+            command=self.sidebar_button_lexical,
+            font=button_font,
+            fg_color="#1f538d",  # Blue background
+            hover_color="#366BA3",  # Lighter blue on hover
+            corner_radius=6
+        )
         self.sideBtnLexical.grid(row=1, column=0, padx=20, pady=10)
-        self.sideBtnSyntax = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_syntax, state="disabled")
+        
+        self.sideBtnSyntax = customtkinter.CTkButton(
+            self.sidebar_frame,
+            text="Syntax",
+            command=self.sidebar_button_syntax,
+            state="disabled",
+            font=button_font,
+            fg_color="#2B2B2B",  # Dark background when disabled
+            hover_color="#366BA3",  # Lighter blue on hover when enabled
+            corner_radius=6
+        )
         self.sideBtnSyntax.grid(row=2, column=0, padx=20, pady=10)
-        self.sideBtnSemantic = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_semantic, state="disabled")
+        
+        self.sideBtnSemantic = customtkinter.CTkButton(
+            self.sidebar_frame,
+            text="Semantic",
+            command=self.sidebar_button_semantic,
+            state="disabled",
+            font=button_font,
+            fg_color="#2B2B2B",  # Dark background when disabled
+            hover_color="#366BA3",  # Lighter blue on hover when enabled
+            corner_radius=6
+        )
         self.sideBtnSemantic.grid(row=3, column=0, padx=20, pady=10)
         
         # create sidebar widgets
@@ -232,7 +366,10 @@ class App(customtkinter.CTk):
 
         # Replace the old editor frame setup with ModernCodeEditor
         self.editor_frame = ModernCodeEditor(self)
-        self.editor_frame.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        self.editor_frame.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew", rowspan=1)  # Changed rowspan to 1
+        self.grid_rowconfigure(0, weight=3)  # Give more weight to editor row
+        self.grid_rowconfigure(1, weight=1)  # Give less weight to terminal row
+        self.grid_rowconfigure(2, weight=0)  # Minimal weight for input row
         
         # Use the ModernCodeEditor's text widget for code access
         self.codebox = self.editor_frame.text
@@ -330,8 +467,30 @@ class App(customtkinter.CTk):
         if self.terminal_output.get("1.0", END).strip() != "Terminal Output:":
             self.clear_terminal_output()
 
+    def reset_analyzer_buttons(self):
+        """Reset all analyzer buttons to initial state"""
+        self.sideBtnSyntax.configure(
+            state="disabled",
+            fg_color="#2B2B2B"  # Reset to dark background
+        )
+        self.sideBtnSemantic.configure(
+            state="disabled",
+            fg_color="#2B2B2B"  # Reset to dark background
+        )
+        
+        # Clear the lexical analysis table
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+            
+        # Clear any error highlights
+        self.editor_frame.clear_error_highlights()
+        
+        # Clear terminal output
+        self.clear_terminal_output()
+        
     def sidebar_button_lexical(self):
         self.clear_terminal_output()
+        self.editor_frame.clear_error_highlights()
         codebox_content = self.codebox.get("1.0", "end-1c")
 
         # Clear existing content
@@ -392,17 +551,27 @@ class App(customtkinter.CTk):
             token_label.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
         if errors:
-            self.append_terminal_output("Errors:", text_color="red")
+            self.append_terminal_output("Lexical Errors:", text_color="red")
             for error in errors:
                 self.append_terminal_output(str(error), text_color="red")
-            self.sideBtnSyntax.configure(state="disabled")
+                # Highlight the error line
+                if hasattr(error, 'line_number'):
+                    self.editor_frame.highlight_error(error.line_number, error.column)
+            self.sideBtnSyntax.configure(
+                state="disabled",
+                fg_color="#2B2B2B"  # Dark background when disabled
+            )
         else:
-            self.append_terminal_output("No Lexical/s Error", text_color="green")
-            self.sideBtnSyntax.configure(state="normal")
+            self.append_terminal_output("No Lexical Errors", text_color="green")
+            self.sideBtnSyntax.configure(
+                state="normal",
+                fg_color="#1f538d"  # Blue background when enabled
+            )
 
     def sidebar_button_syntax(self):
-        self.clear_terminal_output()  # Clear the terminal output first
-        codebox_content = self.codebox.get("1.0", "end-1c")  # Get the content of the codebox
+        self.clear_terminal_output()
+        self.editor_frame.clear_error_highlights()
+        codebox_content = self.codebox.get("1.0", "end-1c")
         
         # First do lexical analysis
         tokens, lexical_errors = run(codebox_content)
@@ -411,7 +580,12 @@ class App(customtkinter.CTk):
             self.append_terminal_output("Cannot perform syntax analysis due to lexical errors:", text_color="red")
             for error in lexical_errors:
                 self.append_terminal_output(str(error), text_color="red")
-            self.sideBtnSemantic.configure(state="disabled")
+                if hasattr(error, 'line_number'):
+                    self.editor_frame.highlight_error(error.line_number, error.column)
+            self.sideBtnSemantic.configure(
+                state="disabled",
+                fg_color="#2B2B2B"  # Dark background when disabled
+            )
             return
 
         # If no lexical errors, proceed with syntax analysis
@@ -419,30 +593,17 @@ class App(customtkinter.CTk):
         
         if isinstance(syntax_result, SyntaxError):
             self.append_terminal_output(str(syntax_result), text_color="red")
-            # Highlight the error in the code editor
-            self.highlight_error(syntax_result.line_number, syntax_result.column)
-            self.sideBtnSemantic.configure(state="disabled")
+            self.editor_frame.highlight_error(syntax_result.line_number, syntax_result.column)
+            self.sideBtnSemantic.configure(
+                state="disabled",
+                fg_color="#2B2B2B"  # Dark background when disabled
+            )
         else:
             self.append_terminal_output("No Syntax Errors", text_color="green")
-            self.sideBtnSemantic.configure(state="normal")
-
-    def highlight_error(self, line_num, column):
-        """Highlight the error location in the code editor"""
-        # Remove any existing highlights
-        self.codebox.tag_remove("error", "1.0", "end")
-        
-        # Create a tag for error highlighting
-        self.codebox.tag_config("error", background="red", foreground="white")
-        
-        # Calculate the position to highlight
-        start_pos = f"{line_num}.{column}"
-        end_pos = f"{line_num}.{column + 1}"
-        
-        # Apply the highlight
-        self.codebox.tag_add("error", start_pos, end_pos)
-        
-        # Scroll to the error position
-        self.codebox.see(start_pos)
+            self.sideBtnSemantic.configure(
+                state="normal",
+                fg_color="#1f538d"  # Blue background when enabled
+            )
 
     def sidebar_button_semantic(self):
         self.append_terminal_output("Semantic Button Clicked!")
