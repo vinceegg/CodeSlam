@@ -698,8 +698,30 @@ class Parser:
         return args
         
     def parse_expression(self):
-        """Parse expressions including arithmetic, relational, and logical operations"""
-        return self.parse_logical()
+        """Parse expressions including string concatenation"""
+        left = self.parse_logical()
+        if isinstance(left, SyntaxError):
+            return left
+        
+        # Handle string concatenation with &
+        while self.current_token and self.current_token.type == TokenType.AMPERSAND.value:
+            operator = self.current_token.value
+            self.advance()
+            
+            right = self.parse_logical()
+            if isinstance(right, SyntaxError):
+                return right
+            
+            left = {
+                'type': 'concatenation',
+                'operator': operator,
+                'left': left,
+                'right': right,
+                'line': self.current_line,
+                'column': self.current_column
+            }
+        
+        return left
 
     def parse_logical(self):
         """Parse logical operations (AND, OR)"""
@@ -811,9 +833,14 @@ class Parser:
         return left
 
     def parse_factor(self):
-        """Parse factors (primary expressions and unary operations)"""
+        """Parse factors (primary expressions, unary operations, and type casting)"""
         if not self.current_token:
             return self.error("Expected expression")
+        
+        # Handle type casting
+        if self.current_token.type in [TokenType.FEINT.value, TokenType.FLOATER.value, 
+                                      TokenType.CHANT.value, TokenType.STAT.value]:
+            return self.parse_type_cast()
         
         # Handle unary operations
         if self.current_token.type in [TokenType.ADD.value, TokenType.SUB.value, TokenType.NOT.value]:
@@ -831,6 +858,33 @@ class Parser:
             }
         
         return self.parse_primary()
+
+    def parse_type_cast(self):
+        """Parse type casting expressions"""
+        cast_type = self.current_token.value
+        start_line = self.current_line
+        start_column = self.current_column
+        self.advance()
+
+        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
+            return self.error(f"Expected '(' after {cast_type} for type casting")
+        self.advance()
+
+        value = self.parse_expression()
+        if isinstance(value, SyntaxError):
+            return value
+
+        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
+            return self.error(f"Expected ')' after value in {cast_type} type cast")
+        self.advance()
+
+        return {
+            'type': 'type_cast',
+            'cast_type': cast_type,
+            'value': value,
+            'line': start_line,
+            'column': start_column
+        }
 
     def parse_primary(self):
         """Parse primary expressions (variables, literals, parenthesized expressions, function calls)"""
