@@ -316,10 +316,20 @@ class Parser:
             if next_token and self.is_data_type(next_token.type):
                 break  # This is a declaration, not a definition
             
+            # Skip any whitespace or comments before the function definition
+            self.skip_whitespace_and_comments()
+            
             defn = self.parse_function_definition()
             if isinstance(defn, SyntaxError):
                 return defn
             definitions.append(defn)
+            
+            # Skip any whitespace or comments after the function definition
+            self.skip_whitespace_and_comments()
+            
+            # Check if we've reached the Team block
+            if self.current_token and self.current_token.type == TokenType.TEAM.value:
+                break
             
         return definitions
 

@@ -34,10 +34,11 @@ class LineNumbers(tk.Text):
         super().__init__(master, **kwargs)
         self.text_widget = text_widget
         
+        # Configure the line numbers appearance based on mode
+        self.update_colors()
+        
         # Configure the line numbers appearance
         self.configure(width=4)
-        self.configure(background='#2b2b2b')  # Dark background
-        self.configure(foreground='#606366')  # Grayish line numbers
         self.configure(borderwidth=0)
         self.configure(highlightthickness=0)
         self.configure(state='disabled')  # Make it read-only
@@ -107,32 +108,61 @@ class LineNumbers(tk.Text):
             self.yview_moveto(self.text_widget.yview()[0])
         self.configure(state='disabled')
 
+    def update_colors(self):
+        """Update colors based on appearance mode"""
+        if customtkinter.get_appearance_mode() == "Light":
+            self.configure(background='#f0f0f0')  # Light background
+            self.configure(foreground='#666666')  # Darker line numbers for light mode
+        else:
+            self.configure(background='#2b2b2b')  # Dark background
+            self.configure(foreground='#606366')  # Grayish line numbers for dark mode
+
 class SyntaxHighlighter:
     def __init__(self, text_widget):
         self.text_widget = text_widget
+        self.update_colors()
+        
+    def update_colors(self):
+        """Update syntax highlighting colors based on appearance mode"""
+        is_light = customtkinter.get_appearance_mode() == "Light"
+        
+        # Define color schemes for light and dark modes
+        self.color_scheme = {
+            'keyword': '#0033B3' if is_light else '#4ADADF',  # Blue for light, Light blue for dark
+            'number': '#1750EB' if is_light else '#E71D56',   # Blue for light, Pink for dark
+            'string': '#067D17' if is_light else '#9CD1BB',   # Green for light, Light green for dark
+            'comment': '#8C8C8C' if is_light else '#808080',  # Gray for both
+            'variable': '#871094' if is_light else '#EAF2F1', # Purple for light, Light gray for dark
+            'operator': '#E75C1D' if is_light else '#FFB27D', # Orange for both
+            'brackets': '#000000' if is_light else '#a9b7c6'  # Black for light, Light gray for dark
+        }
         
         # Define syntax highlighting patterns
         self.patterns = [
             # Keywords
-            (r'\b(Team|Wilt|Feint|Floater|Chant|Stat|Forward|Play|Run|Switch|Get|Default|Dribble|Pass|Shoot|Rebound|Announce|Inbound)\b', '#4ADADF'),  # Light Blue
+            (r'\b(Team|Wilt|Feint|Floater|Chant|Stat|Forward|Play|Run|Switch|Get|Default|Dribble|Pass|Shoot|Rebound|Announce|Inbound)\b', 
+             self.color_scheme['keyword']),
             # Numbers
-            (r'\b\d+(\.\d+)?\b', '#E71D56'),  
+            (r'\b\d+(\.\d+)?\b', self.color_scheme['number']),
             # Strings
-            (r'"[^"]*"', '#9CD1BB'), 
+            (r'"[^"]*"', self.color_scheme['string']),
             # Comments
-            (r'//.*$', '#808080'),  
+            (r'//.*$', self.color_scheme['comment']),
             # Variables with @ prefix
-            (r'@\w+', '#EAF2F1'),  
+            (r'@\w+', self.color_scheme['variable']),
             # Operators
-            (r'[+\-*/=<>!&|]', '#FFB27D'),  
+            (r'[+\-*/=<>!&|]', self.color_scheme['operator']),
             # Parentheses and brackets
-            (r'[\(\)\[\]\{\}]', '#a9b7c6'), 
+            (r'[\(\)\[\]\{\}]', self.color_scheme['brackets'])
         ]
         
-        # Create tags for each pattern
+        # Update existing tags with new colors
         for pattern, color in self.patterns:
             self.text_widget.tag_configure(pattern, foreground=color)
-            
+        
+        # Reapply highlighting
+        self.highlight()
+
     def highlight(self, event=None):
         # Remove existing tags
         for pattern, _ in self.patterns:
@@ -149,8 +179,23 @@ class SyntaxHighlighter:
 class ModernCodeEditor(tk.Frame):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
-        self.configure(background='#2b2b2b')
+        self.update_colors()
         self.create_widgets()
+        
+    def update_colors(self):
+        """Update colors based on appearance mode"""
+        if customtkinter.get_appearance_mode() == "Light":
+            self.configure(background='#ffffff')  # White background for light mode
+            self.editor_bg = '#ffffff'
+            self.editor_fg = '#000000'
+            self.select_bg = '#add6ff'  # Light blue selection
+            self.select_fg = '#000000'
+        else:
+            self.configure(background='#2b2b2b')  # Dark background
+            self.editor_bg = '#2b2b2b'
+            self.editor_fg = '#a9b7c6'
+            self.select_bg = '#214283'
+            self.select_fg = '#a9b7c6'
         
     def create_widgets(self):
         # Create main editor frame with grid
@@ -158,21 +203,21 @@ class ModernCodeEditor(tk.Frame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
         
-        # Create text widget with custom font and colors
+        # Create text widget with dynamic colors
         editor_font = font.Font(family='Consolas', size=11)
         self.text = ScrolledText(
             self,
             wrap=tk.NONE,
             font=editor_font,
-            background='#2b2b2b',
-            foreground='#a9b7c6',
-            insertbackground='white',
-            selectbackground='#214283',
-            selectforeground='#a9b7c6',
-            spacing1=4,  # Adjusted spacing
+            background=self.editor_bg,
+            foreground=self.editor_fg,
+            insertbackground=self.editor_fg,  # Cursor color matches text
+            selectbackground=self.select_bg,
+            selectforeground=self.select_fg,
+            spacing1=4,
             spacing2=0,
             spacing3=4,
-            padx=8,  # Added padding
+            padx=8,
             pady=4
         )
         
@@ -294,6 +339,30 @@ class ModernCodeEditor(tk.Frame):
         # Ensure the error is visible
         self.text.see(line_start)
 
+    def update_theme(self):
+        """Update all colors when theme changes"""
+        self.update_colors()
+        self.text.configure(
+            background=self.editor_bg,
+            foreground=self.editor_fg,
+            insertbackground=self.editor_fg,
+            selectbackground=self.select_bg,
+            selectforeground=self.select_fg
+        )
+        self.line_numbers.update_colors()
+        self.highlighter.update_colors()  # Update syntax highlighting colors
+        self.update_error_colors()  # Update error highlighting colors
+
+    def update_error_colors(self):
+        """Update error highlighting colors based on appearance mode"""
+        is_light = customtkinter.get_appearance_mode() == "Light"
+        
+        error_bg = "#FFE8E8" if is_light else "#4B1515"  # Light red for light mode, Dark red for dark mode
+        error_highlight = "#FFCCCC" if is_light else "#662222"  # Brighter red for both modes
+        
+        self.text.tag_configure("error_line", background=error_bg)
+        self.text.tag_configure("error_highlight", background=error_highlight)
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -336,7 +405,7 @@ class App(customtkinter.CTk):
             command=self.sidebar_button_syntax,
             state="disabled",
             font=button_font,
-            fg_color="#2B2B2B",  # Dark background when disabled
+            fg_color="#E5E5E5" if customtkinter.get_appearance_mode() == "Light" else "#2B2B2B",  # Light/Dark background when disabled
             hover_color="#366BA3",  # Lighter blue on hover when enabled
             corner_radius=6
         )
@@ -348,7 +417,7 @@ class App(customtkinter.CTk):
             command=self.sidebar_button_semantic,
             state="disabled",
             font=button_font,
-            fg_color="#2B2B2B",  # Dark background when disabled
+            fg_color="#E5E5E5" if customtkinter.get_appearance_mode() == "Light" else "#2B2B2B",  # Light/Dark background when disabled
             hover_color="#366BA3",  # Lighter blue on hover when enabled
             corner_radius=6
         )
@@ -383,7 +452,7 @@ class App(customtkinter.CTk):
         # Style the table headers
         self.style = ttk.Style()
         self.style.configure("Header.TLabel", font=('Helvetica', 12, 'bold'))
-        
+
         # Terminal (text widget) to display output
         self.terminal_output = customtkinter.CTkTextbox(self, width=250, height=150)
         self.terminal_output.grid(row=1, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
@@ -445,6 +514,12 @@ class App(customtkinter.CTk):
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
+        # Update editor colors when appearance mode changes
+        self.editor_frame.update_theme()
+        # Update button colors
+        self.update_button_colors()
+        # Update scrollable frame colors
+        self.update_lexical_table_colors()
 
     def change_scaling_event(self, new_scaling: str):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
@@ -497,17 +572,24 @@ class App(customtkinter.CTk):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
-        # Create styled table headers
+        # Create styled table headers with light/dark mode awareness
         header_frame = customtkinter.CTkFrame(self.scrollable_frame)
         header_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         header_frame.grid_columnconfigure(0, weight=1)
         header_frame.grid_columnconfigure(1, weight=1)
 
+        is_light = customtkinter.get_appearance_mode() == "Light"
+        header_bg = "#F0F0F0" if is_light else "#3B3B3B"
+        content_bg = "#FFFFFF" if is_light else "#2b2b2b"
+        alt_content_bg = "#F5F5F5" if is_light else "#323232"
+        text_color = "black" if is_light else "white"
+
         header_lexeme = customtkinter.CTkLabel(
             header_frame, 
             text="Lexeme",
             font=customtkinter.CTkFont(size=14, weight="bold"),
-            fg_color="#3B3B3B",  # Darker blue background
+            fg_color=header_bg,
+            text_color=text_color,
             corner_radius=6
         )
         header_lexeme.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
@@ -516,7 +598,8 @@ class App(customtkinter.CTk):
             header_frame, 
             text="Token",
             font=customtkinter.CTkFont(size=14, weight="bold"),
-            fg_color="#3B3B3B",  # Darker blue background
+            fg_color=header_bg,
+            text_color=text_color,
             corner_radius=6
         )
         header_token.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
@@ -528,7 +611,7 @@ class App(customtkinter.CTk):
         for i, token in enumerate(tokens):
             row_frame = customtkinter.CTkFrame(
                 self.scrollable_frame,
-                fg_color="#2b2b2b" if i % 2 == 0 else "#323232"
+                fg_color=content_bg if i % 2 == 0 else alt_content_bg
             )
             row_frame.grid(row=i+1, column=0, columnspan=2, sticky="ew", padx=5, pady=2)
             row_frame.grid_columnconfigure(0, weight=1)
@@ -538,6 +621,7 @@ class App(customtkinter.CTk):
                 row_frame, 
                 text=token.value,
                 font=customtkinter.CTkFont(size=12),
+                text_color=text_color,
                 anchor="center"
             )
             lexeme_label.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
@@ -546,6 +630,7 @@ class App(customtkinter.CTk):
                 row_frame, 
                 text=token.type,
                 font=customtkinter.CTkFont(size=12),
+                text_color=text_color,
                 anchor="center"
             )
             token_label.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
@@ -608,11 +693,62 @@ class App(customtkinter.CTk):
     def sidebar_button_semantic(self):
         self.append_terminal_output("Semantic Button Clicked!")
 
-    def append_terminal_output(self, text):
-        """Append text to the terminal output."""
-        self.terminal_output.configure(state="normal")  # Make it editable temporarily
-        self.terminal_output.insert(END, f"{text}\n")
-        self.terminal_output.configure(state="disabled")  # Make it read-only again
+    def append_terminal_output(self, text, text_color=None):
+        """Append text to the terminal output with mode-aware colors"""
+        self.terminal_output.configure(state="normal")
+        
+        if text_color:
+            # Adjust colors for light mode
+            if customtkinter.get_appearance_mode() == "Light":
+                if text_color == "red":
+                    text_color = "#CC0000"  # Darker red for light mode
+                elif text_color == "green":
+                    text_color = "#006400"  # Darker green for light mode
+                    
+            self.terminal_output.insert(END, text + "\n", text_color)
+            self.terminal_output.tag_config(text_color, foreground=text_color)
+        else:
+            self.terminal_output.insert(END, text + "\n")
+        
+        self.terminal_output.configure(state="disabled")
+            
+    def on_configure(self, event):
+        """Update line numbers when code editor is configured/resized"""
+        self.update_line_numbers()
+        self.line_numbers.yview_moveto(self.codebox.yview()[0])
+
+    def update_button_colors(self):
+        """Update button colors based on appearance mode"""
+        disabled_color = "#E5E5E5" if customtkinter.get_appearance_mode() == "Light" else "#2B2B2B"
+        
+        if self.sideBtnSyntax.cget("state") == "disabled":
+            self.sideBtnSyntax.configure(fg_color=disabled_color)
+        if self.sideBtnSemantic.cget("state") == "disabled":
+            self.sideBtnSemantic.configure(fg_color=disabled_color)
+
+    def update_lexical_table_colors(self):
+        """Update lexical analyzer table colors based on appearance mode"""
+        is_light = customtkinter.get_appearance_mode() == "Light"
+        
+        # Update the scrollable frame background
+        self.scrollable_frame.configure(
+            fg_color="#FFFFFF" if is_light else "#2B2B2B"
+        )
+        
+        # Update header colors
+        for widget in self.scrollable_frame.winfo_children():
+            if isinstance(widget, customtkinter.CTkFrame):
+                if widget.grid_info()['row'] == 0:  # Header frame
+                    for header in widget.winfo_children():
+                        header.configure(
+                            fg_color="#F0F0F0" if is_light else "#3B3B3B"
+                        )
+                else:  # Content rows
+                    widget.configure(
+                        fg_color="#FFFFFF" if is_light else "#2b2b2b" 
+                        if widget.grid_info()['row'] % 2 == 0 
+                        else "#F5F5F5" if is_light else "#323232"
+                    )
 
     def execute_command(self, event=None):
         """Execute the command entered in the command input field."""
@@ -627,24 +763,6 @@ class App(customtkinter.CTk):
         self.terminal_output.delete("1.0", END)  # Clear all text
         self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
         self.terminal_output.configure(state="disabled")  # Make it read-only again
-
-    def append_terminal_output(self, text, text_color=None):
-        """Append text to the terminal output."""
-        self.terminal_output.configure(state="normal")
-        # self.terminal_output.insert(END, text + "\n")
-        # self.terminal_output.configure(state="disabled")     
-        if text_color:
-            self.terminal_output.insert(END, text + "\n", text_color)
-            self.terminal_output.tag_config(text_color, foreground=text_color)  # Configure the color
-        else:
-            self.terminal_output.insert(END, text + "\n")
-        
-        self.terminal_output.configure(state="disabled")
-            
-    def on_configure(self, event):
-        """Update line numbers when code editor is configured/resized"""
-        self.update_line_numbers()
-        self.line_numbers.yview_moveto(self.codebox.yview()[0])
 
 if __name__ == "__main__":
     app = App()
