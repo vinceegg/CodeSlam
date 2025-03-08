@@ -1813,7 +1813,7 @@ class Lexer:
     def state139(self, input_str):
         return True, Token(TokenType.TIMEOUT.value, input_str)
 
-    # WIN STATE
+    # WIN/WILT STATE
     def state140(self):
         input_str = ""
         input_str += self.current_char
@@ -1832,6 +1832,8 @@ class Lexer:
         match self.current_char:
             case "n":
                 return self.state142(input_str)
+            case "l":
+                return self.state296(input_str)
             case _:
                 return False, input_str
     
@@ -1905,12 +1907,28 @@ class Lexer:
             return self.state149(input_str)
         elif self.current_char == "=":
             return self.state150(input_str)
+        elif self.current_char == "+":
+            return self.state298(input_str)
         else:
             return False, input_str
 
     # FINAL STATE
     def state149(self, input_str):
         return True, Token(TokenType.ADD.value, input_str)
+    
+    # ++ STATE
+    def state298(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in asval_delim:
+            return self.state299(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE ++
+    def state299(self, input_str):
+        return True, Token(TokenType.INCREMENT.value, input_str)
 
     def state150(self, input_str):
         input_str += self.current_char
@@ -1934,6 +1952,8 @@ class Lexer:
             return self.state153(input_str)
         elif self.current_char == "=":
             return self.state154(input_str)
+        elif self.current_char == "-":
+            return self.state300(input_str)
         else:
             return False, input_str
 
@@ -1953,6 +1973,20 @@ class Lexer:
     # FINAL STATE
     def state155(self, input_str):
         return True, Token(TokenType.SUB_ASSIGN.value, input_str)
+    
+    # -- STATE
+    def state300(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in asval_delim:
+            return self.state301(input_str)
+        else:
+            return False, input_str
+
+    # FINAL STATE --
+    def state301(self, input_str):
+        return True, Token(TokenType.DECREMENT.value, input_str)
 
     def state156(self):
         input_str = ""
@@ -3121,6 +3155,37 @@ class Lexer:
         input_str += self.current_char
         self.advance()
         return True, Token(TokenType.GET.value, input_str)
+    
+    # WILT STATE
+    def state296(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "t":
+                return self.state297(input_str)
+            case _:
+                return False, input_str
+            
+    # WILT FINAL STATE
+    def state297(self, input_str):
+        input_str += self.current_char
+        self.advance()
+        return True, Token(TokenType.WILT.value, input_str)
+    
+    # # FINAL STATE for ++
+    # def state298(self, input_str):  
+    #     input_str += self.current_char
+    #     self.advance()
+    #     return True, Token(TokenType.INCREMENT.value, input_str)
+    
+    # # FINAL STATE for --
+    # def state299(self, input_str):  
+    #     input_str += self.current_char
+    #     self.advance()
+    #     return True, Token(TokenType.DECREMENT.value, input_str)
+    
+    
         
 
 def run(text):
