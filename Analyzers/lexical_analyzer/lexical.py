@@ -3154,7 +3154,11 @@ class Lexer:
     def state295(self, input_str):
         input_str += self.current_char
         self.advance()
-        return True, Token(TokenType.GET.value, input_str)
+
+        if self.current_char in delim8:
+            return True, Token(TokenType.GET.value, input_str)
+        else:
+            return False, input_str
     
     # WILT STATE
     def state296(self, input_str):
