@@ -3154,7 +3154,7 @@ class Lexer:
         if self.current_char in whitespace:
             return self.state299(input_str)
         else:
-            return False, input_str
+            return self.state299(input_str)
 
     def state299(self, input_str):
         return True, Token(TokenType.MULTI_COMMENT.value, input_str)
