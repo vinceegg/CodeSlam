@@ -3184,19 +3184,20 @@ class Lexer:
         else:
             return False, input_str
 
-    # FINAL STATE
     def state302(self, input_str):
         input_str += self.current_char  # Add the closing quote
         self.advance()
         
-        if self.current_char is None:
-            return True, Token(TokenType.GET.value, input_str)
+        result = True, Token(TokenType.GET.value, input_str)
         
-        if self.current_char in delim8:
-            return True, Token(TokenType.GET.value, input_str)
-        else:
-            return False, input_str
+        if self.current_char is not None and self.current_char in delim8:
+            return self.state303(input_str)
+        return result
 
+    # FINAL STATE
+    def state303(self, input_str):
+        return True, Token(TokenType.GET.value, input_str)
+    
 def run(text):
     # Create a lexer instance with the input text
     lexer = Lexer(text)
