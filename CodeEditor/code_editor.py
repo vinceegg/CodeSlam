@@ -244,7 +244,7 @@ class ModernCodeEditor(tk.Frame):
         
         # Add auto-indentation
         self.text.bind('<Return>', self.auto_indent)
-        self.text.bind('<Tab>', self.handle_tab)
+        # self.text.bind('<Tab>', self.handle_tab)
         
         # Add bracket matching
         self.text.bind('<KeyRelease-bracketleft>', self.insert_matching_bracket)
@@ -276,10 +276,10 @@ class ModernCodeEditor(tk.Frame):
             return "break"
         return None
         
-    def handle_tab(self, event):
-        # Insert spaces instead of tab
-        self.text.insert("insert", "    ")
-        return "break"
+    # def handle_tab(self, event):
+    #     # Insert spaces instead of tab
+    #     self.text.insert("insert", "    ")
+    #     return "break"
         
     def insert_matching_bracket(self, event):
         # Define matching brackets

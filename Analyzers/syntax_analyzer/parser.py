@@ -55,7 +55,8 @@ class Parser:
             TokenType.SPACE.value,
             TokenType.TAB.value,
             TokenType.NEWLINE.value,
-            TokenType.COMMENT.value
+            TokenType.COMMENT.value,
+            TokenType.MULTI_COMMENT.value
         ]:
             self.advance()
 
@@ -67,7 +68,7 @@ class Parser:
             # Parse global declarations first
             global_declarations = self.parse_global_declarations()
             if isinstance(global_declarations, SyntaxError):
-                return global_declarations
+                return global_declarations  
             
             self.skip_whitespace_and_comments()
             
@@ -171,7 +172,23 @@ class Parser:
             TokenType.NEWLINE.value
         ]:
             self.advance()
-
+    
+    # def parse_global_decl(self):
+    #     """Parse global declarations according to rules 2-6"""
+    #     global_declared = self.parse_global_declared()
+    #     if isinstance(global_declared, SyntaxError):
+    #         return global_declared
+        
+    #     global_decl = self.parse_global_decl()
+    #     if isinstance(global_decl, SyntaxError):
+    #         return global_decl
+        
+    #     return {
+    #         'type': 'global_declaration',
+    #         'global_declared': global_declared,
+    #         'global_decl': global_decl
+    #     }
+    
     def parse_global_declarations(self):
         """Parse global declarations according to rules 2-6"""
         declarations = []
@@ -199,7 +216,7 @@ class Parser:
         """Parse individual global declaration according to rules 4-6"""
         if self.current_token.type == TokenType.CONST.value:
             return self.parse_constant_declaration()
-        elif self.peek() and self.peek().type == TokenType.LEFT_BRACKET.value:
+        elif self.peek() and self.peek().type == TokenType.ARRAY_INDEX_LEFT.value:
             return self.parse_array_declaration(is_global=True)
         else:
             return self.parse_variable_declaration(is_global=True)
@@ -233,7 +250,7 @@ class Parser:
 
     def parse_local_declared(self):
         """Parse individual local declaration according to rules 48-49"""
-        if self.peek() and self.peek().type == TokenType.LEFT_BRACKET.value:
+        if self.peek() and self.peek().type == TokenType.ARRAY_INDEX_LEFT.value:
             return self.parse_array_declaration(is_global=False)
         else:
             return self.parse_variable_declaration(is_global=False)
@@ -312,11 +329,6 @@ class Parser:
         definitions = []
         
         while self.current_token and self.current_token.type == TokenType.WILT.value:
-            # Peek ahead to check if this is a definition (no return type)
-            next_token = self.peek()
-            if next_token and self.is_data_type(next_token.type):
-                break  # This is a declaration, not a definition
-            
             # Skip any whitespace or comments before the function definition
             self.skip_whitespace_and_comments()
             
@@ -642,7 +654,7 @@ class Parser:
             args.append(expr)
             
             # Check for string concatenation with &
-            while self.current_token and self.current_token.type == TokenType.AMPERSAND.value:
+            while self.current_token and self.current_token.type == TokenType.CHANT_CONCAT.value:
                 self.advance()  # Move past &
                 
                 # Parse the next expression after &
@@ -715,7 +727,7 @@ class Parser:
             return left
         
         # Handle string concatenation with &
-        while self.current_token and self.current_token.type == TokenType.AMPERSAND.value:
+        while self.current_token and self.current_token.type == TokenType.CHANT_CONCAT.value:
             operator = self.current_token.value
             self.advance()
             
@@ -735,14 +747,15 @@ class Parser:
         return left
 
     def parse_logical(self):
-        """Parse logical operations (AND, OR)"""
+        """Parse logical operations (AND, OR, NOT)"""
         left = self.parse_relational()
         if isinstance(left, SyntaxError):
             return left
         
         while self.current_token and self.current_token.type in [
-            TokenType.AND.value,
-            TokenType.OR.value
+            TokenType.AND_OP.value,
+            TokenType.OR_OP.value,
+            TokenType.NOT_OP.value
         ]:
             operator = self.current_token.value
             self.advance()
@@ -854,7 +867,7 @@ class Parser:
             return self.parse_type_cast()
         
         # Handle unary operations
-        if self.current_token.type in [TokenType.ADD.value, TokenType.SUB.value, TokenType.NOT.value]:
+        if self.current_token.type in [TokenType.ADD.value, TokenType.SUB.value, TokenType.NOT_OP.value]:
             operator = self.current_token.value
             self.advance()
             
@@ -1015,13 +1028,13 @@ class Parser:
                 self.advance()
                 
                 # Check for array access
-                if self.current_token and self.current_token.type == TokenType.LEFT_BRACKET.value:
+                if self.current_token and self.current_token.type == TokenType.ARRAY_INDEX_LEFT.value:
                     self.advance()
                     index = self.parse_expression()
                     if isinstance(index, SyntaxError):
                         return index
                         
-                    if not self.current_token or self.current_token.type != TokenType.RIGHT_BRACKET.value:
+                    if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_RIGHT.value:
                         return self.error("Expected ']' after array index")
                     self.advance()
                     
@@ -1156,7 +1169,7 @@ class Parser:
         array_name = self.current_token.value
         self.advance()
 
-        if not self.current_token or self.current_token.type != TokenType.LEFT_BRACKET.value:
+        if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_LEFT.value:
             return self.error("Expected '[' after array name")
         self.advance()
 
@@ -1165,20 +1178,20 @@ class Parser:
         if isinstance(size, SyntaxError):
             return size
 
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_BRACKET.value:
+        if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_RIGHT.value:
             return self.error("Expected ']' after array size")
         self.advance()
 
         # Check for optional second dimension
         dimensions = [size]
-        if self.current_token and self.current_token.type == TokenType.LEFT_BRACKET.value:
+        if self.current_token and self.current_token.type == TokenType.ARRAY_INDEX_LEFT.value:
             self.advance()
             size2 = self.parse_array_size()
             if isinstance(size2, SyntaxError):
                 return size2
             dimensions.append(size2)
             
-            if not self.current_token or self.current_token.type != TokenType.RIGHT_BRACKET.value:
+            if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_RIGHT.value:
                 return self.error("Expected ']' after second dimension size")
             self.advance()
 
@@ -1434,7 +1447,11 @@ class Parser:
         return left
 
     def parse_forward(self):
-        """Parse Forward statement according to rules 201-213"""
+        """Parse Forward statement according to rules for:
+        Forward(@i = 0; @i < @num; @i++) {
+            statements
+        }
+        """
         start_line = self.current_line
         start_column = self.current_column
         self.advance()
@@ -1443,7 +1460,7 @@ class Parser:
             return self.error("Expected '(' after Forward")
         self.advance()
 
-        # Parse initialization (rules 202-205)
+        # Parse initialization (@i = 0)
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
             return self.error("Expected variable name in Forward initialization")
         var_name = self.current_token.value
@@ -1461,8 +1478,8 @@ class Parser:
             return self.error("Expected ';' after Forward initialization")
         self.advance()
 
-        # Parse condition (rules 206-210)
-        condition = self.parse_binary_operation()
+        # Parse condition (@i < @num)
+        condition = self.parse_expression()
         if isinstance(condition, SyntaxError):
             return condition
 
@@ -1470,27 +1487,10 @@ class Parser:
             return self.error("Expected ';' after Forward condition")
         self.advance()
 
-        # Parse increment/decrement (rules 211-213)
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected variable in Forward increment/decrement")
-        inc_var = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type not in [
-            TokenType.ADD_ASSIGN.value,
-            TokenType.SUB_ASSIGN.value,
-            TokenType.MUL_ASSIGN.value,
-            TokenType.DIV_ASSIGN.value,
-            TokenType.MOD_ASSIGN.value
-        ]:
-            return self.error("Expected '+=', '-=', '*=', '/=', or '%=' in Forward increment/decrement")
-        inc_op = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.FEINTLIT.value:
-            return self.error("Expected numeric literal in Forward increment/decrement")
-        inc_value = self.current_token.value
-        self.advance()
+        # Parse increment/decrement part
+        update = self.parse_forward_update()
+        if isinstance(update, SyntaxError):
+            return update
 
         if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
             return self.error("Expected ')' after Forward increment/decrement")
@@ -1516,15 +1516,79 @@ class Parser:
                 'value': initial_value
             },
             'condition': condition,
-            'update': {
-                'variable': inc_var,
-                'operator': inc_op,
-                'value': inc_value
-            },
+            'update': update,
             'body': body,
             'line': start_line,
             'column': start_column
         }
+
+    def parse_forward_update(self):
+        """Parse the update expression in Forward loop:
+        Can be one of:
+        1. Prefix increment/decrement: ++@i, --@i
+        2. Postfix increment/decrement: @i++, @i--
+        3. Assignment operators: @i += 1, @i -= 1, etc.
+        """
+        if not self.current_token:
+            return self.error("Expected update expression")
+
+        # Handle prefix increment/decrement
+        if self.current_token.type in [TokenType.INCREMENT.value, TokenType.DECREMENT.value]:
+            operator = self.current_token.value
+            self.advance()
+            
+            if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+                return self.error("Expected variable after prefix operator")
+            var_name = self.current_token.value
+            self.advance()
+            
+            return {
+                'type': 'prefix_operation',
+                'operator': operator,
+                'variable': var_name
+            }
+
+        # Handle variable-first expressions (postfix or assignment)
+        elif self.current_token.type == TokenType.VAR_INIT.value:
+            var_name = self.current_token.value
+            self.advance()
+
+            if not self.current_token:
+                return self.error("Expected operator after variable")
+
+            # Handle postfix increment/decrement
+            if self.current_token.type in [TokenType.INCREMENT.value, TokenType.DECREMENT.value]:
+                operator = self.current_token.value
+                self.advance()
+                return {
+                    'type': 'postfix_operation',
+                    'operator': operator,
+                    'variable': var_name
+                }
+
+            # Handle assignment operators
+            elif self.current_token.type in [
+                TokenType.ADD_ASSIGN.value,
+                TokenType.SUB_ASSIGN.value,
+                TokenType.MUL_ASSIGN.value,
+                TokenType.DIV_ASSIGN.value,
+                TokenType.MOD_ASSIGN.value
+            ]:
+                operator = self.current_token.value
+                self.advance()
+
+                value = self.parse_expression()
+                if isinstance(value, SyntaxError):
+                    return value
+
+                return {
+                    'type': 'assignment_operation',
+                    'operator': operator,
+                    'variable': var_name,
+                    'value': value
+                }
+
+        return self.error("Invalid increment/decrement in Forward loop")
 
     def parse_play(self):
         """Parse Play statement according to rule 226"""
@@ -1784,7 +1848,7 @@ class Parser:
             'function_decls': {TokenType.TEAM.value},
             'team_statements': {TokenType.CODE_BLOCK_RIGHT.value, TokenType.REBOUND.value},
             'expression': {TokenType.SEMICOLON.value, TokenType.RIGHT_PAREN.value, TokenType.COMMA.value,
-                          TokenType.AMPERSAND.value}
+                          TokenType.CHANT_CONCAT.value}
         }
         return token_type in follow_sets.get(non_terminal, set())
 
