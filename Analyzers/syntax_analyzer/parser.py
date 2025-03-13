@@ -94,6 +94,12 @@ class Parser:
             if isinstance(team_block, SyntaxError):
                 return team_block
             
+            # After parsing the Team block, there should be no more tokens
+            # except possibly whitespace, newlines, or comments
+            self.skip_whitespace_and_comments()
+            if self.current_token:
+                return self.error("Unexpected content after Team block")
+            
             return {
                 'type': 'program',
                 'global_declarations': global_declarations,
@@ -646,31 +652,33 @@ class Parser:
         """Parse Announce statement arguments including string concatenation"""
         args = []
         
+        if not self.current_token or self.current_token.type == TokenType.RIGHT_PAREN.value:
+            return args  # Empty arguments list is valid
+            
+        # Parse the first expression
+        expr = self.parse_expression()
+        if isinstance(expr, SyntaxError):
+            return expr
+        args.append(expr)
+        
+        # Check for string concatenation with &
         while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-            # Parse the first expression
-            expr = self.parse_expression()
-            if isinstance(expr, SyntaxError):
-                return expr
-            args.append(expr)
-            
-            # Check for string concatenation with &
-            while self.current_token and self.current_token.type == TokenType.CHANT_CONCAT.value:
-                self.advance()  # Move past &
+            # Must have & for concatenation
+            if self.current_token.type != TokenType.CHANT_CONCAT.value:
+                return self.error("Expected '&' operator for string concatenation")
                 
-                # Parse the next expression after &
-                next_expr = self.parse_expression()
-                if isinstance(next_expr, SyntaxError):
-                    return next_expr
-                args.append({
-                    'type': 'concatenation',
-                    'operator': '&',
-                    'value': next_expr
-                })
+            self.advance()  # Move past &
             
-            # Break if we hit the closing parenthesis
-            if self.current_token and self.current_token.type == TokenType.RIGHT_PAREN.value:
-                break
-                
+            # Parse the next expression after &
+            next_expr = self.parse_expression()
+            if isinstance(next_expr, SyntaxError):
+                return next_expr
+            args.append({
+                'type': 'concatenation',
+                'operator': '&',
+                'value': next_expr
+            })
+            
         return args
 
     """Inbound Syntax : Inbound("String", @id);"""
