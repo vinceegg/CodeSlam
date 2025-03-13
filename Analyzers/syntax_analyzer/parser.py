@@ -1574,7 +1574,7 @@ class Parser:
             return value
         
         # If we get here, we couldn't parse the array element
-        return self.error(f"Invalid array element type: {self.current_token.type}")
+        return self.error(f"Invalid array element type")
 
     def data_type(self):
         """
