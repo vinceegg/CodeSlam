@@ -96,6 +96,7 @@ class TokenType(Enum):
     WILT = "WILT"                               
     INCREMENT = "INCREMENT"                     # Increment: Increases the value of a variable by 1
     DECREMENT = "DECREMENT"                     # Decrement: Decreases the value of a variable by 1
+    GET_LITERAL = "GET_LITERAL"                 # Get Literal: Used to get the value of a variable
 
 class Token:
     """

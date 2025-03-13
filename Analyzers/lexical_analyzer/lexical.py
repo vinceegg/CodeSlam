@@ -351,7 +351,15 @@ class Lexer:
                     tokens.append(input_str)
                 else:
                     errors.append(IllegalCharError(
-                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+            elif self.current_char == "]":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state190()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                       
             elif self.current_char == "{":
                 pos_start = self.pos.copy()
                 valid, input_str = self.state192()
@@ -2213,10 +2221,11 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
+        if self.current_char == ']':
+            return False, input_str
+
         if self.current_char in other_delim1:
             return self.state189(input_str)
-        elif self.current_char == "]":
-            return self.state190(input_str)
         else:
             return False, input_str
 
@@ -2225,7 +2234,8 @@ class Lexer:
         return True, Token(TokenType.ARRAY_INDEX_LEFT.value, input_str)
 
     # ARRAY INDEX RIGHT STATE
-    def state190(self, input_str):
+    def state190(self):
+        input_str = ""
         input_str += self.current_char
         self.advance()
 
@@ -3196,7 +3206,7 @@ class Lexer:
 
     # FINAL STATE
     def state303(self, input_str):
-        return True, Token(TokenType.GET.value, input_str)
+        return True, Token(TokenType.GET_LITERAL.value, input_str)
     
 def run(text):
     # Create a lexer instance with the input text
