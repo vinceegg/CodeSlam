@@ -981,6 +981,15 @@ class Parser:
                                       TokenType.CHANT.value, TokenType.STAT.value]:
             return self.parse_type_cast()
         
+        # Handle negative numeric literals directly
+        if self.current_token.type in [TokenType.NEGAFEINT.value, TokenType.NEGAFLOATER.value]:
+            value = self.current_token.value
+            self.advance()
+            return {
+                'type': 'numeric_literal',
+                'value': value
+            }
+        
         # Handle unary operations
         if self.current_token.type in [TokenType.ADD.value, TokenType.SUB.value, TokenType.NOT_OP.value]:
             operator = self.current_token.value
@@ -1096,7 +1105,7 @@ class Parser:
                 }
         
         # Handle numeric literals
-        elif token.type in [TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value]:
+        elif token.type in [TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value, TokenType.NEGAFEINT.value, TokenType.NEGAFLOATER.value]:
             value = token.value
             self.advance()
             return {
@@ -1154,7 +1163,15 @@ class Parser:
         arguments = []
         while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
             # Parse argument according to rules 233-237
-            if self.current_token.type in [TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value, TokenType.CHANTLIT.value, TokenType.WIN.value, TokenType.LOSS.value]:
+            if self.current_token.type in [
+                TokenType.FEINTLIT.value, 
+                TokenType.FLOATERLIT.value, 
+                TokenType.NEGAFEINT.value, 
+                TokenType.NEGAFLOATER.value,
+                TokenType.CHANTLIT.value, 
+                TokenType.WIN.value, 
+                TokenType.LOSS.value
+            ]:
                 # Literal argument
                 arguments.append({
                     'type': 'literal',
@@ -1193,7 +1210,7 @@ class Parser:
                 if isinstance(argument, SyntaxError):
                     return argument
                 arguments.append(argument)
-
+            
             # Check for more arguments
             if self.current_token and self.current_token.type == TokenType.COMMA.value:
                 self.advance()
