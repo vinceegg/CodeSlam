@@ -644,7 +644,12 @@ class Parser:
         # If not an array declaration, proceed with normal token-by-token parsing
         token_type = self.current_token.type
         
-        if self.is_data_type(token_type):
+        # Add Timeout and Resume to valid statement types
+        if token_type == TokenType.TIMEOUT.value:
+            return self.parse_timeout()
+        elif token_type == TokenType.RESUME.value:
+            return self.parse_resume()
+        elif self.is_data_type(token_type):
             return self.parse_variable_declaration(is_global=False)
         elif token_type == TokenType.ANNOUNCE.value:
             return self.parse_announce()
@@ -671,6 +676,38 @@ class Parser:
             return None
         else:
             return self.error(f"Unexpected token: {self.current_token.value}")
+    
+    def parse_timeout(self):
+        """Parse Timeout (break) statement"""
+        start_line = self.current_line
+        start_column = self.current_column
+        self.advance()  # Move past 'Timeout'
+
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after Timeout")
+        self.advance()
+
+        return {
+            'type': 'timeout',
+            'line': start_line,
+            'column': start_column
+        }
+
+    def parse_resume(self):
+        """Parse Resume (continue) statement"""
+        start_line = self.current_line
+        start_column = self.current_column
+        self.advance()  # Move past 'Resume'
+
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after Resume")
+        self.advance()
+
+        return {
+            'type': 'resume',
+            'line': start_line,
+            'column': start_column
+        }
 
     def parse_variable_declaration(self, is_global=False):
         """Parse variable declarations according to rules 11-14 and 82"""
@@ -1659,6 +1696,8 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after switch header")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         # Parse case list (rules 75-80)
         cases = []
@@ -1669,8 +1708,8 @@ class Parser:
             if not self.current_token:
                 return self.error("Expected case value")
             
-            if self.current_token.type in [TokenType.ARITH_OP.value, TokenType.ALPHABET.value,
-                                         TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value]:
+            if self.current_token.type in [TokenType.VAR_INIT.value, TokenType.CHANTLIT.value,
+                                         TokenType.FEINTLIT.value]:
                 case_value = self.current_token.value
                 self.advance()
             else:
@@ -1679,11 +1718,31 @@ class Parser:
             if not self.current_token or self.current_token.type != TokenType.COLON.value:
                 return self.error("Expected ':' after case value")
             self.advance()
+            
+            self.skip_whitespace_and_comments()
 
             # Parse case statements
-            case_statements = self.parse_statements()
-            if isinstance(case_statements, SyntaxError):
-                return case_statements
+            case_statements = []
+            while self.current_token and self.current_token.type not in [TokenType.GET.value, TokenType.DEFAULT.value, TokenType.CODE_BLOCK_RIGHT.value]:
+                # Add support for Timeout and Resume in switch cases
+                if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
+                    statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
+                                else self.parse_resume())
+                    if isinstance(statement, SyntaxError):
+                        return statement
+                    case_statements.append(statement)
+                    if self.current_token.type == TokenType.TIMEOUT.value:
+                        break  # Exit case after Timeout
+                    self.skip_whitespace_and_comments()
+                    continue
+                
+                statement = self.parse_statement()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                if statement:
+                    case_statements.append(statement)
+                
+                self.skip_whitespace_and_comments()
 
             cases.append({
                 'value': case_value,
@@ -1699,9 +1758,28 @@ class Parser:
                 return self.error("Expected ':' after Default")
             self.advance()
 
-            default_statements = self.parse_statements()
-            if isinstance(default_statements, SyntaxError):
-                return default_statements
+            default_statements = []
+            while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+                # Add support for Timeout and Resume in default case
+                if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
+                    statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
+                                else self.parse_resume())
+                    if isinstance(statement, SyntaxError):
+                        return statement
+                    default_statements.append(statement)
+                    if self.current_token.type == TokenType.TIMEOUT.value:
+                        break  # Exit case after Timeout
+                    self.skip_whitespace_and_comments()
+                    continue
+                
+                statement = self.parse_statement()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                if statement:
+                    default_statements.append(statement)
+                
+                self.skip_whitespace_and_comments()
+                
             default_case = default_statements
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
@@ -1808,10 +1886,27 @@ class Parser:
             return self.error("Expected '{' after Forward header")
         self.advance()
 
-        # Parse loop body
-        body = self.parse_statements()
-        if isinstance(body, SyntaxError):
-            return body
+         # Parse loop body
+        body = []
+        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            # Add support for Timeout and Resume in Forward loops
+            if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
+                statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
+                            else self.parse_resume())
+                if isinstance(statement, SyntaxError):
+                    return statement
+                body.append(statement)
+                if self.current_token.type == TokenType.TIMEOUT.value:
+                    break  # Exit loop after Timeout
+                continue
+            
+            statement = self.parse_statement()
+            if isinstance(statement, SyntaxError):
+                return statement
+            if statement:
+                body.append(statement)
+            
+            self.skip_whitespace_and_comments()
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' at end of Forward block")
@@ -1920,9 +2015,27 @@ class Parser:
             return self.error("Expected '{' after Play condition")
         self.advance()
 
-        body = self.parse_statements()
-        if isinstance(body, SyntaxError):
-            return body
+        # Parse loop body
+        body = []
+        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            # Add support for Timeout and Resume in Play loops
+            if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
+                statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
+                            else self.parse_resume())
+                if isinstance(statement, SyntaxError):
+                    return statement
+                body.append(statement)
+                if self.current_token.type == TokenType.TIMEOUT.value:
+                    break  # Exit loop after Timeout
+                continue
+            
+            statement = self.parse_statement()
+            if isinstance(statement, SyntaxError):
+                return statement
+            if statement:
+                body.append(statement)
+            
+            self.skip_whitespace_and_comments()
 
         # Parse increment/decrement
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
@@ -1973,9 +2086,27 @@ class Parser:
             return self.error("Expected '{' after Run")
         self.advance()
 
-        body = self.parse_statements()
-        if isinstance(body, SyntaxError):
-            return body
+        # Parse loop body
+        body = []
+        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            # Add support for Timeout and Resume in Run-Play loops
+            if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
+                statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
+                            else self.parse_resume())
+                if isinstance(statement, SyntaxError):
+                    return statement
+                body.append(statement)
+                if self.current_token.type == TokenType.TIMEOUT.value:
+                    break  # Exit loop after Timeout
+                continue
+            
+            statement = self.parse_statement()
+            if isinstance(statement, SyntaxError):
+                return statement
+            if statement:
+                body.append(statement)
+            
+            self.skip_whitespace_and_comments()
 
         # Parse increment/decrement
         if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
