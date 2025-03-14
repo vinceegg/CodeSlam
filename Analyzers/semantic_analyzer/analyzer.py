@@ -142,6 +142,14 @@ class AstVisitor:
             # Process initializer if present
             value = node.get('value')
             if value is not None:
+                # Check type compatibility
+                initializer_type = self.get_expression_type(value)
+                print(f"DEBUG: Variable type: {var_type}, Initializer type: {initializer_type}")
+                
+                # Case-insensitive comparison
+                if initializer_type and var_type.upper() != initializer_type.upper():
+                    self.add_error(type_mismatch_error(var_type, initializer_type, line_number, column))
+                
                 self.visit(value)
             
             return None
@@ -171,6 +179,11 @@ class AstVisitor:
                         # Process initializer if present
                         init_value = value.get('value')
                         if init_value is not None:
+                            # Check type compatibility with case-insensitivity
+                            initializer_type = self.get_expression_type(init_value)
+                            if initializer_type and var_type.upper() != initializer_type.upper():
+                                self.add_error(type_mismatch_error(var_type, initializer_type, line_number, column))
+                                
                             self.visit(init_value)
         
         return None
@@ -192,6 +205,13 @@ class AstVisitor:
                 # Process initializer if present
                 value = decl.get('value')
                 if value is not None:
+                    # Check type compatibility with case-insensitivity
+                    initializer_type = self.get_expression_type(value)
+                    print(f"DEBUG: Variable type: {var_type}, Initializer type: {initializer_type}")
+                    
+                    if initializer_type and var_type.upper() != initializer_type.upper():
+                        self.add_error(type_mismatch_error(var_type, initializer_type, line_number, column))
+                    
                     self.visit(value)
             elif decl.get('type'):
                 # Recursive for nested structures
@@ -350,6 +370,8 @@ class AstVisitor:
             line_number = node.get('line', 0)
         column = node.get('column', 0)
         
+        print(f"DEBUG: Assignment: {target_name} = {value} at line {line_number}")
+        
         # Look up the target variable
         var_symbol = self.semantic_analyzer.lookup_symbol(target_name)
         
@@ -362,9 +384,10 @@ class AstVisitor:
                 
             # Get expression type
             expr_type = self.get_expression_type(value)
+            print(f"DEBUG: Variable type: {var_symbol.var_type}, Expression type: {expr_type}")
             
-            # Check type compatibility
-            if expr_type and expr_type != var_symbol.var_type:
+            # Make case-insensitive comparison
+            if expr_type and var_symbol.var_type.upper() != expr_type.upper():
                 self.add_error(type_mismatch_error(var_symbol.var_type, expr_type, line_number, column))
                 
             # Mark the variable as initialized
@@ -748,13 +771,13 @@ class AstVisitor:
             value_type = node.get('value_type')
             
             if value_type == 'FEINTLIT':
-                return 'FEINT'
+                return 'Feint'
             elif value_type == 'FLOATERLIT':
-                return 'FLOATER'
+                return 'Floater'
             elif value_type == 'CHANTLIT':
-                return 'CHANT'
+                return 'Chant'
             elif value_type in ['WIN', 'LOSS']:
-                return 'STAT'
+                return 'Stat'
                 
             return None
             
@@ -772,37 +795,43 @@ class AstVisitor:
             value = node.get('value')
             try:
                 int(value)
-                return 'FEINT'
+                return 'Feint'
             except (ValueError, TypeError):
                 try:
                     float(value)
-                    return 'FLOATER'
+                    return 'Floater'
                 except (ValueError, TypeError):
                     return None
             
         elif node_type == 'string_literal':
-            return 'CHANT'
+            return 'Chant'
             
         elif node_type == 'binary_operation' or node_type == 'arithmetic_operation':
             left_type = self.get_expression_type(node.get('left'))
             right_type = self.get_expression_type(node.get('right'))
             operator = node.get('operator')
             
+            # For consistency, standardize types before passing to get_result_type
+            if left_type:
+                left_type = self._standardize_type(left_type)
+            if right_type:
+                right_type = self._standardize_type(right_type)
+                
             # Let the analyzer determine the result type
             return SemanticAnalyzer.get_result_type(left_type, right_type, operator)
             
         elif node_type == 'concatenation':
             # Concatenation always results in a string
-            return 'CHANT'
+            return 'Chant'
             
         elif node_type == 'unary_operation':
             operand_type = self.get_expression_type(node.get('operand'))
             operator = node.get('operator')
             
-            if operator == '-' and SemanticAnalyzer.is_numeric_type(operand_type):
+            if operator == '-' and operand_type and SemanticAnalyzer.is_numeric_type(operand_type):
                 return operand_type
-            elif operator == '!' and SemanticAnalyzer.is_boolean_type(operand_type):
-                return 'STAT'
+            elif operator == '!' and operand_type and SemanticAnalyzer.is_boolean_type(operand_type):
+                return 'Stat'
                 
             return None
             
@@ -825,6 +854,22 @@ class AstVisitor:
             return None
             
         return None
+        
+    def _standardize_type(self, type_name):
+        """Standardize type names to match language specification"""
+        if not type_name:
+            return None
+            
+        type_upper = type_name.upper()
+        if type_upper == 'FEINT':
+            return 'Feint'
+        elif type_upper == 'FLOATER':
+            return 'Floater'
+        elif type_upper == 'CHANT':
+            return 'Chant'
+        elif type_upper == 'STAT':
+            return 'Stat'
+        return type_name
 
 def analyze(ast):
     """Analyze the AST for semantic errors"""

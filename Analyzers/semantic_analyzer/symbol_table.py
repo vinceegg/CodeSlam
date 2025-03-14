@@ -86,56 +86,75 @@ class SemanticAnalyzer:
     # Helper methods for type checking
     @staticmethod
     def is_numeric_type(type_name):
-        """Check if a type is numeric (FEINT or FLOATER)"""
-        return type_name in ["FEINT", "FLOATER"]
+        """Check if a type is numeric"""
+        if not type_name:
+            return False
         
-    @staticmethod
-    def is_boolean_type(type_name):
-        """Check if a type is boolean (STAT)"""
-        return type_name == "STAT"
+        type_upper = type_name.upper()
+        return type_upper in ['FEINT', 'FLOATER']
         
     @staticmethod
     def is_string_type(type_name):
-        """Check if a type is string (CHANT)"""
-        return type_name == "CHANT"
+        """Check if a type is a string"""
+        if not type_name:
+            return False
+            
+        type_upper = type_name.upper()
+        return type_upper == 'CHANT'
+        
+    @staticmethod
+    def is_boolean_type(type_name):
+        """Check if a type is a boolean"""
+        if not type_name:
+            return False
+            
+        type_upper = type_name.upper()
+        return type_upper == 'STAT'
         
     @staticmethod
     def get_result_type(left_type, right_type, operator):
-        """Determine the result type of an operation between two types"""
-        numeric_types = ["FEINT", "FLOATER"]
-        
-        # Handle numeric operations
-        if operator in ["+", "-", "*", "/", "%"]:
-            if left_type in numeric_types and right_type in numeric_types:
-                # For mixed numeric types, result is FLOATER
-                if "FLOATER" in [left_type, right_type]:
-                    return "FLOATER"
-                return "FEINT"
-            return None  # Invalid operation
+        """Get the result type of a binary operation"""
+        # Handle null types
+        if not left_type or not right_type:
+            return None
             
-        # Handle string concatenation
-        if operator == "&":
-            if left_type == "CHANT" and right_type == "CHANT":
-                return "CHANT"
-            return None  # Invalid operation
+        # Convert types to uppercase for consistent comparison
+        left_upper = left_type.upper()
+        right_upper = right_type.upper()
             
-        # Handle comparison operators
-        if operator in ["==", "!=", "<", ">", "<=", ">="]:
-            # Numeric comparisons
-            if left_type in numeric_types and right_type in numeric_types:
-                return "STAT"
-            # String comparisons (only equality/inequality)
-            if left_type == "CHANT" and right_type == "CHANT" and operator in ["==", "!="]:
-                return "STAT"
-            # Boolean comparisons (only equality/inequality)
-            if left_type == "STAT" and right_type == "STAT":
-                return "STAT"
-            return None  # Invalid operation
+        # Arithmetic operations
+        if operator in ['+', '-', '*', '/', '%']:
+            if left_upper in ['FEINT', 'FLOATER'] and right_upper in ['FEINT', 'FLOATER']:
+                # If either is FLOATER, result is FLOATER
+                if 'FLOATER' in [left_upper, right_upper]:
+                    return 'Floater'
+                # Otherwise both are FEINT, result is FEINT
+                return 'Feint'
+            return None
             
-        # Handle logical operators
-        if operator in ["&&", "||"]:
-            if left_type == "STAT" and right_type == "STAT":
-                return "STAT"
-            return None  # Invalid operation
+        # String concatenation
+        if operator == '&':
+            if 'CHANT' in [left_upper, right_upper]:
+                return 'Chant'
+            return None
             
-        return None  # Unknown operator 
+        # Comparison operations
+        if operator in ['==', '!=', '<', '>', '<=', '>=']:
+            # Numeric types can be compared
+            if left_upper in ['FEINT', 'FLOATER'] and right_upper in ['FEINT', 'FLOATER']:
+                return 'Stat'
+            # Strings can be compared
+            if left_upper == 'CHANT' and right_upper == 'CHANT':
+                return 'Stat'
+            # Booleans can be compared
+            if left_upper == 'STAT' and right_upper == 'STAT':
+                return 'Stat'
+            return None
+            
+        # Logical operations
+        if operator in ['&&', '||']:
+            if left_upper == 'STAT' and right_upper == 'STAT':
+                return 'Stat'
+            return None
+            
+        return None 
