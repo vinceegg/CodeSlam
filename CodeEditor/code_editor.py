@@ -9,6 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Analyzers.lexical_analyzer.lexical import *  # Import all function from lexical.py
 from Analyzers.syntax_analyzer import parse  # Import the parser
 from Analyzers.semantic_analyzer import analyze  # Import the semantic analyzer
+from Analyzers.semantic_analyzer.evaluator import evaluate_ast  # Import the expression evaluator
 from tkinter import END
 
 from customtkinter import CTkImage
@@ -23,7 +24,7 @@ import re
 # Load the image
 image_path = "../assets/icons/CodeSLAM-LOGO.png"
 try:
-    image = Image.open(image_path)
+    image = Image.open("../assets/icons/CodeSLAM-LOGO.png")
     # Create CTkImage with a specified size
     logo_image = CTkImage(image, size=(100, 100))  # Set desired width and height here
 except Exception as e:
@@ -367,6 +368,83 @@ class ModernCodeEditor(tk.Frame):
         
         self.text.tag_configure("error_line", background=error_bg)
         self.text.tag_configure("error_highlight", background=error_highlight)
+
+    def process_announce_statements(self, ast):
+        """Process announce statements in the AST"""
+        if not ast:
+            return
+            
+        try:
+            # If this is an announce statement, evaluate it
+            if ast.get('type') == 'announce':
+                try:
+                    results = evaluate_ast([ast], self.text.get("1.0", END))
+                    if results:  # Only try to access the result if we got one
+                        output = results[0]
+                        self.append_terminal_output(output)
+                except Exception as e:
+                    print(f"DEBUG: Error evaluating Announce: {str(e)}")
+                    import traceback
+                    print(f"Announce error: {traceback.format_exc()}")
+                return
+                
+            # Handle team_block specifically
+            if ast.get('type') == 'program' and 'team_block' in ast:
+                self.process_announce_statements(ast['team_block'])
+                return
+                
+            # Look for statements in team_block
+            if ast.get('type') == 'team_block' and 'statements' in ast:
+                statements = ast['statements']
+                if isinstance(statements, list):
+                    for stmt in statements:
+                        if stmt.get('type') == 'announce':
+                            try:
+                                results = evaluate_ast([stmt], self.text.get("1.0", END))
+                                if results:  # Only try to access the result if we got one
+                                    output = results[0]
+                                    self.append_terminal_output(output)
+                            except Exception as e:
+                                print(f"DEBUG: Error evaluating Announce in statements list: {str(e)}")
+                                import traceback
+                                print(f"Announce error: {traceback.format_exc()}")
+                else:
+                    if statements and statements.get('type') == 'announce':
+                        try:
+                            results = evaluate_ast([statements], self.text.get("1.0", END))
+                            if results:
+                                output = results[0]
+                                self.append_terminal_output(output)
+                        except Exception as e:
+                            print(f"DEBUG: Error evaluating single Announce: {str(e)}")
+                            import traceback
+                            print(f"Announce error: {traceback.format_exc()}")
+                    else:
+                        self.process_announce_statements(statements)
+                return
+                
+            # Process all children of the node for other announce statements
+            for key, value in ast.items():
+                if key == 'type':
+                    continue  # Skip type field for debug clarity
+                    
+                if isinstance(value, dict):
+                    self.process_announce_statements(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict):
+                            self.process_announce_statements(item)
+        except Exception as e:
+            print(f"DEBUG: Error in process_announce_statements: {str(e)}")
+            import traceback
+            print(f"Process error: {traceback.format_exc()}")
+
+    def append_terminal_output(self, text, text_color=None):
+        """Delegate to the App's append_terminal_output method"""
+        if hasattr(self, 'master') and hasattr(self.master, 'append_terminal_output'):
+            self.master.append_terminal_output(text, text_color)
+        else:
+            print(f"Terminal output: {text}")  # Fallback if parent method not available
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -736,13 +814,25 @@ class App(customtkinter.CTk):
                 self.append_terminal_output(str(error), text_color="red")
                 if hasattr(error, 'line_number'):
                     self.editor_frame.highlight_error(error.line_number, error.column)
-        else:
-            self.append_terminal_output("No Semantic Errors", text_color="green")
-            
-            # If no semantic errors, display Announce statement outputs
-            self.append_terminal_output("\nProgram Output:", text_color="blue")
-            self.process_announce_statements(syntax_result)
-            
+        
+        # Display Announce statement outputs regardless of semantic errors
+        self.append_terminal_output("\nProgram Output:", text_color="green")
+        
+        # Extract and evaluate Announce statements
+        try:
+            # Try to directly evaluate the AST for announce statements
+            results = evaluate_ast(syntax_result, codebox_content)
+            if results:
+                for result in results:
+                    self.append_terminal_output(result)
+            # If no direct results, try the older method
+            else:
+                self.process_announce_statements(syntax_result)
+        except Exception as e:
+            self.append_terminal_output(f"Error evaluating Announce statements: {str(e)}", text_color="red")
+            import traceback
+            print("Evaluator error:", traceback.format_exc())
+
     def print_ast_structure(self, node, indent=0):
         """Print the structure of the AST for debugging"""
         if not node or not isinstance(node, dict):
@@ -766,175 +856,6 @@ class App(customtkinter.CTk):
                     self.print_ast_structure(item, indent + 4)
             else:
                 print(" " * indent + f"{key}: {value}")
-
-    def process_announce_statements(self, ast):
-        """Process Announce statements to display output on the terminal"""
-        if not ast or not isinstance(ast, dict):
-            return
-            
-        # Debug output
-        print(f"Processing node type: {ast.get('type', 'unknown')}")
-        
-        # Special handling for program node
-        if ast.get('type') == 'program':
-            # Process team block
-            team_block = ast.get('team_block')
-            if team_block:
-                self.process_announce_statements(team_block)
-            return
-            
-        # Special handling for team block
-        if ast.get('type') == 'team_block':
-            # Process statements in team block
-            statements = ast.get('statements', [])
-            for statement in statements:
-                self.process_announce_statements(statement)
-            return
-            
-        # If it's an announce statement, evaluate and display it
-        if ast.get('type') == 'announce':
-            output = self.evaluate_announce(ast)
-            self.append_terminal_output(output)
-            print(f"Found announce statement, output: {output}")
-            
-        # Process all children of the node
-        for key, value in ast.items():
-            if key == 'type':
-                continue  # Skip type field for debug clarity
-                
-            if isinstance(value, dict):
-                self.process_announce_statements(value)
-            elif isinstance(value, list):
-                for item in value:
-                    if isinstance(item, dict):
-                        self.process_announce_statements(item)
-
-    def evaluate_announce(self, node):
-        """Evaluate an announce statement and return the output string"""
-        arguments = node.get('arguments', [])
-        output = ""
-        
-        print(f"Evaluating announce with {len(arguments)} arguments")
-        print(f"Arguments: {arguments}")
-        
-        for arg in arguments:
-            # Handle concatenation with left and right structure
-            if isinstance(arg, dict) and arg.get('type') == 'concatenation':
-                left = arg.get('left')
-                right = arg.get('right')
-                
-                if left:
-                    left_value = self.evaluate_expression(left)
-                    print(f"Left value: {left_value}")
-                    output += left_value
-                    
-                if right:
-                    right_value = self.evaluate_expression(right)
-                    print(f"Right value: {right_value}")
-                    output += right_value
-            else:
-                arg_value = self.evaluate_expression(arg)
-                print(f"Regular argument value: {arg_value}")
-                output += arg_value
-                
-        print(f"Final announce output: {output}")
-        return output
-        
-    def evaluate_expression(self, expr):
-        """Evaluate an expression and return its string representation"""
-        if not expr or not isinstance(expr, dict):
-            print(f"Invalid expression: {expr}")
-            return str(expr) if expr is not None else ""
-            
-        expr_type = expr.get('type')
-        print(f"Evaluating expression of type: {expr_type}")
-        
-        # Literal values
-        if expr_type == 'literal':
-            value = str(expr.get('value', ''))
-            # Remove quotes from string literals
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]
-            print(f"Literal value: {value}")
-            return value
-            
-        # String literals
-        elif expr_type == 'string_literal':
-            value = str(expr.get('value', ''))
-            # Remove quotes from string literals
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]
-            print(f"String literal value: {value}")
-            return value
-            
-        # Numeric literals
-        elif expr_type == 'numeric_literal':
-            value = str(expr.get('value', ''))
-            print(f"Numeric literal value: {value}")
-            return value
-                
-        # Variable references - look up actual values
-        elif expr_type == 'variable':
-            var_name = expr.get('name', '')
-            print(f"Variable reference: {var_name}")
-            
-            # Look up the variable value in the AST
-            var_value = self.find_variable_value(var_name)
-            if var_value is not None:
-                return str(var_value)
-            
-            # If we couldn't find the value, return a placeholder
-            return var_name
-                
-        # Binary operations (simplified)
-        elif expr_type == 'binary_operation':
-            left = self.evaluate_expression(expr.get('left'))
-            right = self.evaluate_expression(expr.get('right'))
-            operator = expr.get('operator')
-            result = f"({left} {operator} {right})"
-            print(f"Binary operation result: {result}")
-            return result
-                
-        # Unary operations (simplified)
-        elif expr_type == 'unary_operation':
-            operand = self.evaluate_expression(expr.get('operand'))
-            operator = expr.get('operator')
-            result = f"{operator}{operand}"
-            print(f"Unary operation result: {result}")
-            return result
-                
-        print(f"Unknown expression type: {expr_type}")
-        return ""
-        
-    def find_variable_value(self, var_name):
-        """Find the value of a variable in the AST"""
-        # Get the current code content
-        code_content = self.codebox.get("1.0", "end-1c")
-        
-        # Use regular expressions to find variable assignments
-        # Look for patterns like "@varname = value;"
-        pattern = rf"{var_name}\s*=\s*(\d+|\d+\.\d+|\"[^\"]*\"|Win|Loss);"
-        match = re.search(pattern, code_content)
-        
-        if match:
-            value = match.group(1)
-            # Remove quotes from string literals
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]
-            return value
-            
-        # Look for patterns like "Feint @varname = value;"
-        pattern = rf"(Feint|Floater|Chant|Stat)\s+{var_name}\s*=\s*(\d+|\d+\.\d+|\"[^\"]*\"|Win|Loss);"
-        match = re.search(pattern, code_content)
-        
-        if match:
-            value = match.group(2)
-            # Remove quotes from string literals
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]
-            return value
-            
-        return None
 
     def append_terminal_output(self, text, text_color=None):
         """Append text to the terminal output with mode-aware colors"""

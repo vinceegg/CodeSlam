@@ -1,353 +1,378 @@
 from Analyzers.lexical_analyzer.tokens import TokenType
 from .errors import (
-    SemanticError, 
-    UndeclaredVariableError, 
-    TypeMismatchError, 
-    RedeclarationError,
-    UninitializedVariableError
+    SemanticError, undefined_variable_error, type_mismatch_error, 
+    already_defined_error, invalid_operation_error, undefined_function_error,
+    argument_count_error, invalid_array_index_error, array_dimension_error,
+    non_array_error, constant_assignment_error, invalid_return_error,
+    missing_return_error
+)
+from .symbol_table import (
+    SemanticAnalyzer, SymbolTable, Symbol, VariableSymbol, FunctionSymbol
 )
 
-class SymbolTable:
-    """Symbol table to track variables and their types"""
-    def __init__(self, parent=None):
-        self.symbols = {}  # Maps variable names to their info (type, initialized, etc.)
-        self.parent = parent  # Parent scope for nested scopes
-        
-    def declare(self, name, data_type, initialized=False, is_global=False):
-        """Declare a variable in the current scope"""
-        if name in self.symbols:
-            return False  # Already declared in this scope
-        
-        self.symbols[name] = {
-            'type': data_type,
-            'initialized': initialized,
-            'is_global': is_global
-        }
-        return True
-        
-    def lookup(self, name):
-        """Look up a variable in the current scope or parent scopes"""
-        if name in self.symbols:
-            return self.symbols[name]
-        if self.parent:
-            return self.parent.lookup(name)
-        return None
-        
-    def update(self, name, initialized=True):
-        """Update a variable's initialization status"""
-        if name in self.symbols:
-            self.symbols[name]['initialized'] = initialized
-            return True
-        if self.parent:
-            return self.parent.update(name)
-        return False
-        
-    def get_type(self, name):
-        """Get the type of a variable"""
-        symbol = self.lookup(name)
-        return symbol['type'] if symbol else None
-        
-    def is_initialized(self, name):
-        """Check if a variable is initialized"""
-        symbol = self.lookup(name)
-        return symbol['initialized'] if symbol else False
-
-class SemanticAnalyzer:
-    """Analyzes the AST for semantic errors"""
-    def __init__(self, ast):
-        self.ast = ast
+class AstVisitor:
+    """Base visitor class for traversing the AST"""
+    def __init__(self, semantic_analyzer=None):
+        self.semantic_analyzer = semantic_analyzer or SemanticAnalyzer()
         self.errors = []
-        self.global_scope = SymbolTable()  # Global scope
-        self.current_scope = self.global_scope  # Current scope (starts at global)
+        # Track current function for return type checking
+        self.current_function = None
+        # Track if we've seen a return statement
+        self.has_return = False
         
-        # Type compatibility for operations
-        self.type_compatibility = {
-            'FEINT': ['FEINT', 'FLOATER'],
-            'FLOATER': ['FEINT', 'FLOATER'],
-            'CHANT': ['CHANT'],
-            'STAT': ['STAT']
-        }
-        
-        # Valid types for operations
-        self.valid_types = {
-            'arithmetic': ['FEINT', 'FLOATER'],
-            'logical': ['STAT'],
-            'relational': ['FEINT', 'FLOATER', 'CHANT', 'STAT'],
-            'concatenation': ['CHANT']
-        }
-        
-    def analyze(self):
-        """Analyze the AST for semantic errors"""
-        if not self.ast:
-            return []
-            
-        # Start analysis from the root node
-        self.visit(self.ast)
-        return self.errors
+    def add_error(self, error):
+        """Add an error to the list"""
+        self.errors.append(error)
         
     def visit(self, node):
         """Visit a node in the AST"""
-        if not node or not isinstance(node, dict):
+        if not node:
             return None
             
-        # Dispatch to the appropriate visitor method based on node type
         method_name = f"visit_{node.get('type', '')}"
-        visitor = getattr(self, method_name, self.generic_visit)
-        return visitor(node)
+        visitor = getattr(self, method_name, None)
+        
+        if visitor:
+            return visitor(node)
+        else:
+            # If no specific visitor method exists, use generic_visit
+            return self.generic_visit(node)
         
     def generic_visit(self, node):
-        """Generic visitor for nodes without specific visitors"""
-        # Visit all children of the node
-        for key, value in node.items():
-            if isinstance(value, dict):
-                self.visit(value)
-            elif isinstance(value, list):
-                for item in value:
-                    if isinstance(item, dict):
-                        self.visit(item)
+        """Default visitor method"""
+        # Process children recursively
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == 'type':
+                    continue
+                    
+                if isinstance(value, dict):
+                    self.visit(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict):
+                            self.visit(item)
         return None
         
     def visit_program(self, node):
-        """Visit the program node (root of the AST)"""
-        # Visit global declarations
-        for decl in node.get('global_declarations', []):
-            self.visit(decl)
-            
-        # Visit function declarations
-        for func_decl in node.get('function_declarations', []):
-            self.visit(func_decl)
-            
-        # Visit function definitions
-        for func_def in node.get('function_definitions', []):
-            self.visit(func_def)
-            
-        # Visit the team block
-        team_block = node.get('team_block')
-        if team_block:
-            self.visit(team_block)
-            
+        """Visit the program node (top-level node in the AST)"""
+        print(f"DEBUG: Visiting program node with keys: {node.keys()}")
+        
+        # The team block is the main part of the program
+        if 'team_block' in node:
+            self.visit(node['team_block'])
+        
         return None
         
     def visit_team_block(self, node):
-        """Visit the team (main) block"""
-        # Visit local declarations first
-        for decl in node.get('local_declarations', []):
-            self.visit(decl)
-            
-        # Then visit statements
-        for statement in node.get('statements', []):
-            self.visit(statement)
+        """Visit the main team block - handles all declarations and statements"""
+        print(f"DEBUG: Visiting team_block with keys: {node.keys()}")
+        print(f"DEBUG: Full team_block node: {node}")
+        
+        # Process all variable declarations first
+        if 'local_declarations' in node:
+            if isinstance(node['local_declarations'], list):
+                for decl in node['local_declarations']:
+                    print(f"DEBUG: Processing local declaration: {decl}")
+                    self.visit(decl)
+            else:
+                print(f"DEBUG: Processing single local declaration: {node['local_declarations']}")
+                self.visit(node['local_declarations'])
+        
+        # Then process statements which might reference those variables
+        if 'statements' in node:
+            if isinstance(node['statements'], list):
+                for stmt in node['statements']:
+                    print(f"DEBUG: Processing statement: {stmt}")
+                    self.visit(stmt)
+            else:
+                print(f"DEBUG: Processing single statement: {node['statements']}")
+                self.visit(node['statements'])
+        
+        # Handle any remaining sections
+        for key, value in node.items():
+            if key not in ['type', 'local_declarations', 'statements']:
+                if isinstance(value, list):
+                    for item in value:
+                        self.visit(item)
+                elif isinstance(value, dict):
+                    self.visit(value)
+                    
+        return None
+        
+    def visit_unknown(self, node):
+        """Visit an unknown node type (handles special syntax structure)"""
+        # Extract variable name and value
+        var_name = node.get('name')
+        value = node.get('value')
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
+        
+        # If this is a variable declaration part
+        if var_name and var_name.startswith('@'):
+            # Handle initializer if present
+            if value is not None:
+                self.visit(value)
+                
         return None
         
     def visit_variable_declaration(self, node):
         """Visit a variable declaration"""
-        data_type = node.get('data_type')
-        is_global = node.get('is_global', False)
+        print(f"DEBUG: Visiting variable declaration: {node}")
         
-        for decl in node.get('declarations', []):
-            var_name = decl.get('name')
-            value = decl.get('value')
+        # Get the data type
+        var_type = node.get('data_type')
+        
+        # Get line info
+        line_number = node.get('line_number', node.get('line', 0))
+        column = node.get('column', 0)
+        is_constant = node.get('is_constant', False)
+        
+        # Try direct variable name in the node
+        var_name = node.get('name')
+        if var_name and var_name.startswith('@'):
+            print(f"DEBUG: Found variable name directly: {var_name}")
             
-            # Check if variable is already declared in current scope
-            if not self.current_scope.declare(var_name, data_type, value is not None, is_global):
-                self.errors.append(RedeclarationError(
-                    var_name, 
-                    node.get('line', 0), 
-                    node.get('column', 0)
-                ))
+            # Create and register the variable
+            dimensions = []
+            var_symbol = VariableSymbol(var_name, var_type, is_constant, dimensions, line_number, column)
+            self.semantic_analyzer.define_symbol(var_symbol)
+            print(f"DEBUG: Defined symbol: {var_name} of type {var_type}")
+            
+            # Process initializer if present
+            value = node.get('value')
+            if value is not None:
+                self.visit(value)
+            
+            return None
+        
+        # Try 'declarations' field
+        declarations = node.get('declarations', [])
+        if declarations:
+            if isinstance(declarations, list):
+                for decl in declarations:
+                    self.process_declaration_item(decl, var_type, line_number, column, is_constant)
+            else:
+                self.process_declaration_item(declarations, var_type, line_number, column, is_constant)
+            return None
+        
+        # Try looking at each field for possible nested variable declarations
+        for key, value in node.items():
+            if key not in ['type', 'data_type', 'line_number', 'line', 'column', 'is_constant']:
+                if isinstance(value, dict):
+                    var_name = value.get('name')
+                    if var_name and var_name.startswith('@'):
+                        print(f"DEBUG: Found variable in nested field {key}: {var_name}")
+                        dimensions = []
+                        var_symbol = VariableSymbol(var_name, var_type, is_constant, dimensions, line_number, column)
+                        self.semantic_analyzer.define_symbol(var_symbol)
+                        print(f"DEBUG: Defined symbol from nested field: {var_name} of type {var_type}")
+                        
+                        # Process initializer if present
+                        init_value = value.get('value')
+                        if init_value is not None:
+                            self.visit(init_value)
+        
+        return None
+        
+    def process_declaration_item(self, decl, var_type, line_number, column, is_constant):
+        """Process a single declaration item (helper for visit_variable_declaration)"""
+        print(f"DEBUG: Processing declaration item: {decl}")
+        
+        # Handle 'unknown' type nodes
+        if isinstance(decl, dict):
+            var_name = decl.get('name')
+            if var_name and var_name.startswith('@'):
+                print(f"DEBUG: Found variable in declaration item: {var_name}")
+                dimensions = []
+                var_symbol = VariableSymbol(var_name, var_type, is_constant, dimensions, line_number, column)
+                self.semantic_analyzer.define_symbol(var_symbol)
+                print(f"DEBUG: Defined symbol from declaration: {var_name} of type {var_type}")
                 
-            # If there's an initialization value, check type compatibility
-            if value:
-                value_type = self.get_expression_type(value)
-                if value_type and not self.is_type_compatible(data_type, value_type):
-                    self.errors.append(TypeMismatchError(
-                        data_type, 
-                        value_type, 
-                        node.get('line', 0), 
-                        node.get('column', 0)
-                    ))
-        return None
+                # Process initializer if present
+                value = decl.get('value')
+                if value is not None:
+                    self.visit(value)
+            elif decl.get('type'):
+                # Recursive for nested structures
+                self.visit(decl)
         
-    def visit_announce(self, node):
-        """Visit an announce statement"""
-        for arg in node.get('arguments', []):
-            # If it's a concatenation, check the value
-            if isinstance(arg, dict) and arg.get('type') == 'concatenation':
-                self.check_announce_arg(arg.get('value'), node)
-            else:
-                self.check_announce_arg(arg, node)
-        return None
+    def visit_function_declaration(self, node):
+        """Visit a function declaration"""
+        func_name = node.get('name')
+        return_type = node.get('return_type')
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
         
-    def check_announce_arg(self, arg, node):
-        """Check an announce argument for semantic errors"""
-        if isinstance(arg, dict):
-            # If it's a variable reference, check if it's declared and initialized
-            if arg.get('type') == 'variable':
-                var_name = arg.get('name')
-                if not self.current_scope.lookup(var_name):
-                    self.errors.append(UndeclaredVariableError(
-                        var_name, 
-                        node.get('line', 0), 
-                        node.get('column', 0)
-                    ))
-                elif not self.current_scope.is_initialized(var_name):
-                    self.errors.append(UninitializedVariableError(
-                        var_name, 
-                        node.get('line', 0), 
-                        node.get('column', 0)
-                    ))
-            # Recursively check other expression types
-            else:
-                self.visit(arg)
-        return None
-        
-    def get_expression_type(self, expr):
-        """Get the type of an expression"""
-        if not expr or not isinstance(expr, dict):
+        # Check if function is already defined
+        if self.semantic_analyzer.is_symbol_defined(func_name, current_scope_only=True):
+            self.add_error(already_defined_error(func_name, line_number, column))
             return None
             
-        expr_type = expr.get('type')
+        # Process parameters
+        parameters = []
+        for param in node.get('parameters', []):
+            param_name = param.get('name')
+            param_type = param.get('param_type')
+            param_line = param.get('line_number', line_number)
+            param_col = param.get('column', column)
+            
+            param_symbol = VariableSymbol(param_name, param_type, False, [], param_line, param_col)
+            parameters.append(param_symbol)
+            
+        # Create a function symbol
+        func_symbol = FunctionSymbol(func_name, return_type, parameters, line_number, column)
         
-        # Literal values
-        if expr_type == 'literal':
-            literal_type = expr.get('literal_type')
-            if literal_type == 'FEINTLIT':
-                return 'FEINT'
-            elif literal_type == 'FLOATERLIT':
-                return 'FLOATER'
-            elif literal_type == 'CHANT_LIT':
-                return 'CHANT'
-            elif literal_type in ['WIN', 'LOSS']:
-                return 'STAT'
-                
-        # Variable references
-        elif expr_type == 'variable':
-            var_name = expr.get('name')
-            symbol = self.current_scope.lookup(var_name)
-            if symbol:
-                return symbol['type']
-                
-        # Binary operations
-        elif expr_type == 'binary_operation':
-            left_type = self.get_expression_type(expr.get('left'))
-            right_type = self.get_expression_type(expr.get('right'))
-            operator = expr.get('operator')
-            
-            # Arithmetic operations
-            if operator in ['+', '-', '*', '/', '%']:
-                if left_type in ['FEINT', 'FLOATER'] and right_type in ['FEINT', 'FLOATER']:
-                    return 'FLOATER' if 'FLOATER' in [left_type, right_type] else 'FEINT'
-                    
-            # Relational operations
-            elif operator in ['==', '!=', '<', '>', '<=', '>=']:
-                return 'STAT'
-                
-            # Logical operations
-            elif operator in ['&&', '||']:
-                if left_type == 'STAT' and right_type == 'STAT':
-                    return 'STAT'
-                    
-        # Unary operations
-        elif expr_type == 'unary_operation':
-            operand_type = self.get_expression_type(expr.get('operand'))
-            operator = expr.get('operator')
-            
-            # Negation
-            if operator == '-' and operand_type in ['FEINT', 'FLOATER']:
-                return operand_type
-                
-            # Logical not
-            elif operator == '!' and operand_type == 'STAT':
-                return 'STAT'
-                
+        # Add to symbol table
+        self.semantic_analyzer.define_symbol(func_symbol)
+        
         return None
         
-    def is_type_compatible(self, expected_type, actual_type):
-        """Check if two types are compatible"""
-        if expected_type == actual_type:
-            return True
+    def visit_function_definition(self, node):
+        """Visit a function definition"""
+        func_name = node.get('name')
+        return_type = node.get('return_type')
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
+        
+        # Look up the function
+        func_symbol = self.semantic_analyzer.lookup_symbol(func_name)
+        
+        if not func_symbol:
+            # If not declared, create a new function symbol
+            parameters = []
+            for param in node.get('parameters', []):
+                param_name = param.get('name')
+                param_type = param.get('param_type')
+                param_line = param.get('line_number', line_number)
+                param_col = param.get('column', column)
+                
+                param_symbol = VariableSymbol(param_name, param_type, False, [], param_line, param_col)
+                parameters.append(param_symbol)
+                
+            func_symbol = FunctionSymbol(func_name, return_type, parameters, line_number, column)
+            self.semantic_analyzer.define_symbol(func_symbol)
+        else:
+            # Check if return types match for function declaration and definition
+            if func_symbol.return_type != return_type:
+                self.add_error(type_mismatch_error(func_symbol.return_type, return_type, line_number, column))
+                
+            # Check if parameters match
+            func_params = func_symbol.parameters
+            def_params = node.get('parameters', [])
             
-        # Check compatibility based on the type_compatibility map
-        if expected_type in self.type_compatibility:
-            return actual_type in self.type_compatibility[expected_type]
+            if len(func_params) != len(def_params):
+                self.add_error(argument_count_error(
+                    func_name, len(func_params), len(def_params), line_number, column
+                ))
+            else:
+                for i, (func_param, def_param) in enumerate(zip(func_params, def_params)):
+                    if func_param.var_type != def_param.get('param_type'):
+                        self.add_error(type_mismatch_error(
+                            func_param.var_type, def_param.get('param_type'), 
+                            def_param.get('line_number', line_number), 
+                            def_param.get('column', column)
+                        ))
+        
+        # Mark the function as defined
+        func_symbol.is_defined = True
+        
+        # Enter a new scope for the function body
+        self.semantic_analyzer.enter_scope()
+        
+        # Add parameters to the function scope
+        for param in node.get('parameters', []):
+            param_name = param.get('name')
+            param_type = param.get('param_type')
+            param_line = param.get('line_number', line_number)
+            param_col = param.get('column', column)
             
-        return False
+            param_symbol = VariableSymbol(param_name, param_type, False, [], param_line, param_col)
+            self.semantic_analyzer.define_symbol(param_symbol)
+            
+        # Store current function for return type checking
+        prev_function = self.current_function
+        self.current_function = func_symbol
+        
+        # Reset return flag
+        prev_has_return = self.has_return
+        self.has_return = False
+        
+        # Visit the function body
+        if 'body' in node:
+            if isinstance(node['body'], list):
+                for stmt in node['body']:
+                    self.visit(stmt)
+            else:
+                self.visit(node['body'])
+            
+        # Check if function has a return statement if needed
+        if func_symbol.return_type != "DUNK" and not self.has_return:
+            self.add_error(missing_return_error(func_name, line_number))
+            
+        # Restore previous function and return flag
+        self.current_function = prev_function
+        self.has_return = prev_has_return
+        
+        # Exit the function scope
+        self.semantic_analyzer.exit_scope()
+        
+        return None
+        
+    def visit_rebound(self, node):
+        """Visit a return statement"""
+        # Set the return flag
+        self.has_return = True
+        
+        # Check if expression matches function return type
+        if 'expression' in node and self.current_function:
+            expr = node['expression']
+            expr_type = self.get_expression_type(expr)
+            expected_type = self.current_function.return_type
+            line_number = node.get('line_number', 0)
+            column = node.get('column', 0)
+            
+            if expr_type and expr_type != expected_type:
+                self.add_error(invalid_return_error(expected_type, expr_type, line_number, column))
+                
+            # Visit the expression
+            self.visit(expr)
+            
+        return None
         
     def visit_assignment(self, node):
         """Visit an assignment statement"""
-        # Handle direct assignment structure from parser
-        if 'name' in node and 'target' not in node:
-            var_name = node.get('name')
-            value = node.get('value')
-            
-            # Check if variable exists
-            symbol = self.current_scope.lookup(var_name)
-            
-            if not symbol:
-                self.errors.append(UndeclaredVariableError(
-                    var_name, 
-                    node.get('line', 0), 
-                    node.get('column', 0)
-                ))
-                return None
-                
-            # Check type compatibility
-            target_type = symbol['type']
-            value_type = self.get_expression_type(value)
-            
-            if value_type and not self.is_type_compatible(target_type, value_type):
-                self.errors.append(TypeMismatchError(
-                    target_type, 
-                    value_type, 
-                    node.get('line', 0), 
-                    node.get('column', 0)
-                ))
-                
-            # Mark variable as initialized
-            self.current_scope.update(var_name, True)
-            return None
-        
-        # Handle nested target structure
-        target = node.get('target')
+        target_name = node.get('name')
         value = node.get('value')
+        operator = node.get('operator', '=')
+        line_number = node.get('line_number', 0)
+        if not line_number:
+            line_number = node.get('line', 0)
+        column = node.get('column', 0)
         
-        # Check if target is None
-        if target is None:
-            self.errors.append(SemanticError(
-                "Invalid assignment target",
-                node.get('line', 0),
-                node.get('column', 0)
-            ))
-            return None
+        # Look up the target variable
+        var_symbol = self.semantic_analyzer.lookup_symbol(target_name)
         
-        # Check if target variable exists
-        if target.get('type') == 'variable':
-            var_name = target.get('name')
-            symbol = self.current_scope.lookup(var_name)
-            
-            if not symbol:
-                self.errors.append(UndeclaredVariableError(
-                    var_name, 
-                    node.get('line', 0), 
-                    node.get('column', 0)
-                ))
-                return None
+        if not var_symbol:
+            self.add_error(undefined_variable_error(target_name, line_number, column))
+        else:
+            # Check if variable is constant
+            if var_symbol.is_constant:
+                self.add_error(constant_assignment_error(target_name, line_number, column))
                 
+            # Get expression type
+            expr_type = self.get_expression_type(value)
+            
             # Check type compatibility
-            target_type = symbol['type']
-            value_type = self.get_expression_type(value)
-            
-            if value_type and not self.is_type_compatible(target_type, value_type):
-                self.errors.append(TypeMismatchError(
-                    target_type, 
-                    value_type, 
-                    node.get('line', 0), 
-                    node.get('column', 0)
-                ))
+            if expr_type and expr_type != var_symbol.var_type:
+                self.add_error(type_mismatch_error(var_symbol.var_type, expr_type, line_number, column))
                 
-            # Mark variable as initialized
-            self.current_scope.update(var_name, True)
+            # Mark the variable as initialized
+            var_symbol.initialized = True
             
+        # Visit the value
+        self.visit(value)
+        
         return None
         
     def visit_binary_operation(self, node):
@@ -355,227 +380,468 @@ class SemanticAnalyzer:
         left = node.get('left')
         right = node.get('right')
         operator = node.get('operator')
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
         
-        # Get types of operands
+        # Get operand types
         left_type = self.get_expression_type(left)
         right_type = self.get_expression_type(right)
         
-        # Check if operands are valid for the operation
-        if operator in ['+', '-', '*', '/', '%']:
-            # Arithmetic operations require numeric types
-            if left_type not in ['FEINT', 'FLOATER'] or right_type not in ['FEINT', 'FLOATER']:
-                self.errors.append(SemanticError(
-                    f"Arithmetic operation '{operator}' requires numeric operands, got {left_type} and {right_type}",
-                    node.get('line', 0),
-                    node.get('column', 0)
-                ))
-                
-        elif operator in ['&&', '||']:
-            # Logical operations require boolean types
-            if left_type != 'STAT' or right_type != 'STAT':
-                self.errors.append(SemanticError(
-                    f"Logical operation '{operator}' requires STAT operands, got {left_type} and {right_type}",
-                    node.get('line', 0),
-                    node.get('column', 0)
-                ))
-                
-        elif operator in ['==', '!=', '<', '>', '<=', '>=']:
-            # Relational operations require compatible types
-            if not self.is_type_compatible(left_type, right_type):
-                self.errors.append(SemanticError(
-                    f"Relational operation '{operator}' requires compatible operands, got {left_type} and {right_type}",
-                    node.get('line', 0),
-                    node.get('column', 0)
-                ))
-                
+        # Skip if types couldn't be determined
+        if not left_type or not right_type:
+            # Visit children
+            self.visit(left)
+            self.visit(right)
+            return None
+            
+        # Check type compatibility for the operation
+        result_type = SemanticAnalyzer.get_result_type(left_type, right_type, operator)
+        
+        if not result_type:
+            self.add_error(invalid_operation_error(operator, left_type, right_type, line_number, column))
+            
+        # Visit children
+        self.visit(left)
+        self.visit(right)
+        
         return None
         
     def visit_unary_operation(self, node):
         """Visit a unary operation"""
         operand = node.get('operand')
         operator = node.get('operator')
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
         
-        # Get type of operand
+        # Get operand type
         operand_type = self.get_expression_type(operand)
         
-        # Check if operand is valid for the operation
-        if operator == '-':
-            # Negation requires numeric type
-            if operand_type not in ['FEINT', 'FLOATER']:
-                self.errors.append(SemanticError(
-                    f"Unary operation '{operator}' requires numeric operand, got {operand_type}",
-                    node.get('line', 0),
-                    node.get('column', 0)
-                ))
-                
-        elif operator == '!':
-            # Logical not requires boolean type
-            if operand_type != 'STAT':
-                self.errors.append(SemanticError(
-                    f"Unary operation '{operator}' requires STAT operand, got {operand_type}",
-                    node.get('line', 0),
-                    node.get('column', 0)
-                ))
-                
-        return None
-        
-    def visit_variable(self, node):
-        """Visit a variable reference"""
-        var_name = node.get('name')
-        symbol = self.current_scope.lookup(var_name)
-        
-        if not symbol:
-            self.errors.append(UndeclaredVariableError(
-                var_name, 
-                node.get('line', 0), 
-                node.get('column', 0)
-            ))
-        elif not symbol['initialized']:
-            self.errors.append(UninitializedVariableError(
-                var_name, 
-                node.get('line', 0), 
-                node.get('column', 0)
-            ))
+        # Skip if type couldn't be determined
+        if not operand_type:
+            self.visit(operand)
+            return None
             
-        return None
-        
-    def visit_code_block(self, node):
-        """Visit a code block and create a new scope"""
-        # Create a new scope for the block
-        previous_scope = self.current_scope
-        self.current_scope = SymbolTable(previous_scope)
-        
-        # Visit all statements in the block
-        for statement in node.get('statements', []):
-            self.visit(statement)
+        # Check type compatibility for the operation
+        if operator == '-' and not SemanticAnalyzer.is_numeric_type(operand_type):
+            self.add_error(invalid_operation_error(operator, operand_type, None, line_number, column))
+        elif operator == '!' and not SemanticAnalyzer.is_boolean_type(operand_type):
+            self.add_error(invalid_operation_error(operator, operand_type, None, line_number, column))
             
-        # Restore the previous scope
-        self.current_scope = previous_scope
-        return None
+        # Visit children
+        self.visit(operand)
         
-    def visit_function_declaration(self, node):
-        """Visit a function declaration"""
-        func_name = node.get('name')
-        return_type = node.get('return_type')
-        parameters = node.get('parameters', [])
-        
-        # Create a new scope for the function
-        previous_scope = self.current_scope
-        self.current_scope = SymbolTable(previous_scope)
-        
-        # Add parameters to the function scope
-        for param in parameters:
-            param_name = param.get('name')
-            param_type = param.get('type')
-            self.current_scope.declare(param_name, param_type, True)
-            
-        # Visit the function body
-        body = node.get('body')
-        if body:
-            self.visit(body)
-            
-        # Restore the previous scope
-        self.current_scope = previous_scope
         return None
         
     def visit_function_call(self, node):
         """Visit a function call"""
         func_name = node.get('name')
         arguments = node.get('arguments', [])
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
         
-        # Check if function exists (simplified for now)
-        # In a real implementation, you would check against declared functions
+        # Look up the function
+        func_symbol = self.semantic_analyzer.lookup_symbol(func_name)
         
-        # Check argument types (simplified for now)
+        if not func_symbol:
+            self.add_error(undefined_function_error(func_name, line_number, column))
+            
+            # Still visit arguments
+            for arg in arguments:
+                self.visit(arg)
+                
+            return None
+            
+        # Check argument count
+        if len(arguments) != len(func_symbol.parameters):
+            self.add_error(argument_count_error(
+                func_name, len(func_symbol.parameters), len(arguments), line_number, column
+            ))
+        else:
+            # Check argument types
+            for i, (param, arg) in enumerate(zip(func_symbol.parameters, arguments)):
+                arg_type = self.get_expression_type(arg)
+                
+                if arg_type and arg_type != param.var_type:
+                    self.add_error(type_mismatch_error(
+                        param.var_type, arg_type, node.get('line_number', line_number), column
+                    ))
+                    
+        # Visit arguments
         for arg in arguments:
             self.visit(arg)
             
         return None
         
-    def visit_if_statement(self, node):
-        """Visit an if statement"""
-        condition = node.get('condition')
-        then_branch = node.get('then_branch')
-        else_branch = node.get('else_branch')
+    def visit_variable(self, node):
+        """Visit a variable reference"""
+        var_name = node.get('name')
         
-        # Check if condition is a boolean expression
-        condition_type = self.get_expression_type(condition)
-        if condition_type != 'STAT':
-            self.errors.append(SemanticError(
-                f"If condition must be a STAT expression, got {condition_type}",
-                node.get('line', 0),
-                node.get('column', 0)
-            ))
-            
-        # Visit then branch
-        if then_branch:
-            self.visit(then_branch)
-            
-        # Visit else branch if present
-        if else_branch:
-            self.visit(else_branch)
+        # Normalize line number detection
+        line_number = node.get('line_number', node.get('line', 0))
+        column = node.get('column', 0)
+        
+        # Print debug info
+        print(f"DEBUG: Visiting variable: {var_name} at line {line_number}, column {column}")
+        
+        # Look up the variable
+        var_symbol = self.semantic_analyzer.lookup_symbol(var_name)
+        
+        if not var_symbol:
+            print(f"DEBUG: Symbol not found: {var_name}")
+            self.add_error(undefined_variable_error(var_name, line_number, column))
+        else:
+            print(f"DEBUG: Symbol found: {var_name}, type: {var_symbol.var_type}")
             
         return None
         
-    def visit_while_statement(self, node):
-        """Visit a while statement"""
-        condition = node.get('condition')
-        body = node.get('body')
+    def visit_array_element(self, node):
+        """Visit an array element access"""
+        array_name = node.get('array_name')
+        indices = node.get('indices', [])
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
         
-        # Check if condition is a boolean expression
-        condition_type = self.get_expression_type(condition)
-        if condition_type != 'STAT':
-            self.errors.append(SemanticError(
-                f"While condition must be a STAT expression, got {condition_type}",
-                node.get('line', 0),
-                node.get('column', 0)
-            ))
-            
-        # Visit body
-        if body:
-            self.visit(body)
-            
-        return None
+        # Look up the array
+        array_symbol = self.semantic_analyzer.lookup_symbol(array_name)
         
-    def visit_for_statement(self, node):
-        """Visit a for statement"""
-        initialization = node.get('initialization')
-        condition = node.get('condition')
-        update = node.get('update')
-        body = node.get('body')
-        
-        # Create a new scope for the for loop
-        previous_scope = self.current_scope
-        self.current_scope = SymbolTable(previous_scope)
-        
-        # Visit initialization
-        if initialization:
-            self.visit(initialization)
-            
-        # Check if condition is a boolean expression
-        if condition:
-            condition_type = self.get_expression_type(condition)
-            if condition_type != 'STAT':
-                self.errors.append(SemanticError(
-                    f"For condition must be a STAT expression, got {condition_type}",
-                    node.get('line', 0),
-                    node.get('column', 0)
+        if not array_symbol:
+            self.add_error(undefined_variable_error(array_name, line_number, column))
+        else:
+            # Check if variable is an array
+            if not array_symbol.dimensions:
+                self.add_error(non_array_error(array_name, line_number, column))
+                
+            # Check dimensions
+            if len(indices) != len(array_symbol.dimensions):
+                self.add_error(array_dimension_error(
+                    len(array_symbol.dimensions), len(indices), line_number, column
                 ))
                 
+            # Verify indices are integers
+            for idx in indices:
+                idx_type = self.get_expression_type(idx)
+                if idx_type != "FEINT":
+                    self.add_error(invalid_array_index_error(line_number, column))
+                    
+        # Visit indices
+        for idx in indices:
+            self.visit(idx)
+            
+        return None
+        
+    def visit_dribble(self, node):
+        """Visit an if statement"""
+        condition = node.get('condition')
+        condition_type = self.get_expression_type(condition)
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
+        
+        # Check condition type
+        if condition_type and condition_type != "STAT":
+            self.add_error(type_mismatch_error("STAT", condition_type, line_number, column))
+            
+        # Visit condition
+        self.visit(condition)
+        
+        # Enter then scope
+        self.semantic_analyzer.enter_scope()
+        # Visit then body
+        if 'then_body' in node:
+            if isinstance(node['then_body'], list):
+                for stmt in node['then_body']:
+                    self.visit(stmt)
+            else:
+                self.visit(node['then_body'])
+        # Exit then scope
+        self.semantic_analyzer.exit_scope()
+        
+        # Enter else scope if present
+        if 'else_body' in node:
+            self.semantic_analyzer.enter_scope()
+            # Visit else body
+            if isinstance(node['else_body'], list):
+                for stmt in node['else_body']:
+                    self.visit(stmt)
+            else:
+                self.visit(node['else_body'])
+            # Exit else scope
+            self.semantic_analyzer.exit_scope()
+            
+        return None
+        
+    def visit_play(self, node):
+        """Visit a while loop"""
+        condition = node.get('condition')
+        condition_type = self.get_expression_type(condition)
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
+        
+        # Check condition type
+        if condition_type and condition_type != "STAT":
+            self.add_error(type_mismatch_error("STAT", condition_type, line_number, column))
+            
+        # Visit condition
+        self.visit(condition)
+        
+        # Enter loop scope
+        self.semantic_analyzer.enter_scope()
+        # Visit loop body
+        if 'body' in node:
+            if isinstance(node['body'], list):
+                for stmt in node['body']:
+                    self.visit(stmt)
+            else:
+                self.visit(node['body'])
+        # Exit loop scope
+        self.semantic_analyzer.exit_scope()
+        
+        return None
+        
+    def visit_forward(self, node):
+        """Visit a for loop"""
+        # Visit initialization
+        init = node.get('init')
+        if init:
+            self.visit(init)
+            
+        # Check condition type
+        condition = node.get('condition')
+        condition_type = self.get_expression_type(condition)
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
+        
+        if condition_type and condition_type != "STAT":
+            self.add_error(type_mismatch_error("STAT", condition_type, line_number, column))
+            
+        # Visit condition
+        self.visit(condition)
+        
         # Visit update
+        update = node.get('update')
         if update:
             self.visit(update)
             
-        # Visit body
-        if body:
-            self.visit(body)
+        # Enter loop scope
+        self.semantic_analyzer.enter_scope()
+        # Visit loop body
+        if 'body' in node:
+            if isinstance(node['body'], list):
+                for stmt in node['body']:
+                    self.visit(stmt)
+            else:
+                self.visit(node['body'])
+        # Exit loop scope
+        self.semantic_analyzer.exit_scope()
+        
+        return None
+        
+    def visit_announce(self, node):
+        """Visit an announce statement"""
+        arguments = node.get('arguments', [])
+        
+        # Visit all arguments
+        for arg in arguments:
+            self.visit(arg)
             
-        # Restore the previous scope
-        self.current_scope = previous_scope
+        return None
+        
+    def visit_inbound(self, node):
+        """Visit an inbound statement"""
+        prompt = node.get('prompt')
+        variable = node.get('variable')
+        line_number = node.get('line_number', 0)
+        column = node.get('column', 0)
+        
+        # Check prompt type
+        if prompt:
+            prompt_type = self.get_expression_type(prompt)
+            if prompt_type and prompt_type != "CHANT":
+                self.add_error(type_mismatch_error("CHANT", prompt_type, line_number, column))
+                
+            # Visit prompt
+            self.visit(prompt)
+            
+        # Check variable
+        if variable:
+            if variable.get('type') == 'variable':
+                var_name = variable.get('name')
+                var_symbol = self.semantic_analyzer.lookup_symbol(var_name)
+                
+                if not var_symbol:
+                    self.add_error(undefined_variable_error(var_name, line_number, column))
+                    
+                # Mark the variable as initialized
+                if var_symbol:
+                    var_symbol.initialized = True
+                    
+            # Visit variable
+            self.visit(variable)
+            
+        return None
+        
+    def visit_numeric_literal(self, node):
+        """Visit a numeric literal node"""
+        # Nothing to check here
+        return None
+        
+    def visit_string_literal(self, node):
+        """Visit a string literal node"""
+        # Nothing to check here
+        return None
+        
+    def visit_concatenation(self, node):
+        """Visit a string concatenation operation"""
+        left = node.get('left')
+        right = node.get('right')
+        line_number = node.get('line_number', 0)
+        if not line_number:
+            line_number = node.get('line', 0)
+        column = node.get('column', 0)
+        
+        # Visit the operands
+        self.visit(left)
+        self.visit(right)
+        
+        # Check types for concatenation
+        left_type = self.get_expression_type(left)
+        right_type = self.get_expression_type(right)
+        
+        # String concatenation should have at least one operand as a string
+        if left_type and right_type:
+            if not (SemanticAnalyzer.is_string_type(left_type) or SemanticAnalyzer.is_string_type(right_type)):
+                self.add_error(invalid_operation_error('&', left_type, right_type, line_number, column))
+        
+        return None
+        
+    def visit_arithmetic_operation(self, node):
+        """Visit an arithmetic operation"""
+        left = node.get('left')
+        right = node.get('right')
+        operator = node.get('operator')
+        line_number = node.get('line_number', 0)
+        if not line_number:
+            line_number = node.get('line', 0)
+        column = node.get('column', 0)
+        
+        # Visit the operands
+        self.visit(left)
+        self.visit(right)
+        
+        # Check types for arithmetic operation
+        left_type = self.get_expression_type(left)
+        right_type = self.get_expression_type(right)
+        
+        if left_type and right_type:
+            if not (SemanticAnalyzer.is_numeric_type(left_type) and SemanticAnalyzer.is_numeric_type(right_type)):
+                self.add_error(invalid_operation_error(operator, left_type, right_type, line_number, column))
+        
+        return None
+        
+    def get_expression_type(self, node):
+        """Get the type of an expression"""
+        if not node:
+            return None
+            
+        node_type = node.get('type')
+        
+        if node_type == 'literal':
+            value_type = node.get('value_type')
+            
+            if value_type == 'FEINTLIT':
+                return 'FEINT'
+            elif value_type == 'FLOATERLIT':
+                return 'FLOATER'
+            elif value_type == 'CHANTLIT':
+                return 'CHANT'
+            elif value_type in ['WIN', 'LOSS']:
+                return 'STAT'
+                
+            return None
+            
+        elif node_type == 'variable':
+            var_name = node.get('name')
+            var_symbol = self.semantic_analyzer.lookup_symbol(var_name)
+            
+            if var_symbol:
+                return var_symbol.var_type
+                
+            return None
+            
+        elif node_type == 'numeric_literal':
+            # Check if it's an integer or float
+            value = node.get('value')
+            try:
+                int(value)
+                return 'FEINT'
+            except (ValueError, TypeError):
+                try:
+                    float(value)
+                    return 'FLOATER'
+                except (ValueError, TypeError):
+                    return None
+            
+        elif node_type == 'string_literal':
+            return 'CHANT'
+            
+        elif node_type == 'binary_operation' or node_type == 'arithmetic_operation':
+            left_type = self.get_expression_type(node.get('left'))
+            right_type = self.get_expression_type(node.get('right'))
+            operator = node.get('operator')
+            
+            # Let the analyzer determine the result type
+            return SemanticAnalyzer.get_result_type(left_type, right_type, operator)
+            
+        elif node_type == 'concatenation':
+            # Concatenation always results in a string
+            return 'CHANT'
+            
+        elif node_type == 'unary_operation':
+            operand_type = self.get_expression_type(node.get('operand'))
+            operator = node.get('operator')
+            
+            if operator == '-' and SemanticAnalyzer.is_numeric_type(operand_type):
+                return operand_type
+            elif operator == '!' and SemanticAnalyzer.is_boolean_type(operand_type):
+                return 'STAT'
+                
+            return None
+            
+        elif node_type == 'function_call':
+            func_name = node.get('name')
+            func_symbol = self.semantic_analyzer.lookup_symbol(func_name)
+            
+            if func_symbol:
+                return func_symbol.return_type
+                
+            return None
+            
+        elif node_type == 'array_element':
+            array_name = node.get('array_name')
+            array_symbol = self.semantic_analyzer.lookup_symbol(array_name)
+            
+            if array_symbol:
+                return array_symbol.var_type
+                
+            return None
+            
         return None
 
 def analyze(ast):
     """Analyze the AST for semantic errors"""
-    analyzer = SemanticAnalyzer(ast)
-    errors = analyzer.analyze()
-    return errors if errors else None 
+    # Create a semantic analyzer
+    semantic_analyzer = SemanticAnalyzer()
+    
+    # Create an AST visitor
+    visitor = AstVisitor(semantic_analyzer)
+    
+    # Visit the AST
+    try:
+        visitor.visit(ast)
+    except Exception as e:
+        # If there's an error during traversal, add it to the errors list
+        import traceback
+        error_info = str(e) + "\n" + traceback.format_exc()
+        visitor.add_error(SemanticError(f"Error during semantic analysis: {error_info}", 0, 0))
+    
+    # Return any errors found
+    return visitor.errors 

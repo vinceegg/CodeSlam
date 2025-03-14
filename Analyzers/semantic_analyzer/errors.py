@@ -1,5 +1,5 @@
 class SemanticError:
-    def __init__(self, error_message, line_number, column):
+    def __init__(self, error_message, line_number, column=0):
         self.error_message = error_message
         self.line_number = line_number
         self.column = column
@@ -10,34 +10,43 @@ class SemanticError:
     def as_tuple(self):
         return (self.error_message, self.line_number, self.column)
 
-def create_semantic_error(message, node):
-    """Helper function to create a semantic error from an AST node"""
-    # Extract line and column info from node if available
-    line = node.get('line', 0)
-    column = node.get('column', 0)
-    return SemanticError(message, line, column)
+def create_semantic_error(message, line_number, column=0):
+    """Helper function to create a semantic error"""
+    return SemanticError(message, line_number, column)
 
-class UndeclaredVariableError(SemanticError):
-    """Error raised when a variable is used but not declared"""
-    def __init__(self, var_name, line_number, column):
-        super().__init__(f"Variable '{var_name}' is not declared", line_number, column)
-        self.var_name = var_name
+# Common semantic error types
+def undefined_variable_error(variable_name, line_number, column=0):
+    return SemanticError(f"Undefined variable '{variable_name}'", line_number, column)
 
-class TypeMismatchError(SemanticError):
-    """Error raised when there's a type mismatch in an operation"""
-    def __init__(self, expected_type, actual_type, line_number, column):
-        super().__init__(f"Type mismatch: Expected {expected_type}, got {actual_type}", line_number, column)
-        self.expected_type = expected_type
-        self.actual_type = actual_type
+def type_mismatch_error(expected_type, actual_type, line_number, column=0):
+    return SemanticError(f"Type mismatch: Expected '{expected_type}', got '{actual_type}'", line_number, column)
 
-class RedeclarationError(SemanticError):
-    """Error raised when a variable is declared more than once in the same scope"""
-    def __init__(self, var_name, line_number, column):
-        super().__init__(f"Variable '{var_name}' is already declared in this scope", line_number, column)
-        self.var_name = var_name
+def already_defined_error(name, line_number, column=0):
+    return SemanticError(f"Identifier '{name}' is already defined in this scope", line_number, column)
 
-class UninitializedVariableError(SemanticError):
-    """Error raised when a variable is used before initialization"""
-    def __init__(self, var_name, line_number, column):
-        super().__init__(f"Variable '{var_name}' is used before initialization", line_number, column)
-        self.var_name = var_name 
+def invalid_operation_error(operation, type1, type2, line_number, column=0):
+    return SemanticError(f"Invalid operation '{operation}' between types '{type1}' and '{type2}'", line_number, column)
+
+def undefined_function_error(function_name, line_number, column=0):
+    return SemanticError(f"Undefined function '{function_name}'", line_number, column)
+
+def argument_count_error(function_name, expected, actual, line_number, column=0):
+    return SemanticError(f"Function '{function_name}' expects {expected} arguments but got {actual}", line_number, column)
+
+def invalid_array_index_error(line_number, column=0):
+    return SemanticError(f"Array index must be an integer", line_number, column)
+
+def array_dimension_error(expected, actual, line_number, column=0):
+    return SemanticError(f"Array access with wrong number of dimensions: Expected {expected}, got {actual}", line_number, column)
+
+def non_array_error(name, line_number, column=0):
+    return SemanticError(f"Variable '{name}' is not an array", line_number, column)
+
+def constant_assignment_error(name, line_number, column=0):
+    return SemanticError(f"Cannot reassign constant '{name}'", line_number, column)
+
+def invalid_return_error(expected_type, actual_type, line_number, column=0):
+    return SemanticError(f"Invalid return type: Expected '{expected_type}', got '{actual_type}'", line_number, column)
+
+def missing_return_error(function_name, line_number, column=0):
+    return SemanticError(f"Function '{function_name}' must return a value", line_number, column) 
