@@ -3188,7 +3188,7 @@ class Lexer:
         input_str += self.current_char  # Add the closing quote
         self.advance()
         
-        result = True, Token(TokenType.GET.value, input_str)
+        result = True, Token(TokenType.GETLIT.value, input_str)
         
         if self.current_char is not None and self.current_char in delim8:
             return self.state303(input_str)
@@ -3196,7 +3196,7 @@ class Lexer:
 
     # FINAL STATE
     def state303(self, input_str):
-        return True, Token(TokenType.GET.value, input_str)
+        return True, Token(TokenType.GETLIT.value, input_str)
 
 def run(text):
     # Create a lexer instance with the input text

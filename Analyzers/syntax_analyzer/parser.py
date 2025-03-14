@@ -173,6 +173,8 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after 'Team()'")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         # Parse local declarations first
         local_declarations = self.parse_local_declarations()
@@ -187,6 +189,8 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' at end of Team block")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         return {
             'type': 'team_block',
@@ -471,6 +475,8 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after function header")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         # Parse statements
         statements = []
@@ -501,6 +507,8 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' at end of function")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         return {
             'type': 'function_definition',
@@ -644,11 +652,12 @@ class Parser:
         # If not an array declaration, proceed with normal token-by-token parsing
         token_type = self.current_token.type
         
-        # Add Timeout and Resume to valid statement types
         if token_type == TokenType.TIMEOUT.value:
             return self.parse_timeout()
         elif token_type == TokenType.RESUME.value:
             return self.parse_resume()
+        elif token_type == TokenType.REBOUND.value:  # Add this line to handle Rebound
+            return self.parse_rebound()
         elif self.is_data_type(token_type):
             return self.parse_variable_declaration(is_global=False)
         elif token_type == TokenType.ANNOUNCE.value:
@@ -661,7 +670,7 @@ class Parser:
             return self.parse_play()
         elif token_type == TokenType.RUN.value:
             return self.parse_run_play()
-        elif token_type == TokenType.DRIBBLE.value:  # Add Dribble statement support
+        elif token_type == TokenType.DRIBBLE.value:
             return self.parse_dribble()
         elif token_type == TokenType.VAR_INIT.value:
             # Check next token to determine if it's a function call or assignment
@@ -1494,6 +1503,8 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' for array initialization")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         values = []
         
@@ -1519,6 +1530,8 @@ class Parser:
                     if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
                         return self.error("Expected '}' after nested array")
                     self.advance()
+                    
+                    self.skip_whitespace_and_comments()
                     
                     values.append(row)
                 else:
@@ -1564,6 +1577,8 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' after array initialization")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
         
         return values
 
@@ -1708,8 +1723,17 @@ class Parser:
             if not self.current_token:
                 return self.error("Expected case value")
             
-            if self.current_token.type in [TokenType.VAR_INIT.value, TokenType.CHANTLIT.value,
-                                         TokenType.FEINTLIT.value]:
+            # Handle different types of case values
+            if self.current_token.type == TokenType.FEINTLIT.value:
+                case_value = self.current_token.value
+                self.advance()
+            elif self.current_token.type in [TokenType.ADD.value, TokenType.SUB.value, 
+                                           TokenType.MUL.value, TokenType.DIV.value, 
+                                           TokenType.MOD.value]:
+                case_value = f"'{self.current_token.value}'"
+                self.advance()
+            elif (self.current_token.type == TokenType.GETLIT.value and 
+                  len(self.current_token.value) == 3):
                 case_value = self.current_token.value
                 self.advance()
             else:
@@ -1724,25 +1748,20 @@ class Parser:
             # Parse case statements
             case_statements = []
             while self.current_token and self.current_token.type not in [TokenType.GET.value, TokenType.DEFAULT.value, TokenType.CODE_BLOCK_RIGHT.value]:
-                # Add support for Timeout and Resume in switch cases
-                if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
-                    statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
-                                else self.parse_resume())
+                # Handle statements including Rebound
+                if self.current_token.type == TokenType.REBOUND.value:
+                    statement = self.parse_rebound()
                     if isinstance(statement, SyntaxError):
                         return statement
                     case_statements.append(statement)
-                    if self.current_token.type == TokenType.TIMEOUT.value:
-                        break  # Exit case after Timeout
                     self.skip_whitespace_and_comments()
-                    continue
-                
-                statement = self.parse_statement()
-                if isinstance(statement, SyntaxError):
-                    return statement
-                if statement:
-                    case_statements.append(statement)
-                
-                self.skip_whitespace_and_comments()
+                else:
+                    statement = self.parse_statement()
+                    if isinstance(statement, SyntaxError):
+                        return statement
+                    if statement:
+                        case_statements.append(statement)
+                    self.skip_whitespace_and_comments()
 
             cases.append({
                 'value': case_value,
@@ -1757,34 +1776,32 @@ class Parser:
             if not self.current_token or self.current_token.type != TokenType.COLON.value:
                 return self.error("Expected ':' after Default")
             self.advance()
+            
+            self.skip_whitespace_and_comments()
 
             default_statements = []
             while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-                # Add support for Timeout and Resume in default case
-                if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
-                    statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
-                                else self.parse_resume())
+                if self.current_token.type == TokenType.REBOUND.value:
+                    statement = self.parse_rebound()
                     if isinstance(statement, SyntaxError):
                         return statement
                     default_statements.append(statement)
-                    if self.current_token.type == TokenType.TIMEOUT.value:
-                        break  # Exit case after Timeout
                     self.skip_whitespace_and_comments()
-                    continue
-                
-                statement = self.parse_statement()
-                if isinstance(statement, SyntaxError):
-                    return statement
-                if statement:
-                    default_statements.append(statement)
-                
-                self.skip_whitespace_and_comments()
-                
+                else:
+                    statement = self.parse_statement()
+                    if isinstance(statement, SyntaxError):
+                        return statement
+                    if statement:
+                        default_statements.append(statement)
+                    self.skip_whitespace_and_comments()
+            
             default_case = default_statements
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' at end of switch")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         return {
             'type': 'switch',
@@ -1885,32 +1902,38 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after Forward header")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
-         # Parse loop body
+        # Parse loop body
         body = []
         while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            # Add support for Timeout and Resume in Forward loops
-            if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
+            if self.current_token.type == TokenType.REBOUND.value:
+                statement = self.parse_rebound()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                body.append(statement)
+            elif self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
                 statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
                             else self.parse_resume())
                 if isinstance(statement, SyntaxError):
                     return statement
                 body.append(statement)
                 if self.current_token.type == TokenType.TIMEOUT.value:
-                    break  # Exit loop after Timeout
-                continue
-            
-            statement = self.parse_statement()
-            if isinstance(statement, SyntaxError):
-                return statement
-            if statement:
-                body.append(statement)
-            
+                    break
+            else:
+                statement = self.parse_statement()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                if statement:
+                    body.append(statement)
             self.skip_whitespace_and_comments()
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' at end of Forward block")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         return {
             'type': 'forward',
@@ -1994,15 +2017,16 @@ class Parser:
         return self.error("Invalid increment/decrement in Forward loop")
 
     def parse_play(self):
-        """Parse Play statement according to rule 226"""
+        """Parse Play statement (while loop)"""
         start_line = self.current_line
         start_column = self.current_column
-        self.advance()
+        self.advance()  # Move past 'Play'
 
         if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
             return self.error("Expected '(' after Play")
         self.advance()
 
+        # Parse condition
         condition = self.parse_expression()
         if isinstance(condition, SyntaxError):
             return condition
@@ -2014,64 +2038,43 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after Play condition")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         # Parse loop body
         body = []
         while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            # Add support for Timeout and Resume in Play loops
-            if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
-                statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
-                            else self.parse_resume())
+            # Handle Timeout, Resume, or regular statements
+            if self.current_token.type == TokenType.TIMEOUT.value:
+                statement = self.parse_timeout()
                 if isinstance(statement, SyntaxError):
                     return statement
                 body.append(statement)
-                if self.current_token.type == TokenType.TIMEOUT.value:
-                    break  # Exit loop after Timeout
-                continue
-            
-            statement = self.parse_statement()
-            if isinstance(statement, SyntaxError):
-                return statement
-            if statement:
+                break  # Exit loop after Timeout
+            elif self.current_token.type == TokenType.RESUME.value:
+                statement = self.parse_resume()
+                if isinstance(statement, SyntaxError):
+                    return statement
                 body.append(statement)
+            else:
+                statement = self.parse_statement()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                if statement:
+                    body.append(statement)
             
             self.skip_whitespace_and_comments()
-
-        # Parse increment/decrement
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected variable for Play increment/decrement")
-        inc_var = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type not in [
-            TokenType.ADD_ASSIGN.value,
-            TokenType.SUB_ASSIGN.value,
-            TokenType.MUL_ASSIGN.value,
-            TokenType.DIV_ASSIGN.value,
-            TokenType.MOD_ASSIGN.value
-        ]:
-            return self.error("Expected '+=', '-=', '*=', '/=', or '%=' in Play increment/decrement")
-        inc_op = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.FEINTLIT.value:
-            return self.error("Expected numeric literal in Play increment/decrement")
-        inc_value = self.current_token.value
-        self.advance()
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' at end of Play block")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         return {
             'type': 'play',
             'condition': condition,
             'body': body,
-            'update': {
-                'variable': inc_var,
-                'operator': inc_op,
-                'value': inc_value
-            },
             'line': start_line,
             'column': start_column
         }
@@ -2085,27 +2088,31 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after Run")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         # Parse loop body
         body = []
         while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            # Add support for Timeout and Resume in Run-Play loops
-            if self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
+            if self.current_token.type == TokenType.REBOUND.value:
+                statement = self.parse_rebound()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                body.append(statement)
+            elif self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
                 statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
                             else self.parse_resume())
                 if isinstance(statement, SyntaxError):
                     return statement
                 body.append(statement)
                 if self.current_token.type == TokenType.TIMEOUT.value:
-                    break  # Exit loop after Timeout
-                continue
-            
-            statement = self.parse_statement()
-            if isinstance(statement, SyntaxError):
-                return statement
-            if statement:
-                body.append(statement)
-            
+                    break
+            else:
+                statement = self.parse_statement()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                if statement:
+                    body.append(statement)
             self.skip_whitespace_and_comments()
 
         # Parse increment/decrement
@@ -2133,6 +2140,8 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' after Run block")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         if not self.current_token or self.current_token.type != TokenType.PLAY.value:
             return self.error("Expected 'Play' after Run block")
@@ -2189,15 +2198,24 @@ class Parser:
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
             return self.error("Expected '{' after Dribble condition")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         # Parse if block statements
-        if_statements = self.parse_statements()
-        if isinstance(if_statements, SyntaxError):
-            return if_statements
+        if_statements = []
+        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+            statement = self.parse_statement()
+            if isinstance(statement, SyntaxError):
+                return statement
+            if statement:
+                if_statements.append(statement)
+            self.skip_whitespace_and_comments()
 
         if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
             return self.error("Expected '}' after Dribble block")
         self.advance()
+        
+        self.skip_whitespace_and_comments()
 
         # Parse Pass (else if) blocks
         pass_blocks = []
@@ -2219,14 +2237,23 @@ class Parser:
             if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
                 return self.error("Expected '{' after Pass condition")
             self.advance()
+            
+            self.skip_whitespace_and_comments()
 
-            pass_statements = self.parse_statements()
-            if isinstance(pass_statements, SyntaxError):
-                return pass_statements
+            pass_statements = []
+            while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+                statement = self.parse_statement()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                if statement:
+                    pass_statements.append(statement)
+                self.skip_whitespace_and_comments()
 
             if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
                 return self.error("Expected '}' after Pass block")
             self.advance()
+            
+            self.skip_whitespace_and_comments()
 
             pass_blocks.append({
                 'condition': pass_condition,
@@ -2241,14 +2268,23 @@ class Parser:
             if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
                 return self.error("Expected '{' after Shoot")
             self.advance()
+            
+            self.skip_whitespace_and_comments()
 
-            shoot_statements = self.parse_statements()
-            if isinstance(shoot_statements, SyntaxError):
-                return shoot_statements
+            shoot_statements = []
+            while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
+                statement = self.parse_statement()
+                if isinstance(statement, SyntaxError):
+                    return statement
+                if statement:
+                    shoot_statements.append(statement)
+                self.skip_whitespace_and_comments()
 
             if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
                 return self.error("Expected '}' after Shoot block")
             self.advance()
+            
+            self.skip_whitespace_and_comments()
 
         return {
             'type': 'dribble',
