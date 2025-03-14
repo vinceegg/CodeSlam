@@ -1,0 +1,42 @@
+Team {
+    // Variable declarations with initialization
+    Feint @num1 = 10;
+    Feint @num2 = 20;
+    Floater @avg = 0.0;
+    Chant @message = "Hello, World!";
+    Stat @isValid = Win;
+    
+    // Variable redeclaration (should cause error)
+    Feint @num1 = 30;
+    
+    // Type mismatch (should cause error)
+    Feint @invalidAssign = "This is not a number";
+    
+    // Using undeclared variable (should cause error)
+    Feint @result = @undeclaredVar + 5;
+    
+    // Using uninitialized variable (should cause error)
+    Feint @uninitializedVar;
+    Feint @badResult = @uninitializedVar * 2;
+    
+    // Valid announce statements
+    Announce("The value of num1 is: " & @num1);
+    Announce(@message);
+    Announce("Average: " & @avg);
+    
+    // Announce with undeclared variable (should cause error)
+    Announce("Undeclared: " & @nonExistentVar);
+    
+    // Announce with uninitialized variable (should cause error)
+    Announce("Uninitialized: " & @uninitializedVar);
+    
+    // Valid operations
+    @avg = (@num1 + @num2) / 2;
+    Announce("New average: " & @avg);
+    
+    // Valid type conversion (implicit)
+    Floater @floatVal = @num1;  // Feint to Floater is valid
+    
+    // Invalid type conversion (should cause error)
+    Feint @intVal = @message;  // Chant to Feint is invalid
+} 

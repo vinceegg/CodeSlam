@@ -12,16 +12,32 @@ class SemanticError:
 
 def create_semantic_error(message, node):
     """Helper function to create a semantic error from an AST node"""
-    # Extract line and column from the node
-    if isinstance(node, dict):
-        line = node.get('line', 1)  # Default to line 1 instead of 0
-        column = node.get('column', 0)
-        
-        # If node has a name attribute, adjust column to point to the identifier
-        if 'name' in node:
-            column = node.get('name_column', column)
-    else:
-        line = 1
-        column = 0
-    
-    return SemanticError(message, line, column) 
+    # Extract line and column info from node if available
+    line = node.get('line', 0)
+    column = node.get('column', 0)
+    return SemanticError(message, line, column)
+
+class UndeclaredVariableError(SemanticError):
+    """Error raised when a variable is used but not declared"""
+    def __init__(self, var_name, line_number, column):
+        super().__init__(f"Variable '{var_name}' is not declared", line_number, column)
+        self.var_name = var_name
+
+class TypeMismatchError(SemanticError):
+    """Error raised when there's a type mismatch in an operation"""
+    def __init__(self, expected_type, actual_type, line_number, column):
+        super().__init__(f"Type mismatch: Expected {expected_type}, got {actual_type}", line_number, column)
+        self.expected_type = expected_type
+        self.actual_type = actual_type
+
+class RedeclarationError(SemanticError):
+    """Error raised when a variable is declared more than once in the same scope"""
+    def __init__(self, var_name, line_number, column):
+        super().__init__(f"Variable '{var_name}' is already declared in this scope", line_number, column)
+        self.var_name = var_name
+
+class UninitializedVariableError(SemanticError):
+    """Error raised when a variable is used before initialization"""
+    def __init__(self, var_name, line_number, column):
+        super().__init__(f"Variable '{var_name}' is used before initialization", line_number, column)
+        self.var_name = var_name 
