@@ -30,6 +30,7 @@ try:
 except Exception as e:
     print(f"Warning: Could not load logo image: {e}")
     # Create a dummy image
+    
     logo_image = None
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"

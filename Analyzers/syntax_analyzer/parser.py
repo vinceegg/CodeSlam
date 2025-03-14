@@ -1137,6 +1137,16 @@ class Parser:
                 
                 array_indices.append(index)
             
+            # Check for increment or decrement operators
+            if self.current_token and self.current_token.type in [TokenType.INCREMENT.value, TokenType.DECREMENT.value]:
+                operator = self.current_token.value
+                self.advance()
+                return {
+                    'type': 'postfix_operation',
+                    'operator': operator,
+                    'variable': var_name
+                }
+
             # Return appropriate node based on whether it's a variable or array element
             if array_indices:
                 return {
@@ -1281,6 +1291,32 @@ class Parser:
             'column': start_column
         }
 
+    def parse_increment(self, var_name, start_line, start_column):
+        """Parse increment operation"""
+        self.advance()  # Move past '++'
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after increment operation")
+        self.advance()
+        return {
+            'type': 'increment',
+            'variable': var_name,
+            'line': start_line,
+            'column': start_column
+        }
+
+    def parse_decrement(self, var_name, start_line, start_column):
+        """Parse decrement operation"""
+        self.advance()  # Move past '--'
+        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+            return self.error("Expected ';' after decrement operation")
+        self.advance()
+        return {
+            'type': 'decrement',
+            'variable': var_name,
+            'line': start_line,
+            'column': start_column
+        }
+
     def parse_assignment(self):
         """Parse variable assignment or array element assignment"""
         start_line = self.current_line
@@ -1306,25 +1342,34 @@ class Parser:
             
             array_indices.append(index)
         
-        # Check for assignment operator
+        # Check for assignment operator or increment/decrement
         if not self.current_token or self.current_token.type not in [
             TokenType.ASSIGN.value,
             TokenType.ADD_ASSIGN.value,
             TokenType.SUB_ASSIGN.value,
             TokenType.MUL_ASSIGN.value,
             TokenType.DIV_ASSIGN.value,
-            TokenType.MOD_ASSIGN.value
+            TokenType.MOD_ASSIGN.value,
+            TokenType.INCREMENT.value,  # Add increment operator
+            TokenType.DECREMENT.value   # Add decrement operator
         ]:
-            expected_operators = "'=', '+=', '-=', '*=', '/=', or '%='"
+            expected_operators = "'=', '+=', '-=', '*=', '/=', '%=', '++', or '--'"
             if array_indices:
                 return self.error(f"Expected {expected_operators} after array indices")
             else:
                 return self.error(f"Expected {expected_operators} after variable name {var_name}")
                 
-        operator = self.current_token.value
+        operator = self.current_token.type
+
+        # Handle increment and decrement separately
+        if operator == TokenType.INCREMENT.value:
+            return self.parse_increment(var_name, start_line, start_column)
+        elif operator == TokenType.DECREMENT.value:
+            return self.parse_decrement(var_name, start_line, start_column)
+
         self.advance()
 
-        # Parse the value being assigned
+        # Parse the value being assigned, if applicable
         value = self.parse_expression()
         if isinstance(value, SyntaxError):
             return value
@@ -1913,6 +1958,8 @@ class Parser:
                 if isinstance(statement, SyntaxError):
                     return statement
                 body.append(statement)
+            elif self.current_token.type == TokenType.INCREMENT.value or self.current_token.type == TokenType.DECREMENT.value:
+                statement = self.parse_increment_decrement()
             elif self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
                 statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
                             else self.parse_resume())
@@ -2056,6 +2103,10 @@ class Parser:
                 if isinstance(statement, SyntaxError):
                     return statement
                 body.append(statement)
+            elif self.current_token.type == TokenType.REBOUND.value:
+                statement = self.parse_rebound()
+            elif self.current_token.type == TokenType.INCREMENT.value or self.current_token.type == TokenType.DECREMENT.value:
+                statement = self.parse_increment_decrement()
             else:
                 statement = self.parse_statement()
                 if isinstance(statement, SyntaxError):
@@ -2078,6 +2129,36 @@ class Parser:
             'line': start_line,
             'column': start_column
         }
+    
+    def parse_increment_decrement(self):
+        """Parse the update expression in Forward loop:
+        Can be one of:
+        1. Prefix increment/decrement: ++@i, --@i
+        2. Postfix increment/decrement: @i++, @i--
+        3. Assignment operators: @i += 1, @i -= 1, etc.
+        """
+        if not self.current_token:
+            return self.error("Expected increment expression")
+
+        # Handle prefix increment/decrement
+        if self.current_token.type in [TokenType.INCREMENT.value, TokenType.DECREMENT.value]:
+            operator = self.current_token.value
+            self.advance()
+            
+            if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+                return self.error("Expected variable after prefix operator")
+            var_name = self.current_token.value
+            self.advance()
+
+            if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
+                return self.error("Expected ';'")
+            self.advance()
+            
+            return {
+                'type': 'prefix_operation',
+                'operator': operator,
+                'variable': var_name
+            }
 
     def parse_run_play(self):
         """Parse Run-Play statement according to rule 227"""
@@ -2099,6 +2180,8 @@ class Parser:
                 if isinstance(statement, SyntaxError):
                     return statement
                 body.append(statement)
+            elif self.current_token.type == TokenType.INCREMENT.value or self.current_token.type == TokenType.DECREMENT.value:
+                statement = self.parse_increment_decrement()
             elif self.current_token.type in [TokenType.TIMEOUT.value, TokenType.RESUME.value]:
                 statement = (self.parse_timeout() if self.current_token.type == TokenType.TIMEOUT.value 
                             else self.parse_resume())
@@ -2116,17 +2199,19 @@ class Parser:
             self.skip_whitespace_and_comments()
 
         # Parse increment/decrement
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected variable for Run-Play increment/decrement")
-        inc_var = self.current_token.value
-        self.advance()
+        # if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
+        #     return self.error("Expected variable")
+        # inc_var = self.current_token.value
+        # self.advance()
 
         if not self.current_token or self.current_token.type not in [
             TokenType.ADD_ASSIGN.value,
             TokenType.SUB_ASSIGN.value,
             TokenType.MUL_ASSIGN.value,
             TokenType.DIV_ASSIGN.value,
-            TokenType.MOD_ASSIGN.value
+            TokenType.MOD_ASSIGN.value,
+            TokenType.INCREMENT.value,
+            TokenType.DECREMENT.value
         ]:
             return self.error("Expected '+=', '-=', '*=', '/=', or '%=' in Run-Play increment/decrement")
         inc_op = self.current_token.value
