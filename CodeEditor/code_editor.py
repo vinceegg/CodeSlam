@@ -22,9 +22,9 @@ from tkinter.scrolledtext import ScrolledText
 import re
 
 # Load the image
-image_path = "../assets/icons/CodeSLAM-LOGO.png"
+image_path = "assets/icons/CodeSLAM-LOGO.png"
 try:
-    image = Image.open("../assets/icons/CodeSLAM-LOGO.png")
+    image = Image.open(image_path)
     # Create CTkImage with a specified size
     logo_image = CTkImage(image, size=(100, 100))  # Set desired width and height here
 except Exception as e:
