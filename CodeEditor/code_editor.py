@@ -635,19 +635,25 @@ class App(customtkinter.CTk):
             )
             token_label.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
+        # Handle errors and button states
         if errors:
             self.append_terminal_output("Lexical Errors:", text_color="red")
             for error in errors:
                 self.append_terminal_output(str(error), text_color="red")
-                # Highlight the error line
                 if hasattr(error, 'line_number'):
                     self.editor_frame.highlight_error(error.line_number, error.column)
+            # Disable syntax button when there are lexical errors
             self.sideBtnSyntax.configure(
+                state="disabled",
+                fg_color="#2B2B2B"  # Dark background when disabled
+            )
+            self.sideBtnSemantic.configure(
                 state="disabled",
                 fg_color="#2B2B2B"  # Dark background when disabled
             )
         else:
             self.append_terminal_output("No Lexical Errors", text_color="green")
+            # Enable syntax button only when there are no lexical errors
             self.sideBtnSyntax.configure(
                 state="normal",
                 fg_color="#1f538d"  # Blue background when enabled
@@ -656,38 +662,43 @@ class App(customtkinter.CTk):
     def sidebar_button_syntax(self):
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
-        codebox_content = self.codebox.get("1.0", "end-1c")
         
-        # First do lexical analysis
-        tokens, lexical_errors = run(codebox_content)
+        # Get the tokens from the lexical analyzer table
+        tokens = []
+        for widget in self.scrollable_frame.winfo_children():
+            if isinstance(widget, customtkinter.CTkFrame) and widget.grid_info()['row'] > 0:  # Skip header row
+                # Get token type and lexeme from the table
+                lexeme_label = widget.winfo_children()[0]
+                token_label = widget.winfo_children()[1]
+                
+                lexeme = lexeme_label.cget("text")
+                token_type = token_label.cget("text")
+                
+                # Create Token object with token type as type and lexeme as value
+                token = Token(TokenType[token_type], token_type)  # Use token_type instead of lexeme
+                tokens.append(token)
         
-        if lexical_errors:
-            self.append_terminal_output("Cannot perform syntax analysis due to lexical errors:", text_color="red")
-            for error in lexical_errors:
-                self.append_terminal_output(str(error), text_color="red")
-                if hasattr(error, 'line_number'):
-                    self.editor_frame.highlight_error(error.line_number, error.column)
-            self.sideBtnSemantic.configure(
-                state="disabled",
-                fg_color="#2B2B2B"  # Dark background when disabled
-            )
+        # If no tokens found, show error
+        if not tokens:
+            self.append_terminal_output("No tokens to analyze. Run lexical analysis first.", text_color="red")
             return
-
-        # If no lexical errors, proceed with syntax analysis
-        syntax_result = parse(tokens)
         
-        if isinstance(syntax_result, SyntaxError):
-            self.append_terminal_output(str(syntax_result), text_color="red")
-            self.editor_frame.highlight_error(syntax_result.line_number, syntax_result.column)
+        # If tokens found, proceed with syntax analysis
+        try:
+            result = parse(tokens)
+            if result:
+                self.append_terminal_output("No Syntax Errors", text_color="green")
+                self.sideBtnSemantic.configure(
+                    state="normal",
+                    fg_color="#1f538d"  # Blue background when enabled
+                )
+        except SyntaxError as e:
+            self.append_terminal_output(f"Syntax Error: {str(e)}", text_color="red")
+            if hasattr(e, 'line_number') and hasattr(e, 'column'):
+                self.editor_frame.highlight_error(e.line_number, e.column)
             self.sideBtnSemantic.configure(
                 state="disabled",
                 fg_color="#2B2B2B"  # Dark background when disabled
-            )
-        else:
-            self.append_terminal_output("No Syntax Errors", text_color="green")
-            self.sideBtnSemantic.configure(
-                state="normal",
-                fg_color="#1f538d"  # Blue background when enabled
             )
 
     def sidebar_button_semantic(self):

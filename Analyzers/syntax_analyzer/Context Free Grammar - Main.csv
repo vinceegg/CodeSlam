@@ -1,0 +1,253 @@
+1,<program>,→,<global_decl> <function_decl> <function_def> <team_block>
+2,<global_decl>,→,<global_declaration><global_decl>
+3,<global_decl>,→,λ
+4,<global_declaration>,→,<variable_dec>
+5,<global_declaration>,→,<const_dec>
+6,<global_declaration>,→,<array_dec>
+7,<variable_dec>,→,<feint_dec>
+8,<variable_dec>,→,<floater_dec>
+9,<variable_dec>,→,<chant_dec>
+10,<variable_dec>,→,<stat_dec>
+11,<feint_dec>,→,Feint @identifier <more_feint>;
+12,<more_feint>,→,λ
+13,<more_feint>,→,<feint_init><feint_init_end>
+14,<feint_init>,→,= <feint_lit>
+15,<feint_lit>,→,Feint Literal
+16,<feint_init_end>,→,λ
+17,<feint_init_end>,→,", @identifier <more_feint>"
+18,<floater_dec>,→,Floater @identifier <more_floater>;
+19,<more_floater>,→,λ
+20,<more_floater>,→,<floater_init><floater_init_end>
+21,<floater_init>,→,= <floater_lit>
+22,<floater_lit>,→,Floater Literal
+23,<floater_init_end>,→,λ
+24,<floater_init_end>,→,", @identifier <more_floater>"
+25,<chant_dec>,→,Chant @identifier <more_chant>;
+26,<more_chant>,→,λ
+27,<more_chant>,→,<chant_init><chant_init_end>
+28,<chant_init>,→,"= ""<chant_lit>"""
+29,<chant_lit>,→,Chant Literal
+30,<chant_init_end>,→,λ
+31,<chant_init_end>,→,", @identifier <more_chant>"
+32,<stat_dec>,→,Stat @identifier <more_stat>;
+33,<more_stat>,→,λ
+34,<more_stat>,→,<stat_init><stat_init_end>
+35,<stat_init>,→,= <stat_value>
+36,<stat_value>,→,Win
+37,<stat_value>,→,Loss
+38,<stat_init_end>,→,λ
+39,<stat_init_end>,→,", @identifier <more_stat>"
+40,<const_dec>,→,Const <variable_dec>
+41,<array_dec>,→,Zone <feint_array>
+42,<array_dec>,→,Zone <floater_array>
+43,<array_dec>,→,Zone <chant_array>
+44,<array_dec>,→,Zone <stat_array>
+45,<feint_array>,→,Feint @identifier [<feint_lit>]<2D_array><feint_array_init>;
+46,<2D_array>,→,λ
+47,<2D_array>,→,[<feint_lit>]
+48,<feint_array_init>,→,λ
+49,<feint_array_init>,→,= {<feint_row>}
+50,<feint_row>,→,<feint_lit><more_feint_lit>
+51,<feint_row>,→,{<feint_lit><more_feint_lit>} <2D_feint_row>
+52,<2D_feint_row>,→,λ
+53,<2D_feint_row>,→,", {<feint_lit><more_feint_lit>}"
+54,<more_feint_lit>,→,λ
+55,<more_feint_lit>,→,", <feint_lit><more_feint_lit>"
+56,<floater_array>,→,Floater @identifier [<feint_lit>]<2D_array><floater_array_init>;
+57,<floater_array_init>,→,λ
+58,<floater_array_init>,→,= {<floater_row>}
+59,<floater_row>,→,<floater_lit><more_floater_lit>
+60,<floater_row>,→,{<floater_lit><more_floater_lit>} <2D_floater_row>
+61,<2D_floater_row>,→,λ
+62,<2D_floater_row>,→,", {<floater_lit><more_floater_lit>}"
+63,<more_floater_lit>,→,λ
+64,<more_floater_lit>,→,", <floater_lit><more_floater_lit>"
+65,<chant_array>,→,Chant @identifier [<feint_lit>]<2D_array><chant_array_init>;
+66,<chant_array_init>,→,λ
+67,<chant_array_init>,→,= {<chant_row>}
+68,<chant_row>,→,"""<chant_lit>""<more_chant_lit>"
+69,<chant_row>,→,{<chant_lit><more_chant_lit>} <2D_chant_row>
+70,<2D_chant_row>,→,λ
+71,<2D_chant_row>,→,", {""<chant_lit>""<more_chant_lit>}"
+72,<more_chant_lit>,→,λ
+73,<more_chant_lit>,→,", ""<chant_lit>""<more_chant_lit>"
+74,<stat_array>,→,Stat @identifier [<feint_lit>]<2D_array><stat_array_init>;
+75,<stat_array_init>,→,λ
+76,<stat_array_init>,→,= {<stat_row>}
+77,<stat_row>,→,<stat_value><more_stat_value>
+78,<stat_row>,→,{<stat_value><more_stat_value>} <2D_stat_row>
+79,<2D_stat_row>,→,λ
+80,<2D_stat_row>,→,", {<stat_value><more_stat_value>}"
+81,<more_stat_value>,→,λ
+82,<more_stat_value>,→,", <stat_value><more_stat_value>"
+83,<function_decl>,→,λ
+84,<function_decl>,→,Wilt <function_declared>
+85,<function_decl>,→,Dunk <dunk_func_declared>
+86,<function_declared>,→,<feint_function>
+87,<function_declared>,→,<floater_function>
+88,<function_declared>,→,<chant_function>
+89,<function_declared>,→,<stat_function>
+90,<dunk_func_declared>,→,<dunk_function>
+91,<feint_function>,→,Feint @identifier(<feint_parameters>);
+92,<feint_parameters>,→,λ
+93,<feint_parameters>,→,<feint_param><feint_params>
+94,<feint_param>,→,Feint @identifier
+95,<feint_params>,→,", <feint_parameters>"
+96,<floater_function>,→,Floater @identifier(<floater_parameters>);
+97,<floater_parameters>,→,λ
+98,<floater_parameters>,→,<floater_param><floater_params>
+99,<floater_param>,→,Floater @identifier
+100,<floater_params>,→,", <floater_parameters>"
+101,<chant_function>,→,Chant @identifier(<chant_parameters>);
+102,<chant_parameters>,→,λ
+103,<chant_parameters>,→,<chant_param><chant_params>
+104,<chant_param>,→,Chant @identifier
+105,<chant_params>,→,", <chant_parameters>"
+106,<stat_function>,→,Stat @identifier(<stat_parameters>);
+107,<stat_parameters>,→,λ
+108,<stat_parameters>,→,<stat_param><stat_params>
+109,<stat_param>,→,Stat @identifier
+110,<stat_params,→,", <stat_parameters>"
+111,<dunk_function>,,@identifier (<dunk_parameters>);
+112,<dunk_parameters>,→,λ
+113,<dunk_parameters>,→,<dunk_param><dunk_params>
+114,<dunk_param>,→,@identifier
+115,<dunk_params>,→,", <dunk_parameters>"
+116,<function_def>,→,Wilt <function_defined> { <function_statements> <rebound_statement> }
+117,<function_def>,→,Dunk <function_defined> { <function_statements> }
+118,<function_defined>,→,@identifier(<function_param>)
+119,<function_param>,→,λ
+120,<function_param>,→,<param><params>
+121,<param>,→,@identifier
+122,<params>,→,", <function_param>"
+123,<function_statements>,→,<other_statements>
+124,<other_statements>,→,λ
+125,<other_statements>,→,<statement><other_statements>
+126,<other_statements>,→,<expression><other_statements>
+127,<statement>,→,λ
+128,<statement>,→,<variable_dec>
+129,<statement>,→,<announce_statement>
+130,<statement>,→,<inbound_statement>
+131,<statement>,→,<assignment_expression>
+132,<statement>,→,<dribble_statement>
+133,<statement>,→,<switch_statement>
+134,<statement>,→,<forward_statement>
+135,<statement>,→,<play_statement>
+136,<statement>,→,<run_play_statement>
+137,<statement>,→,<timeout_statement>
+138,<statement>,→,<resume_statement>
+139,<statement>,→,<increment>;
+140,<statement>,→,<decrement>;
+141,<rebound_statement>,→,Rebound <expression>;
+142,<announce_statement>,→,Announce(<outputs>);
+143,<outputs>,→,<output><other_outputs>
+144,<output>,→,<literal>
+145,<output>,→,<expression>
+146,<output>,→,@identifier
+147,<output>,→,<stat_value>
+148,<other_outputs>,→,λ
+149,<other_outputs>,→,& <outputs>
+150,<literal>,→,<feint_lit>
+151,<literal>,→,<floater_lit>
+152,<literal>,→,<nega_feint_lit>
+153,<literal>,→,<nega_floater_lit>
+154,<nega_feint_lit>,→,Negative Feint Literal
+155,<nega_floater_lit>,→,Negative Floater Literal
+156,<literal>,→,"""<chant_lit>"""
+157,<literal>,→,<stat_value>
+158,<expression>,→,<arithmetic_expression>
+159,<expression>,→,<relational_expression>
+160,<expression>,→,<logical_expression>
+161,<expression>,→,<assignment_expression>
+162,<expression>,→,<function_call>
+163,<arithmetic_expression>,→,<arith_term><more_arith_term>
+164,<arith_term>,→,<number>
+165,<arith_term>,→,( <arithmetic_expression> )
+166,<arith_term>,→,<number_type_cast>
+167,<number>,→,<feint_lit>
+168,<number>,→,<floater_lit>
+169,<number>,→,@identifier
+170,<number_type_cast>,→,<feint_type_casting>
+171,<number_type_cast>,→,<floater_type_casting>
+172,<other_type_cast>,→,<chant_type_casting>
+173,<other_type_cast>,→,<stat_type_casting>
+174,<feint_type_casting>,→,Feint(<arithmetic_expression>)
+175,<floater_type_casting>,→,Floater(<arithmetic_expression>)
+176,<chant_type_casting>,→,Chant(<literal>)
+177,<stat_type_casting>,→,Stat(<literal>)
+178,<more_arith_term>,→,λ
+179,<more_arith_term>,→,+ <arith_term><more_arith_term>
+180,<more_arith_term>,→,- <arith_term><more_arith_term>
+181,<more_arith_term>,→,* <arith_term><more_arith_term>
+182,<more_arith_term>,→,/ <arith_term><more_arith_term>
+183,<more_arith_term>,→,% <arith_term><more_arith_term>
+184,<relational_expression>,→,<relational_operand> <relational_operator> <relational_operand>
+185,<relational_operand>,→,<arithmetic_expression>
+186,<relational_operand>,→,<stat_value>
+187,<relational_operand>,→,"""<chant_lit>"""
+188,<relational_operand>,→,<number_type_cast>
+189,<relational_operand>,→,<other_type_cast>
+190,<relational_operator>,→,<
+191,<relational_operator>,→,>
+192,<relational_operator>,→,==
+193,<relational_operator>,→,<=
+194,<relational_operator>,→,>=
+195,<relational_operator>,→,!=
+196,<logical_expression>,→,<logic_term><more_logic_term>
+197,<logic_term>,→,NOT <logic_term>
+198,<logic_term>,→,( <logical_expression> )
+199,<logic_term>,→,<relational_expression>
+200,<more_logic_term>,→,λ
+201,<more_logic_term>,→,AND <logic_term><more_logic_term>
+202,<more_logic_term>,→,OR <logic_term><more_logic_term>
+203,<assignment_expression>,→,@identifier <assign_operator> <expression>;
+204,<assign_operator>,→,=
+205,<assign_operator>,→,+=
+206,<assign_operator>,→,-=
+207,<assign_operator>,→,*=
+208,<assign_operator>,→,/=
+209,<assign_operator>,→,%=
+210,<function_call>,→,@identifier(<arguments>)
+211,<arguments>,→,<arg><more_args>
+212,<arg>,→,<literal>
+213,<arg>,→,@identifier
+214,<more_args>,→,", <arg><more_args>"
+215,<inbound_statement>,→,Inbound(<inputs>);
+216,<inputs>,→,<input><id_input>
+217,<input>,→,"""<chant_lit>"""
+218,<id_input>,→,", @identifier"
+219,<dribble_statement>,→,Dribble (<condition>) { <other_statements> } <pass_statement> <shoot_statement>
+220,<condition>,→,<relational_expression>
+221,<condition>,→,<logical_expression>
+222,<pass_statement>,→,Pass (<condition>) {<other_statements>} <pass_statement>
+223,<pass_statement>,→,λ
+224,<shoot_statement>,→,Shoot {<other_statements>}
+225,<shoot_statement>,→,λ
+226,<switch_statement>,→,Switch (@identifier) { <get_case>  <get_default>}
+227,<get_case> ,→,Get <get_value> : <other_statements> <timeout_statement> <get_case_end>
+228,<get_value>,→,<feint_lit>
+229,<get_value>,→,"""<chant_lit>"""
+230,<timeout_statement>,→,Timeout;
+231,<get_case_end>,→,λ
+232,<get_case_end>,→,<get_case>
+233,<get_default> ,→,Default: <other_statements>  
+234,<get_default> ,→,λ
+235,<forward_statement>,→,"Forward (@identifier = <forward_lit>; <condition>; <forward_inc_dec> ) { <other_statements>}
+"
+236,<foward_lit>,→,Feint literal
+237,<foward_lit>,→,@identifier 
+238,<forward_inc_dec>,→,<increment>
+239,<forward_inc_dec>,→,<decrement>
+240,<forward_inc_dec>,→,@identifier <assign_operator> <forward_lit>
+241,<increment>,→,@identifier++
+242,<increment>,→,++@identifier
+243,<decrement>,→,@identifier--
+244,<decrement>,→,--@identifier
+245,<resume_statement>,→,Resume;
+246,<play_statement>,→,Play (<condition>){<other_statements>}
+247,<run_play_statement>,→,Run{<other_statements>} Play (<condition>);
+248,<team_block>,,Team() { <local_decl> <other_statements> }
+249,<local_decl>,→,<local_declaration><local_decl>
+250,<local_decl>,→,λ
+251,<local_declaration>,→,<variable_dec>
+252,<local_declaration>,→,<array_dec>

@@ -1,2195 +1,501 @@
 from Analyzers.lexical_analyzer.tokens import TokenType, Token
-from .errors import create_syntax_error, SyntaxError
+from typing import List, Optional
+
+class SyntaxError(Exception):
+    """Custom exception for syntax errors"""
+    def __init__(self, message, line_number=None, column=None):
+        super().__init__(message)
+        self.line_number = line_number
+        self.column = column
 
 class Parser:
-    def __init__(self, tokens):
-        # Keep all tokens including newlines for accurate line tracking
+    # Define First Sets as class variables
+    FIRST_SETS = {
+        'program': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
+                   TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
+        'global_decl': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
+                       TokenType.CONST, TokenType.ZONE},
+        'function_decl': {TokenType.WILT, TokenType.DUNK},
+        'function_def': {TokenType.WILT, TokenType.DUNK},
+        'team_block': {TokenType.TEAM},
+        'statement': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
+                     TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH,
+                     TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.TIMEOUT,
+                     TokenType.RESUME},
+        'expression': {TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT,
+                      TokenType.VAR_INIT, TokenType.NOT_OP},
+        'variable_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+        'array_dec': {TokenType.ZONE},
+        'const_dec': {TokenType.CONST}
+    }
+
+    def __init__(self, tokens: List[Token]):
         self.tokens = tokens
-        self.current_token_index = -1
-        self.current_token = None
-        self.current_line = 1  # Track current line
-        self.current_column = 0  # Track current column
-        # Group tokens by line for better pattern recognition
-        self.tokens_by_line = self.group_tokens_by_line()
-        self.current_line_tokens = []
-        self.current_line_index = 0
-        self.advance()
+        self.current = 0
+        self.current_token = self.tokens[0] if tokens else None
+        self.line_number = 1  # Track line numbers
+        self.column = 0      # Track column position
+        self.expected_tokens = set()  # Add this to track expected tokens
 
-    def group_tokens_by_line(self):
-        """Group tokens by line number for better pattern recognition"""
-        tokens_by_line = []
-        current_line = []
-        current_line_num = 1
-
-        for token in self.tokens:
-            if token.type == TokenType.NEWLINE.value:
-                if current_line:  # Only add non-empty lines
-                    tokens_by_line.append(current_line)
-                current_line = []
-                current_line_num += 1
-            else:
-                if token.type not in [TokenType.SPACE.value, TokenType.TAB.value]:
-                    current_line.append(token)
-        
-        # Add the last line if it's not empty
-        if current_line:
-            tokens_by_line.append(current_line)
-            
-        return tokens_by_line
-
-    def get_line_pattern(self, line_tokens):
-        """Extract the pattern of token types in a line for better recognition"""
-        return [token.type for token in line_tokens]
-
-    def is_array_declaration_pattern(self, line_tokens):
-        """Check if a line matches the pattern of an array declaration"""
-        if len(line_tokens) < 4:
-            return False
-            
-        # Check for basic pattern: DataType VAR_INIT ARRAY_INDEX_LEFT ...
-        pattern = [token.type for token in line_tokens[:3]]
-        data_types = [TokenType.FEINT.value, TokenType.FLOATER.value, TokenType.CHANT.value, TokenType.STAT.value]
-        
-        return (pattern[0] in data_types and 
-                pattern[1] == TokenType.VAR_INIT.value and 
-                pattern[2] == TokenType.ARRAY_INDEX_LEFT.value)
-
-    def error(self, message):
-        """Create a syntax error with current token's position"""
-        if self.current_token:
-            return SyntaxError(message, self.current_line, self.current_column)
-        return SyntaxError(message, self.current_line, self.current_column)
-
-    def advance(self):
-        """Move to next token and track position"""
-        self.current_token_index += 1
-        while self.current_token_index < len(self.tokens):
-            self.current_token = self.tokens[self.current_token_index]
-            
-            # Update position tracking
-            if self.current_token.type == TokenType.NEWLINE.value:
-                self.current_line += 1
-                self.current_column = 0
-            else:
-                self.current_column += len(str(self.current_token.value)) if hasattr(self.current_token, 'value') else 0
-                
-            # Skip spaces and tabs
-            if self.current_token.type in [TokenType.SPACE.value, TokenType.TAB.value]:
-                self.current_token_index += 1
-                continue
-                
-            return self.current_token
-            
-        self.current_token = None
-        return None
-
-    def peek(self):
-        """Look ahead to next non-whitespace token"""
-        index = self.current_token_index + 1
-        while index < len(self.tokens):
-            if self.tokens[index].type not in [TokenType.SPACE.value, TokenType.TAB.value]:
-                return self.tokens[index]
-            index += 1
-        return None
-    
     def skip_whitespace_and_comments(self):
         """Helper method to skip whitespace, newlines and comments"""
         while self.current_token and self.current_token.type in [
-            TokenType.SPACE.value,
-            TokenType.TAB.value,
-            TokenType.NEWLINE.value,
-            TokenType.COMMENT.value,
-            TokenType.MULTI_COMMENT.value
+            TokenType.SPACE,
+            TokenType.TAB,
+            TokenType.NEWLINE,
+            TokenType.COMMENT,
+            TokenType.MULTI_COMMENT
         ]:
             self.advance()
 
-    def parse(self):
-        """Entry point for parsing"""
-        try:
+    def advance(self) -> None:
+        """Advance to next token and update position tracking"""
+        self.current += 1
+        if self.current < len(self.tokens):
+            self.current_token = self.tokens[self.current]
+            # Update line and column based on token position
+            if hasattr(self.current_token, 'line'):
+                self.line_number = self.current_token.line
+            if hasattr(self.current_token, 'column'):
+                self.column = self.current_token.column
+            # Skip any whitespace or comments after advancing
             self.skip_whitespace_and_comments()
-            
-            # Parse global declarations first
-            global_declarations = self.parse_global_declarations()
-            if isinstance(global_declarations, SyntaxError):
-                return global_declarations  
-            
-            self.skip_whitespace_and_comments()
-            
-            # Parse function declarations
-            function_declarations = self.parse_function_decls()
-            if isinstance(function_declarations, SyntaxError):
-                return function_declarations
-            
-            self.skip_whitespace_and_comments()
-            
-            # Parse function definitions
-            function_definitions = self.parse_function_definitions()
-            if isinstance(function_definitions, SyntaxError):
-                return function_definitions
-            
-            self.skip_whitespace_and_comments()
-            
-            # Parse Team block
-            if not self.current_token or self.current_token.type != TokenType.TEAM.value:
-                return self.error("Expected 'Team' block")
-            
-            team_block = self.parse_team_block()
-            if isinstance(team_block, SyntaxError):
-                return team_block
-            
-            # After parsing the Team block, there should be no more tokens
-            # except possibly whitespace, newlines, or comments
-            self.skip_whitespace_and_comments()
-            if self.current_token:
-                return self.error("Unexpected content after Team block")
-            
-            return {
-                'type': 'program',
-                'global_declarations': global_declarations,
-                'function_declarations': function_declarations,
-                'function_definitions': function_definitions,
-                'team_block': team_block
-            }
-            
-        except Exception as e:
-            return self.error(str(e))
-
-
-    def parse_team_block(self):
-        """Parse Team block including local declarations"""
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        self.advance()  # Move past Team
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after 'Team'")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after 'Team('")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' after 'Team()'")
-        self.advance()
-
-        # Parse local declarations first
-        local_declarations = self.parse_local_declarations()
-        if isinstance(local_declarations, SyntaxError):
-            return local_declarations
-
-        # Parse statements
-        statements = self.parse_statements()
-        if isinstance(statements, SyntaxError):
-            return statements
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' at end of Team block")
-        self.advance()
-
-        return {
-            'type': 'team_block',
-            'local_declarations': local_declarations,
-            'statements': statements,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_statements(self):
-        """Parse multiple statements"""
-        statements = []
-        
-        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            # Skip whitespace, newlines, and comments between statements
-            self.skip_whitespace_and_comments()
-            
-            if self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-                statement = self.parse_statement()
-                if isinstance(statement, SyntaxError):
-                    return statement
-                if statement:  # Skip None results from empty statements
-                    statements.append(statement)
-                
-        return statements
-
-    def skip_whitespace_and_newlines(self):
-        """Helper method to skip whitespace and newlines"""
-        while self.current_token and self.current_token.type in [
-            TokenType.SPACE.value, 
-            TokenType.TAB.value,
-            TokenType.NEWLINE.value
-        ]:
-            self.advance()
-    
-    # def parse_global_decl(self):
-    #     """Parse global declarations according to rules 2-6"""
-    #     global_declared = self.parse_global_declared()
-    #     if isinstance(global_declared, SyntaxError):
-    #         return global_declared
-        
-    #     global_decl = self.parse_global_decl()
-    #     if isinstance(global_decl, SyntaxError):
-    #         return global_decl
-        
-    #     return {
-    #         'type': 'global_declaration',
-    #         'global_declared': global_declared,
-    #         'global_decl': global_decl
-    #     }
-    
-    def parse_global_declarations(self):
-        """Parse global declarations according to rules 2-6"""
-        declarations = []
-        
-        while self.current_token and (self.is_data_type(self.current_token.type) or 
-                                    self.current_token.type == TokenType.CONST.value):
-            # Skip if we hit Team block
-            next_token = self.peek()
-            if next_token and next_token.type == TokenType.WILT.value:
-                break
-            if next_token and next_token.type == TokenType.TEAM.value:
-                break
-            
-            # Parse global declaration based on type
-            declaration = self.parse_global_declared()
-            if isinstance(declaration, SyntaxError):
-                return declaration
-            declarations.append(declaration)
-            
-            self.skip_whitespace_and_comments()
-            
-        return declarations
-
-    def parse_global_declared(self):
-        """Parse individual global declaration according to rules 4-6"""
-        if not self.current_token:
-            return self.error("Unexpected end of file")
-            
-        # Get all tokens in the current line to analyze the pattern
-        line_tokens = []
-        saved_index = self.current_token_index
-        
-        # Collect tokens until end of line or end of file
-        while self.current_token_index < len(self.tokens):
-            token = self.tokens[self.current_token_index]
-            if token.type == TokenType.NEWLINE.value:
-                break
-            if token.type not in [TokenType.SPACE.value, TokenType.TAB.value]:
-                line_tokens.append(token)
-            self.current_token_index += 1
-        
-        # Reset position to start of line
-        self.current_token_index = saved_index
-        self.current_token = self.tokens[self.current_token_index]
-        
-        # Check for specific patterns
-        if self.current_token.type == TokenType.CONST.value:
-            return self.parse_constant_declaration()
-        elif line_tokens and self.is_array_declaration_pattern(line_tokens):
-            return self.parse_array_declaration(is_global=True)
         else:
-            return self.parse_variable_declaration(is_global=True)
+            self.current_token = None
 
-    def parse_local_declarations(self):
-        """Parse local declarations according to rules 46-49"""
-        declarations = []
-        
-        while self.current_token and self.is_data_type(self.current_token.type):
-            # Check if this is the start of a statement
-            next_token = self.peek()
-            if next_token and next_token.type in [
-                TokenType.ANNOUNCE.value,
-                TokenType.INBOUND.value,
-                TokenType.FORWARD.value,
-                TokenType.PLAY.value,
-                TokenType.RUN.value,
-                TokenType.SWITCH.value
-            ]:
-                break
-            
-            # Parse local declaration
-            declaration = self.parse_local_declared()
-            if isinstance(declaration, SyntaxError):
-                return declaration
-            declarations.append(declaration)
-            
-            self.skip_whitespace_and_comments()
-            
-        return declarations
-
-    def parse_local_declared(self):
-        """Parse individual local declaration according to rules 48-49"""
-        if not self.current_token:
-            return self.error("Unexpected end of file")
-            
-        # Get all tokens in the current line to analyze the pattern
-        line_tokens = []
-        saved_index = self.current_token_index
-        
-        # Collect tokens until end of line or end of file
-        while self.current_token_index < len(self.tokens):
-            token = self.tokens[self.current_token_index]
-            if token.type == TokenType.NEWLINE.value:
-                break
-            if token.type not in [TokenType.SPACE.value, TokenType.TAB.value]:
-                line_tokens.append(token)
-            self.current_token_index += 1
-        
-        # Reset position to start of line
-        self.current_token_index = saved_index
-        self.current_token = self.tokens[self.current_token_index]
-        
-        # Check for array declaration pattern
-        if line_tokens and self.is_array_declaration_pattern(line_tokens):
-            return self.parse_array_declaration(is_global=False)
-        else:
-            return self.parse_variable_declaration(is_global=False)
-
-    def parse_function_decls(self):
-        """Parse function declarations"""
-        declarations = []
-        
-        while self.current_token and self.current_token.type == TokenType.WILT.value:
-            # Peek ahead to check if this is a declaration (has return type) or definition
-            next_token = self.peek()
-            if not next_token or not self.is_data_type(next_token.type):
-                break  # This is a definition, not a declaration
-            
-            # Parse function declaration
-            declaration = self.parse_function_declaration()
-            if isinstance(declaration, SyntaxError):
-                return declaration
-            declarations.append(declaration)
-            
-            self.skip_whitespace_and_comments()
-            
-        return declarations
-
-    def parse_function_declaration(self):
-        """Parse function declaration"""
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        # Check for Wilt keyword
-        if not self.current_token or self.current_token.type != TokenType.WILT.value:
-            return self.error("Expected 'Wilt' keyword for function declaration")
-        self.advance()
-        
-        # Parse return type
-        if not self.is_data_type(self.current_token.type):
-            return self.error("Expected return type for function declaration")
-        return_type = self.current_token.value
-        self.advance()
-
-        # Parse function name (must be VAR_INIT with @ prefix)
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected function name with @ prefix")
-        function_name = self.current_token.value
-        self.advance()
-
-        # Parse parameter list
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after function name")
-        self.advance()
-
-        parameters = self.parse_parameters()
-        if isinstance(parameters, SyntaxError):
-            return parameters
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after parameters")
-        self.advance()
-
-        # Function declarations must end with semicolon
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after function declaration")
-        self.advance()
-
-        return {
-            'type': 'function_declaration',
-            'return_type': return_type,
-            'name': function_name,
-            'parameters': parameters,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_function_definitions(self):
-        """Parse function definitions"""
-        definitions = []
-        
-        while self.current_token and self.current_token.type == TokenType.WILT.value:
-            # Skip any whitespace or comments before the function definition
-            self.skip_whitespace_and_comments()
-            
-            defn = self.parse_function_definition()
-            if isinstance(defn, SyntaxError):
-                return defn
-            definitions.append(defn)
-            
-            # Skip any whitespace or comments after the function definition
-            self.skip_whitespace_and_comments()
-            
-            # Check if we've reached the Team block
-            if self.current_token and self.current_token.type == TokenType.TEAM.value:
-                break
-            
-        return definitions
-
-    def parse_function_definition(self):
-        """Parse function definition"""
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        # Check for Wilt keyword
-        if not self.current_token or self.current_token.type != TokenType.WILT.value:
-            return self.error("Expected 'Wilt' keyword for function definition")
-        self.advance()
-        
-        # Parse function name (must be VAR_INIT with @ prefix)
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected function name with @ prefix")
-        function_name = self.current_token.value
-        self.advance()
-
-        # Parse parameter list
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after function name")
-        self.advance()
-
-        # Parse simplified parameters (just variable names)
-        parameters = self.parse_simple_parameters()
-        if isinstance(parameters, SyntaxError):
-            return parameters
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after parameters")
-        self.advance()
-
-        # Parse function body
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' after function header")
-        self.advance()
-
-        # Parse statements
-        statements = []
-        rebound_statement = None
-        
-        self.skip_whitespace_and_comments()
-        
-        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            # Check for Rebound statement
-            if self.current_token.type == TokenType.REBOUND.value:
-                if rebound_statement:
-                    return self.error("Multiple Rebound statements not allowed")
-                rebound_statement = self.parse_rebound()
-                if isinstance(rebound_statement, SyntaxError):
-                    return rebound_statement
-                break  # Rebound must be the last statement
-            
-            statement = self.parse_statement()
-            if isinstance(statement, SyntaxError):
-                return statement
-            if statement:  # Skip None results from empty statements
-                statements.append(statement)
-            
-            self.skip_whitespace_and_comments()
-        
-        self.skip_whitespace_and_comments()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' at end of function")
-        self.advance()
-
-        return {
-            'type': 'function_definition',
-            'name': function_name,
-            'parameters': parameters,
-            'body': statements,
-            'rebound': rebound_statement,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_simple_parameters(self):
-        """Parse function parameters without types"""
-        parameters = []
-        
-        while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-            # Parse parameter name (must be VAR_INIT with @ prefix)
-            if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-                return self.error("Expected parameter name with @ prefix")
-            param_name = self.current_token.value
-            self.advance()
-
-            parameters.append({
-                'name': param_name
-            })
-
-            # Check for more parameters
-            if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                self.advance()
-                continue
-            break
-
-        return parameters
-
-    def parse_parameters(self):
-        """Parse function parameters"""
-        parameters = []
-        
-        while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-            # Parse parameter type
-            if not self.is_data_type(self.current_token.type):
-                return self.error("Expected parameter type")
-            param_type = self.current_token.value
-            self.advance()
-
-            # Parse parameter name (must be VAR_INIT with @ prefix)
-            if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-                return self.error("Expected parameter name with @ prefix")
-            param_name = self.current_token.value
-            self.advance()
-
-            parameters.append({
-                'type': param_type,
-                'name': param_name
-            })
-
-            # Check for more parameters
-            if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                self.advance()
-                continue
-            break
-
-        return parameters
-
-    def parse_function_body(self):
-        """Parse function body including Rebound statement"""
-        statements = []
-        
-        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            if self.current_token.type == TokenType.REBOUND.value:
-                rebound = self.parse_rebound()
-                if isinstance(rebound, SyntaxError):
-                    return rebound
-                statements.append(rebound)
-                break
-                
-            statement = self.parse_statement()
-            if isinstance(statement, SyntaxError):
-                return statement
-            if statement:
-                statements.append(statement)
-                
-        return statements
-
-    def parse_rebound(self):
-        """Parse Rebound statement"""
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()
-
-        expression = self.parse_expression()
-        if isinstance(expression, SyntaxError):
-            return expression
-
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after Rebound statement")
-        self.advance()
-
-        return {
-            'type': 'rebound',
-            'value': expression,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def is_data_type(self, token_type):
-        """Check if token is a data type"""
-        return token_type in [
-            TokenType.FEINT.value,
-            TokenType.FLOATER.value,
-            TokenType.CHANT.value,
-            TokenType.STAT.value
-        ]
-
-    def parse_statement(self):
-        """Parse individual statements according to rules 56-65"""
-        if not self.current_token:
-            return self.error("Unexpected end of file")
-
-        # Get all tokens in the current line to analyze the pattern
-        line_tokens = []
-        saved_index = self.current_token_index
-        
-        # Collect tokens until end of line or end of file
-        while self.current_token_index < len(self.tokens):
-            token = self.tokens[self.current_token_index]
-            if token.type == TokenType.NEWLINE.value:
-                break
-            if token.type not in [TokenType.SPACE.value, TokenType.TAB.value]:
-                line_tokens.append(token)
-            self.current_token_index += 1
-        
-        # Reset position to start of line
-        self.current_token_index = saved_index
-        self.current_token = self.tokens[self.current_token_index]
-        
-        # Check for array declaration pattern
-        if line_tokens and self.is_array_declaration_pattern(line_tokens):
-            return self.parse_array_declaration(is_global=False)
-            
-        # If not an array declaration, proceed with normal token-by-token parsing
-        token_type = self.current_token.type
-        
-        if self.is_data_type(token_type):
-            return self.parse_variable_declaration(is_global=False)
-        elif token_type == TokenType.ANNOUNCE.value:
-            return self.parse_announce()
-        elif token_type == TokenType.INBOUND.value:
-            return self.parse_inbound()
-        elif token_type == TokenType.FORWARD.value:
-            return self.parse_forward()
-        elif token_type == TokenType.PLAY.value:
-            return self.parse_play()
-        elif token_type == TokenType.RUN.value:
-            return self.parse_run_play()
-        elif token_type == TokenType.DRIBBLE.value:  # Add Dribble statement support
-            return self.parse_dribble()
-        elif token_type == TokenType.VAR_INIT.value:
-            # Check next token to determine if it's a function call or assignment
-            next_token = self.peek()
-            if next_token and next_token.type == TokenType.LEFT_PAREN.value:
-                return self.parse_function_call()
-            return self.parse_assignment()
-        elif token_type == TokenType.SWITCH.value:
-            return self.parse_switch()
-        elif token_type == TokenType.COMMENT.value:
-            self.advance()
+    def peek(self) -> Optional[Token]:
+        """Look at next token without advancing"""
+        if self.current + 1 >= len(self.tokens):
             return None
-        else:
-            return self.error(f"Unexpected token: {self.current_token.value}")
+        return self.tokens[self.current + 1]
 
-    def parse_variable_declaration(self, is_global=False):
-        """Parse variable declarations according to rules 11-14 and 82"""
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        data_type = self.current_token.value
-        self.advance()
-
-        declarations = []
-        
-        # Parse first variable
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error(f"Expected variable name after {data_type}")
-        
-        while True:
-            var_name = self.current_token.value
+    def match(self, expected_type: TokenType) -> bool:
+        """Check if current token matches expected type"""
+        if self.current_token and self.current_token.type == expected_type:
             self.advance()
+            return True
+        return False
 
-            # Handle initialization if present
-            value = None
-            if self.current_token and self.current_token.type == TokenType.ASSIGN.value:
-                self.advance()
-                
-                # Parse the initialization value - can be an expression, function call, etc.
-                value = self.parse_expression()
-                if isinstance(value, SyntaxError):
-                    return value
-
-            declarations.append({
-                'name': var_name,
-                'value': value
-            })
-
-            # Check for more variables (,)
-            if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                self.advance()
-                if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-                    return self.error("Expected variable name after comma")
-                continue
-            break
-
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after variable declaration")
-        self.advance()
-
-        return {
-            'type': 'variable_declaration',
-            'data_type': data_type,
-            'declarations': declarations,
-            'is_global': is_global,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_announce(self):
-        """Parse Announce statement"""
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after 'Announce'")
-        self.advance()
-
-        args = self.parse_announce_args()
-        if isinstance(args, SyntaxError):
-            return args
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after Announce arguments")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after Announce statement")
-        self.advance()
-
-        return {
-            'type': 'announce',
-            'arguments': args,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_announce_args(self):
-        """Parse Announce statement arguments including string concatenation"""
-        args = []
-        
-        if not self.current_token or self.current_token.type == TokenType.RIGHT_PAREN.value:
-            return args  # Empty arguments list is valid
-            
-        # Parse the first expression
-        expr = self.parse_expression()
-        if isinstance(expr, SyntaxError):
-            return expr
-        args.append(expr)
-        
-        # Check for string concatenation with &
-        while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-            # Must have & for concatenation
-            if self.current_token.type != TokenType.CHANT_CONCAT.value:
-                return self.error("Expected '&' operator for string concatenation")
-                
-            self.advance()  # Move past &
-            
-            # Parse the next expression after &
-            next_expr = self.parse_expression()
-            if isinstance(next_expr, SyntaxError):
-                return next_expr
-            args.append({
-                'type': 'concatenation',
-                'operator': '&',
-                'value': next_expr
-            })
-            
-        return args
-
-    """Inbound Syntax : Inbound("String", @id);"""
-    def parse_inbound(self):
-        """Parse Inbound statement"""
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after 'Inbound'")
-        self.advance()
-
-        args = self.parse_inbound_args()
-        if isinstance(args, SyntaxError):
-            return args
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after Inbound arguments")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after Inbound statement")
-        self.advance()
-
-        return {
-            'type': 'inbound',
-            'arguments': args,
-            'line': start_line,
-            'column': start_column
-        }
-    
-    def parse_inbound_args(self):
-        """Parse Inbound statement arguments"""
-        args = []
-
-        while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-            expr = self.parse_expression()
-            if isinstance(expr, SyntaxError):
-                return expr
-            args.append(expr)
-            
-            if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                self.advance()
-                continue
-            break
-
-        return args
-        
-    def parse_expression(self):
-        """Parse expressions including string concatenation"""
-        left = self.parse_logical()
-        if isinstance(left, SyntaxError):
-            return left
-        
-        # Handle string concatenation with &
-        while self.current_token and self.current_token.type == TokenType.CHANT_CONCAT.value:
-            operator = self.current_token.value
-            self.advance()
-            
-            right = self.parse_logical()
-            if isinstance(right, SyntaxError):
-                return right
-            
-            left = {
-                'type': 'concatenation',
-                'operator': operator,
-                'left': left,
-                'right': right,
-                'line': self.current_line,
-                'column': self.current_column
-            }
-        
-        return left
-
-    def parse_logical(self):
-        """Parse logical operations (AND, OR, NOT)"""
-        left = self.parse_relational()
-        if isinstance(left, SyntaxError):
-            return left
-        
-        while self.current_token and self.current_token.type in [
-            TokenType.AND_OP.value,
-            TokenType.OR_OP.value,
-            TokenType.NOT_OP.value
-        ]:
-            operator = self.current_token.value
-            self.advance()
-            
-            right = self.parse_relational()
-            if isinstance(right, SyntaxError):
-                return right
-            
-            left = {
-                'type': 'logical_operation',
-                'operator': operator,
-                'left': left,
-                'right': right
-            }
-        
-        return left
-
-    def parse_relational(self):
-        """Parse relational operations (>, <, >=, <=, ==, !=)"""
-        left = self.parse_arithmetic()
-        if isinstance(left, SyntaxError):
-            return left
-        
-        while self.current_token and self.current_token.type in [
-            TokenType.GREATER_THAN.value,
-            TokenType.LESS_THAN.value,
-            TokenType.GREATER_EQUAL.value,
-            TokenType.LESS_EQUAL.value,
-            TokenType.EQUAL.value,
-            TokenType.NOT_EQUAL.value
-        ]:
-            operator = self.current_token.value
-            self.advance()
-            
-            right = self.parse_arithmetic()
-            if isinstance(right, SyntaxError):
-                return right
-            
-            left = {
-                'type': 'comparison',
-                'operator': operator,
-                'left': left,
-                'right': right
-            }
-        
-        return left
-
-    def parse_arithmetic(self):
-        """Parse arithmetic operations (+, -, *, /, %)"""
-        left = self.parse_term()
-        if isinstance(left, SyntaxError):
-            return left
-        
-        while self.current_token and self.current_token.type in [
-            TokenType.ADD.value,
-            TokenType.SUB.value
-        ]:
-            operator = self.current_token.value
-            self.advance()
-            
-            right = self.parse_term()
-            if isinstance(right, SyntaxError):
-                return right
-            
-            left = {
-                'type': 'arithmetic_operation',
-                'operator': operator,
-                'left': left,
-                'right': right
-            }
-        
-        return left
-
-    def parse_term(self):
-        """Parse term operations (*, /, %)"""
-        left = self.parse_factor()
-        if isinstance(left, SyntaxError):
-            return left
-        
-        while self.current_token and self.current_token.type in [
-            TokenType.MUL.value,
-            TokenType.DIV.value,
-            TokenType.MOD.value
-        ]:
-            operator = self.current_token.value
-            self.advance()
-            
-            right = self.parse_factor()
-            if isinstance(right, SyntaxError):
-                return right
-            
-            left = {
-                'type': 'arithmetic_operation',
-                'operator': operator,
-                'left': left,
-                'right': right
-            }
-        
-        return left
-
-    def parse_factor(self):
-        """Parse factors (primary expressions, unary operations, and type casting)"""
-        if not self.current_token:
-            return self.error("Expected expression")
-        
-        # Handle type casting
-        if self.current_token.type in [TokenType.FEINT.value, TokenType.FLOATER.value, 
-                                      TokenType.CHANT.value, TokenType.STAT.value]:
-            return self.parse_type_cast()
-        
-        # Handle negative numeric literals directly
-        if self.current_token.type in [TokenType.NEGAFEINT.value, TokenType.NEGAFLOATER.value]:
-            value = self.current_token.value
-            self.advance()
-            return {
-                'type': 'numeric_literal',
-                'value': value
-            }
-        
-        # Handle unary operations
-        if self.current_token.type in [TokenType.ADD.value, TokenType.SUB.value, TokenType.NOT_OP.value]:
-            operator = self.current_token.value
-            self.advance()
-            
-            operand = self.parse_factor()
-            if isinstance(operand, SyntaxError):
-                return operand
-            
-            return {
-                'type': 'unary_operation',
-                'operator': operator,
-                'operand': operand
-            }
-        
-        return self.parse_primary()
-
-    def parse_type_cast(self):
-        """Parse type casting expressions"""
-        cast_type = self.current_token.value
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error(f"Expected '(' after {cast_type} for type casting")
-        self.advance()
-
-        value = self.parse_expression()
-        if isinstance(value, SyntaxError):
-            return value
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error(f"Expected ')' after value in {cast_type} type cast")
-        self.advance()
-
-        return {
-            'type': 'type_cast',
-            'cast_type': cast_type,
-            'value': value,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_primary(self):
-        """Parse primary expressions (variables, literals, parenthesized expressions, function calls)"""
-        if not self.current_token:
-            return self.error("Expected expression")
-
-        token = self.current_token
-        
-        # Handle variables with @ prefix and function calls
-        if token.type == TokenType.VAR_INIT.value:
-            var_name = token.value
-            self.advance()
-            
-            # Check if this is a function call
-            if self.current_token and self.current_token.type == TokenType.LEFT_PAREN.value:
-                self.advance()  # Move past (
-                
-                # Parse arguments
-                arguments = []
-                while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-                    argument = self.parse_expression()
-                    if isinstance(argument, SyntaxError):
-                        return argument
-                    arguments.append(argument)
-                    
-                    # Check for more arguments
-                    if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                        self.advance()
-                        continue
-                    elif self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-                        return self.error("Expected ',' or ')' in function arguments")
-                
-                if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-                    return self.error("Expected ')' after function arguments")
-                self.advance()
-                
-                return {
-                    'type': 'function_call',
-                    'name': var_name,
-                    'arguments': arguments
-                }
-            
-            # Check if this is an array element access
-            array_indices = []
-            while self.current_token and self.current_token.type == TokenType.ARRAY_INDEX_LEFT.value:
-                self.advance()  # Move past [
-                
-                # Parse index expression
-                index = self.parse_expression()
-                if isinstance(index, SyntaxError):
-                    return index
-                    
-                if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_RIGHT.value:
-                    return self.error("Expected ']' after array index")
-                self.advance()  # Move past ]
-                
-                array_indices.append(index)
-            
-            # Return appropriate node based on whether it's a variable or array element
-            if array_indices:
-                return {
-                    'type': 'array_element',
-                    'name': var_name,
-                    'indices': array_indices
-                }
-            else:
-                return {
-                    'type': 'variable',
-                    'name': var_name
-                }
-        
-        # Handle numeric literals
-        elif token.type in [TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value, TokenType.NEGAFEINT.value, TokenType.NEGAFLOATER.value]:
-            value = token.value
-            self.advance()
-            return {
-                'type': 'numeric_literal',
-                'value': value
-            }
-        
-        # Handle string literals
-        elif token.type == TokenType.CHANTLIT.value:
-            value = token.value
-            self.advance()
-            return {
-                'type': 'string_literal',
-                'value': value
-            }
-        
-        # Handle boolean literals
-        elif token.type in [TokenType.WIN.value, TokenType.LOSS.value]:
-            value = token.value
-            self.advance()
-            return {
-                'type': 'boolean_literal',
-                'value': value
-            }
-        
-        # Handle parenthesized expressions
-        elif token.type == TokenType.LEFT_PAREN.value:
-            self.advance()
-            expr = self.parse_expression()
-            if isinstance(expr, SyntaxError):
-                return expr
-            
-            if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-                return self.error("Expected ')'")
-            self.advance()
-            return expr
-        
-        else:
-            return self.error(f"Unexpected token in expression: {token.value}")
-
-    def parse_function_call(self):
-        """Parse function call as a statement according to rule 228"""
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        # Get function name
-        function_name = self.current_token.value
-        self.advance()
-
-        # Parse argument list
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after function name")
-        self.advance()
-
-        arguments = []
-        while self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-            # Parse argument according to rules 233-237
-            if self.current_token.type in [
-                TokenType.FEINTLIT.value, 
-                TokenType.FLOATERLIT.value, 
-                TokenType.NEGAFEINT.value, 
-                TokenType.NEGAFLOATER.value,
-                TokenType.CHANTLIT.value, 
-                TokenType.WIN.value, 
-                TokenType.LOSS.value
-            ]:
-                # Literal argument
-                arguments.append({
-                    'type': 'literal',
-                    'value': self.current_token.value
-                })
-                self.advance()
-            elif self.current_token.type == TokenType.VAR_INIT.value:
-                # Variable or array element argument
-                var_name = self.current_token.value
-                self.advance()
-                
-                # Check for array access
-                if self.current_token and self.current_token.type == TokenType.ARRAY_INDEX_LEFT.value:
-                    self.advance()
-                    index = self.parse_expression()
-                    if isinstance(index, SyntaxError):
-                        return index
-                        
-                    if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_RIGHT.value:
-                        return self.error("Expected ']' after array index")
-                    self.advance()
-                    
-                    arguments.append({
-                        'type': 'array_element',
-                        'name': var_name,
-                        'index': index
-                    })
-                else:
-                    arguments.append({
-                        'type': 'variable',
-                        'name': var_name
-                    })
-            else:
-                # Expression argument
-                argument = self.parse_expression()
-                if isinstance(argument, SyntaxError):
-                    return argument
-                arguments.append(argument)
-            
-            # Check for more arguments
-            if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                self.advance()
-                continue
-            elif self.current_token and self.current_token.type != TokenType.RIGHT_PAREN.value:
-                return self.error("Expected ',' or ')' in function arguments")
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after function arguments")
-        self.advance()
-
-        # Function calls in statements must end with semicolon
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after function call")
-        self.advance()
-
-        return {
-            'type': 'function_call_statement',
-            'name': function_name,
-            'arguments': arguments,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_assignment(self):
-        """Parse variable assignment or array element assignment"""
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        # Get variable name
-        var_name = self.current_token.value
-        self.advance()
-        
-        # Check if this is an array element assignment
-        array_indices = []
-        while self.current_token and self.current_token.type == TokenType.ARRAY_INDEX_LEFT.value:
-            self.advance()  # Move past [
-            
-            # Parse index expression
-            index = self.parse_expression()
-            if isinstance(index, SyntaxError):
-                return index
-                
-            if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_RIGHT.value:
-                return self.error("Expected ']' after array index")
-            self.advance()  # Move past ]
-            
-            array_indices.append(index)
-        
-        # Check for assignment operator
-        if not self.current_token or self.current_token.type not in [
-            TokenType.ASSIGN.value,
-            TokenType.ADD_ASSIGN.value,
-            TokenType.SUB_ASSIGN.value,
-            TokenType.MUL_ASSIGN.value,
-            TokenType.DIV_ASSIGN.value,
-            TokenType.MOD_ASSIGN.value
-        ]:
-            expected_operators = "'=', '+=', '-=', '*=', '/=', or '%='"
-            if array_indices:
-                return self.error(f"Expected {expected_operators} after array indices")
-            else:
-                return self.error(f"Expected {expected_operators} after variable name {var_name}")
-                
-        operator = self.current_token.value
-        self.advance()
-
-        # Parse the value being assigned
-        value = self.parse_expression()
-        if isinstance(value, SyntaxError):
-            return value
-
-        # Check for semicolon
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after assignment")
-        self.advance()
-
-        # Return appropriate assignment node based on whether it's a variable or array element
-        if array_indices:
-            return {
-                'type': 'array_element_assignment',
-                'name': var_name,
-                'indices': array_indices,
-                'operator': operator,
-                'value': value,
-                'line': start_line,
-                'column': start_column
-            }
-        else:
-            return {
-                'type': 'assignment',
-                'name': var_name,
-                'operator': operator,
-                'value': value,
-                'line': start_line,
-                'column': start_column
-            }
-
-    def parse_constant_declaration(self):
-        """Parse constant declaration"""
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        # Skip 'Const' keyword
-        self.advance()
-        
-        if not self.current_token or not self.is_data_type(self.current_token.type):
-            return self.error("Expected data type after 'Const'")
-        data_type = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected variable name after data type")
-        const_name = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.ASSIGN.value:
-            return self.error("Expected '=' after constant name")
-        self.advance()
-
-        value = self.parse_expression()
-        if isinstance(value, SyntaxError):
-            return value
-
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after constant declaration")
-        self.advance()
-
-        return {
-            'type': 'constant_declaration',
-            'data_type': data_type,
-            'name': const_name,
-            'value': value,
-            'is_global': True,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_array_declaration(self, is_global=False):
-        """Parse array declaration according to CFG rules 21-36"""
-        start_line = self.current_line
-        start_column = self.current_column
-        
-        # Get all tokens in the current line to analyze the pattern
-        line_tokens = []
-        saved_index = self.current_token_index
-        
-        # Collect tokens until end of line or end of file
-        while self.current_token_index < len(self.tokens):
-            token = self.tokens[self.current_token_index]
-            if token.type == TokenType.NEWLINE.value:
-                break
-            if token.type not in [TokenType.SPACE.value, TokenType.TAB.value]:
-                line_tokens.append(token)
-            self.current_token_index += 1
-        
-        # Reset position to start of line
-        self.current_token_index = saved_index
-        self.current_token = self.tokens[self.current_token_index]
-        
-        # Verify this is an array declaration
-        if not self.is_array_declaration_pattern(line_tokens):
-            return self.error("Not a valid array declaration pattern")
-        
-        # Parse data type
-        if not self.is_data_type(self.current_token.type):
-            return self.error("Expected data type for array declaration")
-        data_type = self.current_token.value
-        self.advance()
-
-        # Parse array name
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected array name")
-        array_name = self.current_token.value
-        self.advance()
-
-        # Parse array dimensions
-        dimensions = []
-        
-        # First dimension
-        if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_LEFT.value:
-            return self.error("Expected '[' after array name")
-        self.advance()
-        
-        # Parse array size
-        size = self.parse_array_size()
-        if isinstance(size, SyntaxError):
-            return size
-        dimensions.append(size)
-        
-        if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_RIGHT.value:
-            return self.error("Expected ']' after array size")
-        self.advance()
-        
-        # Check for optional second dimension
-        if self.current_token and self.current_token.type == TokenType.ARRAY_INDEX_LEFT.value:
-            self.advance()
-            size2 = self.parse_array_size()
-            if isinstance(size2, SyntaxError):
-                return size2
-            dimensions.append(size2)
-            
-            if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_RIGHT.value:
-                return self.error("Expected ']' after second dimension size")
-            self.advance()
-
-        # Parse optional initialization
-        initialization = None
-        if self.current_token and self.current_token.type == TokenType.ASSIGN.value:
-            self.advance()
-            initialization = self.parse_array_initialization(len(dimensions))
-            if isinstance(initialization, SyntaxError):
-                return initialization
-
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after array declaration")
-        self.advance()
-
-        return {
-            'type': 'array_declaration',
-            'data_type': data_type,
-            'name': array_name,
-            'dimensions': dimensions,
-            'initialization': initialization,
-            'is_global': is_global,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_array_size(self):
-        """Parse array size expression"""
-        if not self.current_token:
-            return self.error("Expected array size")
-        
-        if self.current_token.type != TokenType.FEINTLIT.value:
-            return self.error("Array size must be a Feint literal")
-        
-        size = int(self.current_token.value)
-        self.advance()
-        return size
-
-    def parse_array_initialization(self, dimensions):
-        """Parse array initialization values"""
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' for array initialization")
-        self.advance()
-
-        values = []
-        
-        # For 2D arrays, we need to handle rows differently
-        if dimensions == 2:
-            while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-                # Each row can be enclosed in braces or just be a comma-separated list
-                if self.current_token.type == TokenType.CODE_BLOCK_LEFT.value:
-                    # Row is enclosed in braces
-                    self.advance()
-                    row = []
-                    
-                    while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-                        value = self.parse_array_element()
-                        if isinstance(value, SyntaxError):
-                            return value
-                        row.append(value)
-                        
-                        # Check for comma between elements
-                        if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                            self.advance()
-                    
-                    if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-                        return self.error("Expected '}' after nested array")
-                    self.advance()
-                    
-                    values.append(row)
-                else:
-                    # Row is just a comma-separated list
-                    row = []
-                    
-                    # Parse the first element
-                    value = self.parse_array_element()
-                    if isinstance(value, SyntaxError):
-                        return value
-                    row.append(value)
-                    
-                    # Parse remaining elements in the row
-                    while self.current_token and self.current_token.type == TokenType.COMMA.value:
-                        self.advance()
-                        
-                        # Check if we've reached the end of the array
-                        if self.current_token and self.current_token.type == TokenType.CODE_BLOCK_RIGHT.value:
-                            break
-                            
-                        value = self.parse_array_element()
-                        if isinstance(value, SyntaxError):
-                            return value
-                        row.append(value)
-                    
-                    values.append(row)
-                
-                # Check for comma between rows
-                if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                    self.advance()
-        else:
-            # For 1D arrays, parse elements directly
-            while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-                value = self.parse_array_element()
-                if isinstance(value, SyntaxError):
-                    return value
-                values.append(value)
-                
-                # Check for comma between elements
-                if self.current_token and self.current_token.type == TokenType.COMMA.value:
-                    self.advance()
-        
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' after array initialization")
-        self.advance()
-        
-        return values
-
-    def parse_array_element(self):
-        """Parse single array element according to CFG rules 32-34"""
-        if not self.current_token:
-            return self.error("Expected array element")
-        
-        # Handle numeric literals
-        if self.current_token.type == TokenType.FEINTLIT.value:
-            value = self.current_token.value
-            self.advance()
-            return value
-        
-        # Handle float literals
-        elif self.current_token.type == TokenType.FLOATERLIT.value:
-            value = self.current_token.value
-            self.advance()
-            return value
-        
-        # Handle negative numeric literals
-        elif self.current_token.type in [TokenType.NEGAFEINT.value, TokenType.NEGAFLOATER.value]:
-            value = self.current_token.value
-            self.advance()
-            return value
-        
-        # Handle string literals
-        elif self.current_token.type == TokenType.CHANTLIT.value:
-            value = self.current_token.value
-            self.advance()
-            return value
-            
-        # Handle boolean literals
-        elif self.current_token.type in [TokenType.WIN.value, TokenType.LOSS.value]:
-            value = self.current_token.value
-            self.advance()
-            return value
-            
-        # Handle variables
-        elif self.current_token.type == TokenType.VAR_INIT.value:
-            value = self.current_token.value
-            self.advance()
-            return value
-            
-        # Handle expressions in parentheses
-        elif self.current_token.type == TokenType.LEFT_PAREN.value:
-            self.advance()
-            expr = self.parse_expression()
-            if isinstance(expr, SyntaxError):
-                return expr
-                
-            if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-                return self.error("Expected ')' after expression in array element")
-            self.advance()
-            return expr
-            
-        # Handle numeric literals that might be tokenized differently
-        elif hasattr(self.current_token, 'value') and isinstance(self.current_token.value, (int, float)) or (
-            isinstance(self.current_token.value, str) and self.current_token.value.isdigit()):
-            value = self.current_token.value
-            self.advance()
-            return value
-        
-        # If we get here, we couldn't parse the array element
-        return self.error(f"Invalid array element type")
-
-    def data_type(self):
-        """
-        <data_type> → Feint
-        <data_type> → Floater
-        <data_type> → Chant
-        <data_type> → Stat
-        """
-        if self.current_token.type in ['Feint', 'Floater', 'Chant', 'Stat']:
+    def expect(self, token_type: TokenType) -> None:
+        """Expect a specific token type, raise error if not found"""
+        if self.current_token and self.current_token.type == token_type and \
+           self.current_token.value.upper() == token_type.value.upper():  # Make case-insensitive comparison
             self.advance()
         else:
+            self.expected_tokens.add(token_type)
             raise SyntaxError(
-                f"Expected data type (Feint, Floater, Chant, Stat), got {self.current_token.type}",
-                self.current_token.line,
-                self.current_token.column
+                f"Expected Token: {{{', '.join(t.value for t in self.expected_tokens)}}}, "
+                f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}",
+                self.line_number,
+                self.column
+            )
+            
+
+    def parse(self) -> None:
+        """Start parsing the program"""
+        try:
+            self.parse_program()
+        except SyntaxError as e:
+            print(f"Syntax Error: {str(e)}")
+            raise
+
+    def parse_program(self) -> None:
+        """<program> → <global_decl> <function_decl> <function_def> <team_block>"""
+        # Skip any initial whitespace or comments
+        self.skip_whitespace_and_comments()
+        
+        # Check if current token is in FIRST(program)
+        if self.current_token and self.current_token.type not in self.FIRST_SETS['program']:
+            self.expected_tokens = self.FIRST_SETS['program']  # Set all expected tokens
+            raise SyntaxError(
+                f"Expected Token: {{{', '.join(t.value for t in self.expected_tokens)}}}, "
+                f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}",
+                self.line_number,
+                self.column
             )
 
-    def initialize_end(self):
-        """
-        <initialize_end> → = <global_value> <decls_end>
-        <initialize_end> → λ
-        """
-        if self.current_token.type == 'EQUALS':
-            self.advance()  # consume '='
-            self.global_value()
-            self.decls_end()
+        self.parse_global_decl()
+        self.parse_function_decl()
+        self.parse_function_def()
+        self.parse_team_block()
 
-    def decls_end(self):
-        """
-        <decls_end> → , identifier <initialize_end> <decls_end>
-        <decls_end> → λ
-        """
-        if self.current_token.type == 'COMMA':
-            self.advance()  # consume ','
-            self.match('IDENTIFIER')
-            self.initialize_end()
-            self.decls_end()
+    def parse_global_decl(self) -> None:
+        """<global_decl> → <global_declaration><global_decl> | λ"""
+        # Check FIRST set for global_decl
+        if self.current_token and self.current_token.type in self.FIRST_SETS['global_decl']:
+            self.parse_global_declaration()
+            self.parse_global_decl()  # Recursive call
 
-    def parse_switch(self):
-        """Parse Switch statement according to rules 71-81"""
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after Switch")
-        self.advance()
-
-        # Parse switch expression (rules 72-74)
-        switch_expr = None
-        if self.current_token.type == TokenType.VAR_INIT.value:
-            switch_expr = {'type': 'identifier', 'value': self.current_token.value}
-        elif self.current_token.type == TokenType.FEINTLIT.value:
-            switch_expr = {'type': 'feint_literal', 'value': self.current_token.value}
-        elif self.current_token.type == TokenType.CHANTLIT.value:
-            switch_expr = {'type': 'chant_literal', 'value': self.current_token.value}
+    def parse_global_declaration(self) -> None:
+        """<global_declaration> → <variable_dec> | <const_dec> | <array_dec>"""
+        if self.current_token.type == TokenType.CONST:
+            self.parse_const_dec()
+        elif self.current_token.type == TokenType.ZONE:
+            self.parse_array_dec()
         else:
-            return self.error("Invalid switch expression")
-        self.advance()
+            self.parse_variable_dec()
 
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after switch expression")
-        self.advance()
+    def parse_variable_dec(self) -> None:
+        """Parse variable declarations"""
+        if self.current_token.type == TokenType.FEINT:
+            self.parse_feint_dec()
+        elif self.current_token.type == TokenType.FLOATER:
+            self.parse_floater_dec()
+        elif self.current_token.type == TokenType.CHANT:
+            self.parse_chant_dec()
+        elif self.current_token.type == TokenType.STAT:
+            self.parse_stat_dec()
 
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' after switch header")
-        self.advance()
+    def parse_feint_dec(self) -> None:
+        """<feint_dec> → Feint @identifier <more_feint>;"""
+        self.expect(TokenType.FEINT)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_feint()  # Call the function for <more_feint>
+        self.expect(TokenType.SEMICOLON)
 
-        # Parse case list (rules 75-80)
-        cases = []
-        while self.current_token and self.current_token.type == TokenType.GET.value:
-            self.advance()
-            
-            # Parse case value
-            if not self.current_token:
-                return self.error("Expected case value")
-            
-            if self.current_token.type in [TokenType.ARITH_OP.value, TokenType.ALPHABET.value,
-                                         TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value]:
-                case_value = self.current_token.value
-                self.advance()
-            else:
-                return self.error("Invalid case value")
-
-            if not self.current_token or self.current_token.type != TokenType.COLON.value:
-                return self.error("Expected ':' after case value")
-            self.advance()
-
-            # Parse case statements
-            case_statements = self.parse_statements()
-            if isinstance(case_statements, SyntaxError):
-                return case_statements
-
-            cases.append({
-                'value': case_value,
-                'statements': case_statements
-            })
-
-        # Parse default case (rule 81)
-        default_case = None
-        if self.current_token and self.current_token.type == TokenType.DEFAULT.value:
-            self.advance()
-            
-            if not self.current_token or self.current_token.type != TokenType.COLON.value:
-                return self.error("Expected ':' after Default")
-            self.advance()
-
-            default_statements = self.parse_statements()
-            if isinstance(default_statements, SyntaxError):
-                return default_statements
-            default_case = default_statements
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' at end of switch")
-        self.advance()
-
-        return {
-            'type': 'switch',
-            'expression': switch_expr,
-            'cases': cases,
-            'default': default_case,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_binary_operation(self):
-        """Parse binary operations like addition, comparison, etc."""
-        left = self.parse_expression()
-        if isinstance(left, SyntaxError):
-            return left
+    def parse_more_feint(self) -> None:
+        """<more_feint> → λ | <feint_init><feint_init_end>"""
+        # First set of feint_init is {TokenType.ASSIGN}
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
         
-        while self.current_token and self.current_token.type in [
-            TokenType.ADD.value,
-            TokenType.SUB.value,
-            TokenType.MUL.value,
-            TokenType.DIV.value,
-            TokenType.MOD.value,
-            TokenType.GREATER_THAN.value,
-            TokenType.LESS_THAN.value,
-            TokenType.GREATER_EQUAL.value,
-            TokenType.LESS_EQUAL.value,
-            TokenType.EQUAL.value,
-            TokenType.NOT_EQUAL.value
-        ]:
-            operator = self.current_token.value
-            self.advance()
-            
-            right = self.parse_expression()
-            if isinstance(right, SyntaxError):
-                return right
-            
-            left = {
-                'type': 'binary_operation',
-                'operator': operator,
-                'left': left,
-                'right': right,
-                'line': self.current_line,
-                'column': self.current_column
-            }
+        self.parse_feint_init()
+        self.parse_feint_init_end()
+
+    def parse_feint_init(self) -> None:
+        """<feint_init> → = <feint_lit>"""
+        self.expect(TokenType.ASSIGN)
+        self.parse_feint_lit()
+
+    def parse_feint_lit(self) -> None:
+        """<feint_lit> → Feint Literal"""
+        self.expect(TokenType.FEINTLIT)
+
+    def parse_feint_init_end(self) -> None:
+        """<feint_init_end> → λ | ", @identifier <more_feint>" """
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
         
-        return left
-
-    def parse_forward(self):
-        """Parse Forward statement according to rules for:
-        Forward(@i = 0; @i < @num; @i++) {
-            statements
-        }
-        """
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after Forward")
-        self.advance()
-
-        # Parse initialization (@i = 0)
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected variable name in Forward initialization")
-        var_name = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.ASSIGN.value:
-            return self.error("Expected '=' in Forward initialization")
-        self.advance()
-
-        initial_value = self.parse_expression()
-        if isinstance(initial_value, SyntaxError):
-            return initial_value
-
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after Forward initialization")
-        self.advance()
-
-        # Parse condition (@i < @num)
-        condition = self.parse_expression()
-        if isinstance(condition, SyntaxError):
-            return condition
-
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after Forward condition")
-        self.advance()
-
-        # Parse increment/decrement part
-        update = self.parse_forward_update()
-        if isinstance(update, SyntaxError):
-            return update
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after Forward increment/decrement")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' after Forward header")
-        self.advance()
-
-        # Parse loop body
-        body = self.parse_statements()
-        if isinstance(body, SyntaxError):
-            return body
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' at end of Forward block")
-        self.advance()
-
-        return {
-            'type': 'forward',
-            'initialization': {
-                'name': var_name,
-                'value': initial_value
-            },
-            'condition': condition,
-            'update': update,
-            'body': body,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_forward_update(self):
-        """Parse the update expression in Forward loop:
-        Can be one of:
-        1. Prefix increment/decrement: ++@i, --@i
-        2. Postfix increment/decrement: @i++, @i--
-        3. Assignment operators: @i += 1, @i -= 1, etc.
-        """
-        if not self.current_token:
-            return self.error("Expected update expression")
-
-        # Handle prefix increment/decrement
-        if self.current_token.type in [TokenType.INCREMENT.value, TokenType.DECREMENT.value]:
-            operator = self.current_token.value
-            self.advance()
-            
-            if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-                return self.error("Expected variable after prefix operator")
-            var_name = self.current_token.value
-            self.advance()
-            
-            return {
-                'type': 'prefix_operation',
-                'operator': operator,
-                'variable': var_name
-            }
-
-        # Handle variable-first expressions (postfix or assignment)
-        elif self.current_token.type == TokenType.VAR_INIT.value:
-            var_name = self.current_token.value
-            self.advance()
-
-            if not self.current_token:
-                return self.error("Expected operator after variable")
-
-            # Handle postfix increment/decrement
-            if self.current_token.type in [TokenType.INCREMENT.value, TokenType.DECREMENT.value]:
-                operator = self.current_token.value
-                self.advance()
-                return {
-                    'type': 'postfix_operation',
-                    'operator': operator,
-                    'variable': var_name
-                }
-
-            # Handle assignment operators
-            elif self.current_token.type in [
-                TokenType.ADD_ASSIGN.value,
-                TokenType.SUB_ASSIGN.value,
-                TokenType.MUL_ASSIGN.value,
-                TokenType.DIV_ASSIGN.value,
-                TokenType.MOD_ASSIGN.value
-            ]:
-                operator = self.current_token.value
-                self.advance()
-
-                value = self.parse_expression()
-                if isinstance(value, SyntaxError):
-                    return value
-
-                return {
-                    'type': 'assignment_operation',
-                    'operator': operator,
-                    'variable': var_name,
-                    'value': value
-                }
-
-        return self.error("Invalid increment/decrement in Forward loop")
-
-    def parse_play(self):
-        """Parse Play statement according to rule 226"""
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after Play")
-        self.advance()
-
-        condition = self.parse_expression()
-        if isinstance(condition, SyntaxError):
-            return condition
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after Play condition")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' after Play condition")
-        self.advance()
-
-        body = self.parse_statements()
-        if isinstance(body, SyntaxError):
-            return body
-
-        # Parse increment/decrement
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected variable for Play increment/decrement")
-        inc_var = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type not in [
-            TokenType.ADD_ASSIGN.value,
-            TokenType.SUB_ASSIGN.value,
-            TokenType.MUL_ASSIGN.value,
-            TokenType.DIV_ASSIGN.value,
-            TokenType.MOD_ASSIGN.value
-        ]:
-            return self.error("Expected '+=', '-=', '*=', '/=', or '%=' in Play increment/decrement")
-        inc_op = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.FEINTLIT.value:
-            return self.error("Expected numeric literal in Play increment/decrement")
-        inc_value = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' at end of Play block")
-        self.advance()
-
-        return {
-            'type': 'play',
-            'condition': condition,
-            'body': body,
-            'update': {
-                'variable': inc_var,
-                'operator': inc_op,
-                'value': inc_value
-            },
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_run_play(self):
-        """Parse Run-Play statement according to rule 227"""
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' after Run")
-        self.advance()
-
-        body = self.parse_statements()
-        if isinstance(body, SyntaxError):
-            return body
-
-        # Parse increment/decrement
-        if not self.current_token or self.current_token.type != TokenType.VAR_INIT.value:
-            return self.error("Expected variable for Run-Play increment/decrement")
-        inc_var = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type not in [
-            TokenType.ADD_ASSIGN.value,
-            TokenType.SUB_ASSIGN.value,
-            TokenType.MUL_ASSIGN.value,
-            TokenType.DIV_ASSIGN.value,
-            TokenType.MOD_ASSIGN.value
-        ]:
-            return self.error("Expected '+=', '-=', '*=', '/=', or '%=' in Run-Play increment/decrement")
-        inc_op = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.FEINTLIT.value:
-            return self.error("Expected numeric literal in Run-Play increment/decrement")
-        inc_value = self.current_token.value
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' after Run block")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.PLAY.value:
-            return self.error("Expected 'Play' after Run block")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after Play")
-        self.advance()
-
-        condition = self.parse_expression()
-        if isinstance(condition, SyntaxError):
-            return condition
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after Play condition")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.SEMICOLON.value:
-            return self.error("Expected ';' after Run-Play statement")
-        self.advance()
-
-        return {
-            'type': 'run_play',
-            'body': body,
-            'update': {
-                'variable': inc_var,
-                'operator': inc_op,
-                'value': inc_value
-            },
-            'condition': condition,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def parse_dribble(self):
-        """Parse Dribble-Pass-Shoot (if-elseif-else) statement"""
-        start_line = self.current_line
-        start_column = self.current_column
-        self.advance()  # Move past 'Dribble'
-
-        if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-            return self.error("Expected '(' after Dribble")
-        self.advance()
-
-        # Parse condition
-        condition = self.parse_expression()
-        if isinstance(condition, SyntaxError):
-            return condition
-
-        if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-            return self.error("Expected ')' after condition")
-        self.advance()
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-            return self.error("Expected '{' after Dribble condition")
-        self.advance()
-
-        # Parse if block statements
-        if_statements = self.parse_statements()
-        if isinstance(if_statements, SyntaxError):
-            return if_statements
-
-        if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-            return self.error("Expected '}' after Dribble block")
-        self.advance()
-
-        # Parse Pass (else if) blocks
-        pass_blocks = []
-        while self.current_token and self.current_token.type == TokenType.PASS.value:
-            self.advance()  # Move past 'Pass'
-
-            if not self.current_token or self.current_token.type != TokenType.LEFT_PAREN.value:
-                return self.error("Expected '(' after Pass")
-            self.advance()
-
-            pass_condition = self.parse_expression()
-            if isinstance(pass_condition, SyntaxError):
-                return pass_condition
-
-            if not self.current_token or self.current_token.type != TokenType.RIGHT_PAREN.value:
-                return self.error("Expected ')' after Pass condition")
-            self.advance()
-
-            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-                return self.error("Expected '{' after Pass condition")
-            self.advance()
-
-            pass_statements = self.parse_statements()
-            if isinstance(pass_statements, SyntaxError):
-                return pass_statements
-
-            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-                return self.error("Expected '}' after Pass block")
-            self.advance()
-
-            pass_blocks.append({
-                'condition': pass_condition,
-                'statements': pass_statements
-            })
-
-        # Parse optional Shoot (else) block
-        shoot_statements = None
-        if self.current_token and self.current_token.type == TokenType.SHOOT.value:
-            self.advance()  # Move past 'Shoot'
-
-            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_LEFT.value:
-                return self.error("Expected '{' after Shoot")
-            self.advance()
-
-            shoot_statements = self.parse_statements()
-            if isinstance(shoot_statements, SyntaxError):
-                return shoot_statements
-
-            if not self.current_token or self.current_token.type != TokenType.CODE_BLOCK_RIGHT.value:
-                return self.error("Expected '}' after Shoot block")
-            self.advance()
-
-        return {
-            'type': 'dribble',
-            'condition': condition,
-            'if_statements': if_statements,
-            'pass_blocks': pass_blocks,
-            'shoot_statements': shoot_statements,
-            'line': start_line,
-            'column': start_column
-        }
-
-    def is_in_first_set(self, token_type, non_terminal):
-        """Check if token is in FIRST set of given non-terminal"""
-        first_sets = {
-            'program': {TokenType.FEINT.value, TokenType.FLOATER.value, TokenType.CHANT.value, 
-                       TokenType.STAT.value, TokenType.CONST.value, TokenType.TEAM.value},
-            'global_decl': {TokenType.FEINT.value, TokenType.FLOATER.value, TokenType.CHANT.value, 
-                           TokenType.STAT.value, TokenType.CONST.value},
-            'function_decls': {TokenType.FEINT.value, TokenType.FLOATER.value, TokenType.CHANT.value, 
-                              TokenType.STAT.value},
-            'team_statements': {TokenType.FEINT.value, TokenType.FLOATER.value, TokenType.CHANT.value,
-                              TokenType.STAT.value, TokenType.ANNOUNCE.value, TokenType.INBOUND.value,
-                              TokenType.FORWARD.value, TokenType.PLAY.value, TokenType.RUN.value,
-                              TokenType.SWITCH.value, TokenType.VAR_INIT.value},
-            'expression': {TokenType.VAR_INIT.value, TokenType.FEINTLIT.value, TokenType.FLOATERLIT.value,
-                          TokenType.CHANTLIT.value, TokenType.WIN.value, TokenType.LOSS.value,
-                          TokenType.LEFT_PAREN.value}
-        }
-        return token_type in first_sets.get(non_terminal, set())
-
-    def is_in_follow_set(self, token_type, non_terminal):
-        """Check if token is in FOLLOW set of given non-terminal"""
-        follow_sets = {
-            'global_decl': {TokenType.TEAM.value, TokenType.FEINT.value, TokenType.FLOATER.value,
-                           TokenType.CHANT.value, TokenType.STAT.value},
-            'function_decls': {TokenType.TEAM.value},
-            'team_statements': {TokenType.CODE_BLOCK_RIGHT.value, TokenType.REBOUND.value},
-            'expression': {TokenType.SEMICOLON.value, TokenType.RIGHT_PAREN.value, TokenType.COMMA.value,
-                          TokenType.CHANT_CONCAT.value}
-        }
-        return token_type in follow_sets.get(non_terminal, set())
-
-    def predict(self, productions):
-        """Use predict sets to determine which production to use"""
-        if not self.current_token:
-            return None
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_feint()
+
+    def parse_floater_dec(self) -> None:
+        """<floater_dec> → Floater @identifier <more_floater>;"""
+        self.expect(TokenType.FLOATER)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_floater()
+        self.expect(TokenType.SEMICOLON)
+
+    def parse_more_floater(self) -> None:
+        """<more_floater> → λ | <floater_init><floater_init_end>"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
         
-        token_type = self.current_token.type
+        self.parse_floater_init()
+        self.parse_floater_init_end()
+
+    def parse_floater_init(self) -> None:
+        """<floater_init> → = <floater_lit>"""
+        self.expect(TokenType.ASSIGN)
+        self.parse_floater_lit()
+
+    def parse_floater_lit(self) -> None:
+        """<floater_lit> → Floater Literal"""
+        self.expect(TokenType.FLOATERLIT)
+
+    def parse_floater_init_end(self) -> None:
+        """<floater_init_end> → λ | ", @identifier <more_floater>" """
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
         
-        predict_sets = {
-            'variable_declaration': {TokenType.FEINT.value, TokenType.FLOATER.value, 
-                                   TokenType.CHANT.value, TokenType.STAT.value},
-            'constant_declaration': {TokenType.CONST.value},
-            'array_declaration': {TokenType.FEINT.value, TokenType.FLOATER.value, 
-                                TokenType.CHANT.value, TokenType.STAT.value},
-            'function_declaration': {TokenType.FEINT.value, TokenType.FLOATER.value, 
-                                   TokenType.CHANT.value, TokenType.STAT.value},
-            'team_block': {TokenType.TEAM.value}
-        }
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_floater()
+
+    def parse_chant_dec(self) -> None:
+        """<chant_dec> → Chant @identifier <more_chant>;"""
+        self.expect(TokenType.CHANT)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_chant()
+        self.expect(TokenType.SEMICOLON)
+
+    def parse_more_chant(self) -> None:
+        """<more_chant> → λ | <chant_init><chant_init_end>"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
         
-        for production, predict_set in predict_sets.items():
-            if token_type in predict_set:
-                return production
+        self.parse_chant_init()
+        self.parse_chant_init_end()
+
+    def parse_chant_init(self) -> None:
+        """<chant_init> → = "<chant_lit>" """
+        self.expect(TokenType.ASSIGN)
+        self.expect(TokenType.QUOTE)
+        self.parse_chant_lit()
+        self.expect(TokenType.QUOTE)
+
+    def parse_chant_lit(self) -> None:
+        """<chant_lit> → Chant Literal"""
+        self.expect(TokenType.CHANTLIT)
+
+    def parse_chant_init_end(self) -> None:
+        """<chant_init_end> → λ | ", @identifier <more_chant>" """
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_chant()
+    
+    def parse_stat_dec(self) -> None:
+        """<stat_dec> → Stat @identifier <more_stat>;"""
+        self.expect(TokenType.STAT)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_stat()
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_more_stat(self) -> None:
+        """<more_stat> → λ | <stat_init><stat_init_end>"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
+        self.parse_stat_init()
+        self.parse_stat_init_end()
+        
+    def parse_stat_init(self) -> None:
+        """<stat_init> → = <stat_value>"""
+        self.expect(TokenType.ASSIGN)
+        self.parse_stat_value()
+        
+    def parse_stat_value(self) -> None:
+        """<stat_value> → Win | Loss"""
+        if self.current_token.type == TokenType.WIN:
+            self.expect(TokenType.WIN)
+        elif self.current_token.type == TokenType.LOSS:
+            self.expect(TokenType.LOSS)
+        else:
+            raise SyntaxError(f"Expected stat value, got {self.current_token.type}", self.line_number, self.column)
+        
+    def parse_stat_init_end(self) -> None:
+        """<stat_init_end> → λ | ", @identifier <more_stat_init>" """
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_stat()
+        
+    def parse_const_dec(self) -> None:
+        """<const_dec> → Const @identifier <more_const>;"""
+        self.expect(TokenType.CONST)
+        self.parse_variable_dec()
+        
+    def parse_array_dec(self) -> None:
+        """<array_dec> → Zone <feint_array> <floater_array> <chant_array> <stat_array>;"""
+        self.expect(TokenType.ZONE)
+        if self.current_token.type == TokenType.FEINT:
+            self.parse_feint_array()
+        elif self.current_token.type == TokenType.FLOATER:
+            self.parse_floater_array()
+        elif self.current_token.type == TokenType.CHANT:
+            self.parse_chant_array()
+        elif self.current_token.type == TokenType.STAT:
+            self.parse_stat_array()
+        
+    def parse_feint_array(self) -> None:
+        """<feint_array> → Feint @identifier [<feint_lit>]<2D_array><feint_array_init>;"""
+        self.expect(TokenType.FEINT)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.parse_feint_lit()
+        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        self.parse_2D_array()
+        self.parse_feint_array_init()
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_2D_array(self) -> None:
+        """<2D_array> → λ |  [<feint_lit>]"""
+        if not self.current_token or self.current_token.type != TokenType.ARRAY_INDEX_LEFT:
+            return  # λ case
+        
+        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.parse_feint_lit()
+        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        
+    def parse_feint_array_init(self) -> None:
+        """<feint_array_init> → λ | = {<feint_row>}"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
+        self.expect(TokenType.ASSIGN)
+        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.parse_feint_row()
+        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        
+    def parse_feint_row(self) -> None:
+        """<feint_row> → <feint_lit><more_feint_lit> | {<feint_lit><more_feint_lit>} <2D_feint_row>"""
+        self.parse_feint_lit()
+        self.parse_more_feint_lit()
+        if self.current_token.type == TokenType.ARRAY_INDEX_LEFT:
+            self.expect(TokenType.ARRAY_INDEX_LEFT)
+            self.parse_2D_feint_row()
+            self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.parse_feint_row()
+        
+    def parse_2D_feint_row(self) -> None:
+        """<2D_feint_row> → λ | <feint_lit><more_feint_lit>"""
+        self.parse_feint_lit()
+        self.parse_more_feint_lit() # Recursive call
+
+    def parse_more_feint_lit(self) -> None:
+        """<more_feint_lit> → λ | <feint_lit><more_feint_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.parse_feint_lit()
+        self.parse_more_feint_lit() # Recursive call
+
+    def parse_function_decl(self) -> None:
+        """<function_decl> → Wilt <function_declared> | Dunk <dunk_func_declared> | λ"""
+        # First set of function_decl
+        first_set = {TokenType.WILT, TokenType.DUNK}
+        
+        # If no token or token not in first set, it's λ case
+        if not self.current_token or self.current_token.type not in first_set:
+            return  # λ case
             
-        return None
-
-    def sync(self, sync_set):
-        """Synchronize parser after error by skipping tokens until sync point"""
-        while self.current_token and self.current_token.type not in sync_set:
+        if self.current_token.type == TokenType.WILT:
             self.advance()
+            self.parse_function_declared()
+        elif self.current_token.type == TokenType.DUNK:
+            self.advance()
+            self.parse_dunk_func_declared()
+            
+    def parse_function_def(self) -> None:
+        """<function_def> → Wilt <function_declared> | Dunk <dunk_func_declared> | λ"""
+        # First set of function_def
+        first_set = {TokenType.WILT, TokenType.DUNK}
+        
+        if not self.current_token or self.current_token.type not in first_set:
+            return  # λ case
+        
+        if self.current_token.type == TokenType.WILT:
+            self.advance()
+            self.parse_function_declared()
+        elif self.current_token.type == TokenType.DUNK:
+            self.advance()
+            self.parse_dunk_func_declared()
 
-def parse(tokens):
-    """Main entry point for parsing"""
-    parser = Parser(tokens)
-    return parser.parse()
+    def parse_team_block(self) -> None:
+        """<team_block> → Team() { <local_decl> <other_statements> }"""
+        if not self.current_token or self.current_token.type not in self.FIRST_SETS['team_block']:
+            raise SyntaxError(
+                "Missing Team block at the end of program",
+                self.line_number,
+                self.column
+            )
+
+        self.expect(TokenType.TEAM)
+        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_local_decl()
+        # self.parse_other_statements()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+
+    # def parse_other_statements(self) -> None:
+    #     """<other_statements> → λ | <statement><other_statements> | <expression><other_statements>"""
+    #     # First sets of statement and expression
+    #     statement_first = {
+    #         TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
+    #         TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH,
+    #         TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.TIMEOUT,
+    #         TokenType.RESUME
+    #     }
+        
+    #     expression_first = {
+    #         TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT,
+    #         TokenType.VAR_INIT, TokenType.NOT_OP  # Add other tokens that can start an expression
+    #     }
+        
+    #     # If current token isn't in any first set, it's λ case
+    #     if not self.current_token or (
+    #         self.current_token.type not in statement_first and 
+    #         self.current_token.type not in expression_first
+    #     ):
+    #         return  # λ case
+        
+    #     # Otherwise parse statement or expression
+    #     if self.current_token.type in statement_first:
+    #         self.parse_statement()
+    #     else:
+    #         self.parse_expression()
+        
+    #     self.parse_other_statements()  # Recursive call
+
+    def parse_function_param(self) -> None:
+        """<function_param> → λ | <param><params>"""
+        if not self.current_token or self.current_token.type != TokenType.VAR_INIT:
+            return  # λ case
+        
+        self.parse_param()
+        self.parse_params()
+        
+    def parse_local_decl(self) -> None:
+        """<local_decl> → <local_declaration><local_decl> | λ"""
+        # Check FIRST set for local_decl
+        if self.current_token and self.current_token.type in self.FIRST_SETS['global_decl']:
+            self.parse_local_declaration()
+            self.parse_local_decl()  # Recursive call
+
+    def parse_local_declaration(self) -> None:
+        """<local_declaration> → <variable_dec> | <array_dec>"""
+        if self.current_token.type == TokenType.ZONE:
+            self.parse_array_dec()
+        else:
+            self.parse_variable_dec()
+        
+
+    def error_handler(self, expected_tokens: List[TokenType]) -> None:
+        """Handle syntax errors by providing helpful error messages"""
+        if self.current_token:
+            token_type = self.current_token.type
+            token_value = self.current_token.value
+            raise SyntaxError(
+                f"Unexpected token '{token_value}' of type {token_type}. "
+                f"Expected one of: {', '.join(str(t) for t in expected_tokens)}",
+                self.line_number,
+                self.column
+            )
+        else:
+            raise SyntaxError(
+                f"Unexpected end of file. Expected one of: {', '.join(str(t) for t in expected_tokens)}",
+                self.line_number,
+                self.column
+            )
+
+def parse(tokens: List[Token]) -> bool:
+    """
+    Main parsing function that creates a Parser instance and runs the parsing process.
+    
+    Args:
+        tokens: List of tokens from the lexical analyzer
+    
+    Returns:
+        bool: True if parsing successful, False if syntax errors found
+    """
+    try:
+        parser = Parser(tokens)
+        parser.parse_program()
+        print("\033[92mSyntax Analysis Complete: No syntax errors found!\033[0m")
+        return True
+    except SyntaxError as e:
+        error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: {str(e)}"
+        print(f"\033[91m{error_msg}\033[0m")
+        return False

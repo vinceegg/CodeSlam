@@ -70,6 +70,7 @@ class TokenType(Enum):
     NOT_OP = "NOT_OP"        # Logical NOT: Returns the opposite Boolean value of the operand
 
     # Other Operators
+    ZONE = "ZONE"
     CHANT_CONCAT = "CHANT_CONCAT"               # Chant Concatenation: Concatenates Chant together when working with Chant data types
     ARRAY_INDEX_LEFT = "ARRAY_INDEX_LEFT"       # Array Size/Index: Used to specify the size or index of an array
     ARRAY_INDEX_RIGHT = "ARRAY_INDEX_RIGHT"     # Array Size/Index: Used to specify the size or index of an array
