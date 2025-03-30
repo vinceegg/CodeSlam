@@ -259,7 +259,14 @@ class Lexer:
                 else:
                     errors.append(IllegalCharError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())  
-                    
+            elif self.current_char == "Z":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state304()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string()) 
             ###################          
             # RESERVED  SYMBOLS
             ###################
@@ -351,7 +358,15 @@ class Lexer:
                     tokens.append(input_str)
                 else:
                     errors.append(IllegalCharError(
-                        pos_start, self.pos, "'" + input_str + "'").as_string())                   
+                        pos_start, self.pos, "'" + input_str + "'").as_string())
+            elif self.current_char == "]":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state190()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string())                       
             elif self.current_char == "{":
                 pos_start = self.pos.copy()
                 valid, input_str = self.state192()
@@ -1875,6 +1890,51 @@ class Lexer:
     # WIN FINAL STATE
     def state146(self, input_str):
         return True, Token(TokenType.WIN.value, input_str)
+    
+    # ZONE STATE
+    def state304(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "o":
+                return self.state305(input_str)
+            case _:
+                return False, input_str
+
+    def state305(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "n":
+                return self.state306(input_str)
+            case _:
+                return False, input_str
+            
+    def state306(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "e":
+                return self.state307(input_str)
+            case _:
+                return False, input_str
+        
+    def state307(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim7:
+            return self.state308(input_str)
+        else:
+            return False, input_str
+            
+    # FINAL STATE
+    def state308(self, input_str):
+        return True, Token(TokenType.ZONE.value, input_str)
 
     '''
 
@@ -2213,10 +2273,11 @@ class Lexer:
         input_str += self.current_char
         self.advance()
 
+        if self.current_char == ']':
+            return False, input_str
+
         if self.current_char in other_delim1:
             return self.state189(input_str)
-        elif self.current_char == "]":
-            return self.state190(input_str)
         else:
             return False, input_str
 
@@ -2225,7 +2286,8 @@ class Lexer:
         return True, Token(TokenType.ARRAY_INDEX_LEFT.value, input_str)
 
     # ARRAY INDEX RIGHT STATE
-    def state190(self, input_str):
+    def state190(self):
+        input_str = ""
         input_str += self.current_char
         self.advance()
 
@@ -3154,50 +3216,50 @@ class Lexer:
         if self.current_char in whitespace:
             return self.state299(input_str)
         else:
-            return False, input_str
+            return self.state299(input_str)
 
     def state299(self, input_str):
         return True, Token(TokenType.MULTI_COMMENT.value, input_str)
     
     # DAGDAG 
-    def state300(self, input_str = ""):
-        input_str += self.current_char 
-        self.advance()
+    # def state300(self, input_str = ""):
+    #     input_str += self.current_char 
+    #     self.advance()
         
-        if self.current_char is None:
-            return False, input_str
+    #     if self.current_char is None:
+    #         return False, input_str
         
-        if self.current_char.isascii() and self.current_char != "'":
-            return self.state301(input_str)
-        else:
-            return False, input_str
+    #     if self.current_char.isascii() and self.current_char != "'":
+    #         return self.state301(input_str)
+    #     else:
+    #         return False, input_str
 
-    def state301(self, input_str):
-        input_str += self.current_char 
-        self.advance()
+    # def state301(self, input_str):
+    #     input_str += self.current_char 
+    #     self.advance()
         
-        if self.current_char is None:
-            return False, input_str
+    #     if self.current_char is None:
+    #         return False, input_str
         
-        if self.current_char == "'":
-            return self.state302(input_str)
-        else:
-            return False, input_str
+    #     if self.current_char == "'":
+    #         return self.state302(input_str)
+    #     else:
+    #         return False, input_str
 
-    def state302(self, input_str):
-        input_str += self.current_char  # Add the closing quote
-        self.advance()
+    # def state302(self, input_str):
+    #     input_str += self.current_char  # Add the closing quote
+    #     self.advance()
         
-        result = True, Token(TokenType.GET.value, input_str)
+    #     result = True, Token(TokenType.GET.value, input_str)
         
-        if self.current_char is not None and self.current_char in delim8:
-            return self.state303(input_str)
-        return result
+    #     if self.current_char is not None and self.current_char in delim8:
+    #         return self.state303(input_str)
+    #     return result
 
-    # FINAL STATE
-    def state303(self, input_str):
-        return True, Token(TokenType.GET.value, input_str)
-
+    # # FINAL STATE
+    # def state303(self, input_str):
+    #     return True, Token(TokenType.GET.value, input_str)
+    
 def run(text):
     # Create a lexer instance with the input text
     lexer = Lexer(text)
