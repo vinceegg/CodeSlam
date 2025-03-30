@@ -259,7 +259,14 @@ class Lexer:
                 else:
                     errors.append(IllegalCharError(
                         pos_start, self.pos, "'" + input_str + "'").as_string())  
-                    
+            elif self.current_char == "Z":
+                pos_start = self.pos.copy()
+                valid, input_str = self.state304()
+                if valid:
+                    tokens.append(input_str)
+                else:
+                    errors.append(IllegalCharError(
+                        pos_start, self.pos, "'" + input_str + "'").as_string()) 
             ###################          
             # RESERVED  SYMBOLS
             ###################
@@ -1883,6 +1890,51 @@ class Lexer:
     # WIN FINAL STATE
     def state146(self, input_str):
         return True, Token(TokenType.WIN.value, input_str)
+    
+    # ZONE STATE
+    def state304(self):
+        input_str = ""
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "o":
+                return self.state305(input_str)
+            case _:
+                return False, input_str
+
+    def state305(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "n":
+                return self.state306(input_str)
+            case _:
+                return False, input_str
+            
+    def state306(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        match self.current_char:
+            case "e":
+                return self.state307(input_str)
+            case _:
+                return False, input_str
+        
+    def state307(self, input_str):
+        input_str += self.current_char
+        self.advance()
+
+        if self.current_char in delim7:
+            return self.state308(input_str)
+        else:
+            return False, input_str
+            
+    # FINAL STATE
+    def state308(self, input_str):
+        return True, Token(TokenType.ZONE.value, input_str)
 
     '''
 
