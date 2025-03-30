@@ -674,8 +674,8 @@ class App(customtkinter.CTk):
                 lexeme = lexeme_label.cget("text")
                 token_type = token_label.cget("text")
                 
-                # Create Token object with token type as type and lexeme as value
-                token = Token(TokenType[token_type], token_type)  # Use token_type instead of lexeme
+                # Create Token object with token type as both type and value
+                token = Token(TokenType[token_type], token_type)
                 tokens.append(token)
         
         # If no tokens found, show error
@@ -693,7 +693,11 @@ class App(customtkinter.CTk):
                     fg_color="#1f538d"  # Blue background when enabled
                 )
         except SyntaxError as e:
-            self.append_terminal_output(f"Syntax Error: {str(e)}", text_color="red")
+            # Format the error message to match the console output format
+            error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: Expected Token: {{{e.expected}}}, Unexpected Token: {e.token}"
+            # Display in terminal output
+            self.append_terminal_output(error_msg, text_color="red")
+            # Highlight the error in the code editor
             if hasattr(e, 'line_number') and hasattr(e, 'column'):
                 self.editor_frame.highlight_error(e.line_number, e.column)
             self.sideBtnSemantic.configure(

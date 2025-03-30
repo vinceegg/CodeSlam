@@ -54,7 +54,7 @@ class TokenType(Enum):
     FLOATERLIT = "FLOATERLIT"       # Float Literal: Represents a floating-point value
     NEGAFEINT = "NEGAFEINT"         # Negative: Negates the numerical values, making positive negative and vice versa
     NEGAFLOATER = "NEGAFLOATER"     # Negative: Negates the numerical values, making positive negative and vice versa
-    CHANTLIT = "CHANT_LIT"          # String Literal: Represents a string value
+    CHANTLIT = "CHANTLIT"          # String Literal: Represents a string value
 
     # Relational Operators
     EQUAL = "EQUAL"                    # Equal to: Checks if two values are equal
@@ -70,7 +70,6 @@ class TokenType(Enum):
     NOT_OP = "NOT_OP"        # Logical NOT: Returns the opposite Boolean value of the operand
 
     # Other Operators
-    ZONE = "ZONE"
     CHANT_CONCAT = "CHANT_CONCAT"               # Chant Concatenation: Concatenates Chant together when working with Chant data types
     ARRAY_INDEX_LEFT = "ARRAY_INDEX_LEFT"       # Array Size/Index: Used to specify the size or index of an array
     ARRAY_INDEX_RIGHT = "ARRAY_INDEX_RIGHT"     # Array Size/Index: Used to specify the size or index of an array
