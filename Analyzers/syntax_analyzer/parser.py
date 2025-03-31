@@ -1,17 +1,12 @@
 from Analyzers.lexical_analyzer.tokens import TokenType, Token
 from typing import List, Optional
-from typing import List, Optional, Union  # Add Union here
 
-class SyntaxError:
-    def __init__(self, message, line_number=None, column=None, token=None, expected=None):
-        self.message = message
+class SyntaxError(Exception):
+    """Custom exception for syntax errors"""
+    def __init__(self, message, line_number=None, column=None):
+        super().__init__(message)
         self.line_number = line_number
         self.column = column
-        self.token = token if token else "unknown"
-        self.expected = expected if expected else "unknown"
-
-    def __str__(self):
-        return f"Expected Token: {{{self.expected}}}, Unexpected Token: {self.token}"
 
 class Parser:
     # Define First Sets as class variables
@@ -168,12 +163,13 @@ class Parser:
         self.parse_feint_init_end()
 
     def parse_feint_init(self) -> None:
-        """<feint_init> → λ | = <feint_lit>"""
+        """<feint_init> → λ | = <feint_lit> <feint_init_end>"""
         if not self.current_token or self.current_token.type != TokenType.ASSIGN:
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
-        self.parse_feint_lit()  
+        self.parse_feint_lit()
+        self.parse_feint_init_end()  
 
     def parse_feint_lit(self) -> None:
         """<feint_lit> → Feint Literal"""
@@ -204,12 +200,13 @@ class Parser:
         self.parse_floater_init_end()
 
     def parse_floater_init(self) -> None:
-        """<floater_init> → λ |  = <floater_lit>"""
+        """<floater_init> → λ |  = <floater_lit> <floater_init_end>"""
         if not self.current_token or self.current_token.type != TokenType.ASSIGN:
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
         self.parse_floater_lit()
+        self.parse_floater_init_end()
 
     def parse_floater_lit(self) -> None:
         """<floater_lit> → Floater Literal"""
@@ -245,9 +242,9 @@ class Parser:
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.QUOTE)
         self.parse_chant_lit()
-        self.expect(TokenType.QUOTE)
+        self.parse_chant_init_end()
+        
 
     def parse_chant_lit(self) -> None:
         """<chant_lit> → Chant Literal"""
@@ -284,7 +281,6 @@ class Parser:
         
         self.expect(TokenType.ASSIGN)
         self.parse_stat_value()
-        self.parse_stat_init_end()
         
     def parse_stat_value(self) -> None:
         """<stat_value> → Win | Loss"""
@@ -305,7 +301,7 @@ class Parser:
         self.parse_more_stat()
         
     def parse_const_dec(self) -> None:
-        """<const_dec> → Const @identifier <more_const>;"""
+        """<const_dec> → Const <variable_dec>;"""
         self.expect(TokenType.CONST)
         self.parse_variable_dec()
         
@@ -318,8 +314,6 @@ class Parser:
             self.parse_floater_array()
         elif self.current_token.type == TokenType.CHANT:
             self.parse_chant_array()
-        elif self.current_token.type == TokenType.STAT:
-            self.parse_stat_array()
         
     def parse_feint_array(self) -> None:
         """<feint_array> → Feint @identifier [<feint_lit>]<2D_array><feint_array_init>;"""
@@ -364,7 +358,7 @@ class Parser:
             self.parse_more_feint_lit()
     
     def parse_2D_feint_row(self) -> None:
-        """<2D_feint_row> → λ | <feint_lit><more_feint_lit>"""
+        """<2D_feint_row> → λ | , {<feint_lit><more_feint_lit>} <2D_feint_row> """
         if not self.current_token or self.current_token.type != TokenType.COMMA:
             return  # λ case
         
@@ -373,6 +367,7 @@ class Parser:
         self.parse_feint_lit()
         self.parse_more_feint_lit() # Recursive call
         self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.parse_2D_feint_row()
 
     def parse_more_feint_lit(self) -> None:
         """<more_feint_lit> → λ | <feint_lit><more_feint_lit>"""
@@ -417,7 +412,7 @@ class Parser:
             self.parse_more_floater_lit()
     
     def parse_2D_floater_row(self) -> None:
-        """<2D_floater_row> → λ | <floater_lit><more_floater_lit>"""
+        """<2D_floater_row> → λ |, {<floater_lit><more_floater_lit>} <2D_floater_row>"""
         if not self.current_token or self.current_token.type != TokenType.COMMA:
             return  # λ case
         
@@ -426,6 +421,7 @@ class Parser:
         self.parse_floater_lit()
         self.parse_more_floater_lit() # Recursive call
         self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.parse_2D_floater_row()
 
     def parse_more_floater_lit(self) -> None:
         """<more_floater_lit> → λ | <floater_lit><more_floater_lit>"""
@@ -470,9 +466,16 @@ class Parser:
             self.parse_more_chant_lit()
             
     def parse_2D_chant_row(self) -> None:
-        """<2D_chant_row> → λ | <chant_lit><more_chant_lit>"""
+        """<2D_chant_row> → λ | , {<chant_lit><more_chant_lit>} <2D_chant_row>"""
         if not self.current_token or self.current_token.type != TokenType.COMMA:
-            return  # λ case   
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_chant_lit()
+        self.parse_more_chant_lit() # Recursive call
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.parse_2D_chant_row()
         
     def parse_more_chant_lit(self) -> None:
         """<more_chant_lit> → λ | <chant_lit><more_chant_lit>"""
@@ -482,53 +485,6 @@ class Parser:
         self.expect(TokenType.COMMA)
         self.parse_chant_lit()
         self.parse_more_chant_lit() # Recursive call    
-        
-    def parse_stat_array(self) -> None:
-        """<stat_array> → Stat @identifier [<feint_lit>]<2D_array><stat_array_init>;"""
-        self.expect(TokenType.STAT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
-        self.parse_feint_lit()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
-        self.parse_2D_array()
-        self.parse_stat_array_init()
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_stat_array_init(self) -> None:
-        """<stat_array_init> → λ | = {<stat_row>}"""
-        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
-            return  # λ case
-        
-        self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_stat_row()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-        
-    def parse_stat_row(self) -> None:
-        """<stat_row> → <stat_lit><more_stat_lit> | {<stat_lit><more_stat_lit>} <2D_stat_row>"""
-        if self.current_token.type == TokenType.CODE_BLOCK_LEFT:
-            self.expect(TokenType.CODE_BLOCK_LEFT)
-            self.parse_stat_lit()
-            self.parse_more_stat_lit()
-            self.expect(TokenType.CODE_BLOCK_RIGHT)
-            self.parse_2D_stat_row()
-        else:
-            self.parse_stat_lit()
-            self.parse_more_stat_lit()
-            
-    def parse_2D_stat_row(self) -> None:
-        """<2D_stat_row> → λ | <stat_lit><more_stat_lit>"""
-        if not self.current_token or self.current_token.type != TokenType.COMMA:
-            return  # λ case 
-        
-    def parse_more_stat_lit(self) -> None:  
-        """<more_stat_lit> → λ | <stat_lit><more_stat_lit>"""
-        if not self.current_token or self.current_token.type != TokenType.COMMA:
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.parse_stat_lit()
-        self.parse_more_stat_lit() # Recursive call
         
         
     def parse_function_decl(self) -> None:
@@ -650,7 +606,7 @@ class Parser:
                 self.column
             )
 
-def parse(tokens: List[Token]) -> Union[bool, SyntaxError]:
+def parse(tokens: List[Token]) -> bool:
     """
     Main parsing function that creates a Parser instance and runs the parsing process.
     
@@ -658,20 +614,14 @@ def parse(tokens: List[Token]) -> Union[bool, SyntaxError]:
         tokens: List of tokens from the lexical analyzer
     
     Returns:
-        bool: True if parsing successful
-        SyntaxError: If syntax errors are found
+        bool: True if parsing successful, False if syntax errors found
     """
     try:
         parser = Parser(tokens)
         parser.parse_program()
         print("\033[92mSyntax Analysis Complete: No syntax errors found!\033[0m")
         return True
-    except Exception as e:
-        # Convert the exception to your custom SyntaxError object
-        if hasattr(e, 'line_number') and hasattr(e, 'expected'):
-            error = SyntaxError(str(e), e.line_number, e.column, e.token, e.expected)
-        else:
-            error = SyntaxError(str(e), 0, 0)
-        
-        print(f"\033[91m{error}\033[0m")
-        return error
+    except SyntaxError as e:
+        error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: {str(e)}"
+        print(f"\033[91m{error_msg}\033[0m")
+        return False
