@@ -163,9 +163,12 @@ class Parser:
         self.parse_feint_init_end()
 
     def parse_feint_init(self) -> None:
-        """<feint_init> → = <feint_lit>"""
+        """<feint_init> → λ | = <feint_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
         self.expect(TokenType.ASSIGN)
-        self.parse_feint_lit()
+        self.parse_feint_lit()  
 
     def parse_feint_lit(self) -> None:
         """<feint_lit> → Feint Literal"""
@@ -196,7 +199,10 @@ class Parser:
         self.parse_floater_init_end()
 
     def parse_floater_init(self) -> None:
-        """<floater_init> → = <floater_lit>"""
+        """<floater_init> → λ |  = <floater_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
         self.expect(TokenType.ASSIGN)
         self.parse_floater_lit()
 
@@ -229,7 +235,10 @@ class Parser:
         self.parse_chant_init_end()
 
     def parse_chant_init(self) -> None:
-        """<chant_init> → = "<chant_lit>" """
+        """<chant_init> → λ | = "<chant_lit>" """
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
         self.expect(TokenType.ASSIGN)
         self.expect(TokenType.QUOTE)
         self.parse_chant_lit()
@@ -264,7 +273,10 @@ class Parser:
         self.parse_stat_init_end()
         
     def parse_stat_init(self) -> None:
-        """<stat_init> → = <stat_value>"""
+        """<stat_init> → λ | = <stat_value>"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
         self.expect(TokenType.ASSIGN)
         self.parse_stat_value()
         
@@ -329,28 +341,32 @@ class Parser:
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
         self.parse_feint_row()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
         
     def parse_feint_row(self) -> None:
         """<feint_row> → <feint_lit><more_feint_lit> | {<feint_lit><more_feint_lit>} <2D_feint_row>"""
-        self.parse_feint_lit()
-        self.parse_more_feint_lit()
-        if self.current_token.type == TokenType.ARRAY_INDEX_LEFT:
-            self.expect(TokenType.ARRAY_INDEX_LEFT)
+        if self.current_token.type == TokenType.CODE_BLOCK_LEFT:
+            self.expect(TokenType.CODE_BLOCK_LEFT)
+            self.parse_feint_lit()
+            self.parse_more_feint_lit()
+            self.expect(TokenType.CODE_BLOCK_RIGHT)
             self.parse_2D_feint_row()
-            self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        else:
+            self.parse_feint_lit()
+            self.parse_more_feint_lit()
+    
+    def parse_2D_feint_row(self) -> None:
+        """<2D_feint_row> → λ | <feint_lit><more_feint_lit>"""
         if not self.current_token or self.current_token.type != TokenType.COMMA:
             return  # λ case
         
         self.expect(TokenType.COMMA)
-        self.parse_feint_row()
-        
-    def parse_2D_feint_row(self) -> None:
-        """<2D_feint_row> → λ | <feint_lit><more_feint_lit>"""
+        self.expect(TokenType.CODE_BLOCK_LEFT)
         self.parse_feint_lit()
         self.parse_more_feint_lit() # Recursive call
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
 
     def parse_more_feint_lit(self) -> None:
         """<more_feint_lit> → λ | <feint_lit><more_feint_lit>"""
@@ -360,7 +376,155 @@ class Parser:
         self.expect(TokenType.COMMA)
         self.parse_feint_lit()
         self.parse_more_feint_lit() # Recursive call
+        
+    def parse_floater_array(self) -> None:
+        """<floater_array> → Floater @identifier [<feint_lit>]<2D_array><floater_array_init>;"""
+        self.expect(TokenType.FLOATER)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.parse_feint_lit()
+        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        self.parse_2D_array()
+        self.parse_floater_array_init()
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_floater_array_init(self) -> None:
+        """<floater_array_init> → λ | = {<floater_row>}"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
+        self.expect(TokenType.ASSIGN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_floater_row()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        
+    def parse_floater_row(self) -> None:
+        """<floater_row> → <floater_lit><more_floater_lit> | {<floater_lit><more_floater_lit>} <2D_floater_row>"""
+        if self.current_token.type == TokenType.CODE_BLOCK_LEFT:
+            self.expect(TokenType.CODE_BLOCK_LEFT)
+            self.parse_floater_lit()
+            self.parse_more_floater_lit()
+            self.expect(TokenType.CODE_BLOCK_RIGHT)
+            self.parse_2D_floater_row()
+        else:
+            self.parse_floater_lit()
+            self.parse_more_floater_lit()
+    
+    def parse_2D_floater_row(self) -> None:
+        """<2D_floater_row> → λ | <floater_lit><more_floater_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_floater_lit()
+        self.parse_more_floater_lit() # Recursive call
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
 
+    def parse_more_floater_lit(self) -> None:
+        """<more_floater_lit> → λ | <floater_lit><more_floater_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.parse_floater_lit()
+        self.parse_more_floater_lit() # Recursive call  
+        
+    def parse_chant_array(self) -> None:
+        """<chant_array> → Chant @identifier [<feint_lit>]<2D_array><chant_array_init>;"""
+        self.expect(TokenType.CHANT)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.parse_feint_lit()
+        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        self.parse_2D_array()
+        self.parse_chant_array_init()
+        self.expect(TokenType.SEMICOLON)    
+
+    def parse_chant_array_init(self) -> None:
+        """<chant_array_init> → λ | = {<chant_row>}"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
+        self.expect(TokenType.ASSIGN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_chant_row()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        
+    def parse_chant_row(self) -> None:
+        """<chant_row> → <chant_lit><more_chant_lit> | {<chant_lit><more_chant_lit>} <2D_chant_row>"""
+        if self.current_token.type == TokenType.CODE_BLOCK_LEFT:
+            self.expect(TokenType.CODE_BLOCK_LEFT)
+            self.parse_chant_lit()
+            self.parse_more_chant_lit()
+            self.expect(TokenType.CODE_BLOCK_RIGHT)
+            self.parse_2D_chant_row()
+        else:   
+            self.parse_chant_lit()
+            self.parse_more_chant_lit()
+            
+    def parse_2D_chant_row(self) -> None:
+        """<2D_chant_row> → λ | <chant_lit><more_chant_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case   
+        
+    def parse_more_chant_lit(self) -> None:
+        """<more_chant_lit> → λ | <chant_lit><more_chant_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.parse_chant_lit()
+        self.parse_more_chant_lit() # Recursive call    
+        
+    def parse_stat_array(self) -> None:
+        """<stat_array> → Stat @identifier [<feint_lit>]<2D_array><stat_array_init>;"""
+        self.expect(TokenType.STAT)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.parse_feint_lit()
+        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        self.parse_2D_array()
+        self.parse_stat_array_init()
+        self.expect(TokenType.SEMICOLON)
+
+    def parse_stat_array_init(self) -> None:
+        """<stat_array_init> → λ | = {<stat_row>}"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
+        self.expect(TokenType.ASSIGN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_stat_row()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        
+    def parse_stat_row(self) -> None:
+        """<stat_row> → <stat_lit><more_stat_lit> | {<stat_lit><more_stat_lit>} <2D_stat_row>"""
+        if self.current_token.type == TokenType.CODE_BLOCK_LEFT:
+            self.expect(TokenType.CODE_BLOCK_LEFT)
+            self.parse_stat_lit()
+            self.parse_more_stat_lit()
+            self.expect(TokenType.CODE_BLOCK_RIGHT)
+            self.parse_2D_stat_row()
+        else:
+            self.parse_stat_lit()
+            self.parse_more_stat_lit()
+            
+    def parse_2D_stat_row(self) -> None:
+        """<2D_stat_row> → λ | <stat_lit><more_stat_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case 
+        
+    def parse_more_stat_lit(self) -> None:  
+        """<more_stat_lit> → λ | <stat_lit><more_stat_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.parse_stat_lit()
+        self.parse_more_stat_lit() # Recursive call
+        
+        
     def parse_function_decl(self) -> None:
         """<function_decl> → Wilt <function_declared> | Dunk <dunk_func_declared> | λ"""
         # First set of function_decl

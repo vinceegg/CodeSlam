@@ -140,7 +140,7 @@ class SyntaxHighlighter:
         # Define syntax highlighting patterns
         self.patterns = [
             # Keywords
-            (r'\b(Team|Wilt|Feint|Floater|Chant|Stat|Forward|Play|Run|Switch|Get|Default|Dribble|Pass|Shoot|Rebound|Announce|Inbound)\b', 
+            (r'\b(Team|Wilt|Zone|Const|Feint|Floater|Chant|Stat|Forward|Play|Run|Switch|Get|Default|Dribble|Pass|Shoot|Rebound|Announce|Inbound)\b', 
              self.color_scheme['keyword']),
             # Numbers
             (r'\b\d+(\.\d+)?\b', self.color_scheme['number']),
