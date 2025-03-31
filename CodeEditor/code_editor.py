@@ -12,7 +12,7 @@ from tkinter import END
 
 from customtkinter import CTkImage
 from PIL import Image
-from Analyzers.syntax_analyzer.errors import SyntaxError
+from Analyzers.syntax_analyzer.parser import SyntaxError as ParserSyntaxError  # Import the custom SyntaxError
 
 import tkinter as tk
 from tkinter import ttk, font
@@ -635,6 +635,12 @@ class App(customtkinter.CTk):
             )
             token_label.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
+            # Store position information in the token object for use by the parser
+            if hasattr(token, 'line') and hasattr(token, 'column'):
+                # Make sure these are saved in the token for the parser to use
+                token.line_number = token.line
+                token.column_number = token.column
+
         # Handle errors and button states
         if errors:
             self.append_terminal_output("Lexical Errors:", text_color="red")
@@ -662,39 +668,35 @@ class App(customtkinter.CTk):
     def sidebar_button_syntax(self):
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
+        codebox_content = self.codebox.get("1.0", "end-1c")
         
-        # Get the tokens from the lexical analyzer table
-        tokens = []
-        for widget in self.scrollable_frame.winfo_children():
-            if isinstance(widget, customtkinter.CTkFrame) and widget.grid_info()['row'] > 0:  # Skip header row
-                # Get token type and lexeme from the table
-                lexeme_label = widget.winfo_children()[0]
-                token_label = widget.winfo_children()[1]
-                
-                lexeme = lexeme_label.cget("text")
-                token_type = token_label.cget("text")
-                
-                # Create Token object with token type as both type and value
-                token = Token(TokenType[token_type], token_type)
-                tokens.append(token)
+        # First do lexical analysis
+        tokens, lexical_errors = run(codebox_content)
         
-        # If no tokens found, show error
-        if not tokens:
-            self.append_terminal_output("No tokens to analyze. Run lexical analysis first.", text_color="red")
+        if lexical_errors:
+            self.append_terminal_output("Cannot perform syntax analysis due to lexical errors:", text_color="red")
+            for error in lexical_errors:
+                self.append_terminal_output(str(error), text_color="red")
+                if hasattr(error, 'line_number'):
+                    self.editor_frame.highlight_error(error.line_number, error.column)
+            self.sideBtnSemantic.configure(
+                state="disabled",
+                fg_color="#2B2B2B"  # Dark background when disabled
+            )
             return
-        
-        # If tokens found, proceed with syntax analysis
+
+        # If no lexical errors, proceed with syntax analysis
         try:
-            result = parse(tokens)
-            if result:
+            success = parse(tokens)
+            if success:
                 self.append_terminal_output("No Syntax Errors", text_color="green")
                 self.sideBtnSemantic.configure(
                     state="normal",
                     fg_color="#1f538d"  # Blue background when enabled
                 )
-        except SyntaxError as e:
-            # Format the error message to match the console output format
-            error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: Expected Token: {{{e.expected}}}, Unexpected Token: {e.token}"
+        except ParserSyntaxError as e:  # Use the custom SyntaxError class
+            # Format the error message
+            error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: {str(e)}"
             # Display in terminal output
             self.append_terminal_output(error_msg, text_color="red")
             # Highlight the error in the code editor

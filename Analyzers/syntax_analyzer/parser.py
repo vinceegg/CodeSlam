@@ -35,7 +35,16 @@ class Parser:
         self.current_token = self.tokens[0] if tokens else None
         self.line_number = 1  # Track line numbers
         self.column = 0      # Track column position
-        self.expected_tokens = set()  # Add this to track expected tokens
+        self.expected_tokens = set()  # Track expected tokens
+        self.update_position()  # Initialize position from first token
+
+    def update_position(self):
+        """Update line and column position from current token"""
+        if self.current_token:
+            if hasattr(self.current_token, 'line'):
+                self.line_number = self.current_token.line
+            if hasattr(self.current_token, 'column'):
+                self.column = self.current_token.column
 
     def skip_whitespace_and_comments(self):
         """Helper method to skip whitespace, newlines and comments"""
@@ -53,12 +62,7 @@ class Parser:
         self.current += 1
         if self.current < len(self.tokens):
             self.current_token = self.tokens[self.current]
-            # Update line and column based on token position
-            if hasattr(self.current_token, 'line'):
-                self.line_number = self.current_token.line
-            if hasattr(self.current_token, 'column'):
-                self.column = self.current_token.column
-            # Skip any whitespace or comments after advancing
+            self.update_position()  # Update position when advancing
             self.skip_whitespace_and_comments()
         else:
             self.current_token = None
@@ -71,33 +75,36 @@ class Parser:
 
     def match(self, expected_type: TokenType) -> bool:
         """Check if current token matches expected type"""
-        if self.current_token and self.current_token.type == expected_type:
+        if self.current_token.type == expected_type:
             self.advance()
             return True
         return False
 
     def expect(self, token_type: TokenType) -> None:
         """Expect a specific token type, raise error if not found"""
-        if self.current_token and self.current_token.type == token_type and \
-           self.current_token.value.upper() == token_type.value.upper():  # Make case-insensitive comparison
+        if self.current_token.type == token_type:
             self.advance()
         else:
-            self.expected_tokens.add(token_type)
+            self.expected_tokens = {token_type}  # Set expected token
+            unexpected = "EOF" if not self.current_token else f"{self.current_token.type.value}"
             raise SyntaxError(
-                f"Expected Token: {{{', '.join(t.value for t in self.expected_tokens)}}}, "
-                f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}",
+                f"Expected Token: {{{token_type.value}}}, Unexpected Token: {unexpected}",
                 self.line_number,
                 self.column
             )
-            
 
     def parse(self) -> None:
         """Start parsing the program"""
         try:
             self.parse_program()
+            return True  # Return True if parsing successful
         except SyntaxError as e:
-            print(f"Syntax Error: {str(e)}")
-            raise
+            # Re-raise with position information
+            raise SyntaxError(
+                str(e),
+                self.line_number,
+                self.column
+            )
 
     def parse_program(self) -> None:
         """<program> → <global_decl> <function_decl> <function_def> <team_block>"""
@@ -105,7 +112,7 @@ class Parser:
         self.skip_whitespace_and_comments()
         
         # Check if current token is in FIRST(program)
-        if self.current_token and self.current_token.type not in self.FIRST_SETS['program']:
+        if self.current_token.type not in self.FIRST_SETS['program']:
             self.expected_tokens = self.FIRST_SETS['program']  # Set all expected tokens
             raise SyntaxError(
                 f"Expected Token: {{{', '.join(t.value for t in self.expected_tokens)}}}, "
@@ -614,14 +621,13 @@ def parse(tokens: List[Token]) -> bool:
         tokens: List of tokens from the lexical analyzer
     
     Returns:
-        bool: True if parsing successful, False if syntax errors found
+        bool: True if parsing successful, raises SyntaxError if errors found
     """
     try:
         parser = Parser(tokens)
-        parser.parse_program()
-        print("\033[92mSyntax Analysis Complete: No syntax errors found!\033[0m")
-        return True
+        success = parser.parse()
+        return success
     except SyntaxError as e:
-        error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: {str(e)}"
-        print(f"\033[91m{error_msg}\033[0m")
-        return False
+        # Add a debug print to see the error details
+        print(f"Syntax Error: {str(e)} at line {e.line_number}, column {e.column}")
+        raise  # Re-raise the error for the UI to handle

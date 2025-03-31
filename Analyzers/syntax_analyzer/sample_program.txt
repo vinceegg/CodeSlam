@@ -2,7 +2,6 @@
 Wilt Feint @compute_cube(Feint @x);
 Wilt Feint @check_odd_or_even(Feint @num);
 
-
 #Function Definition
  @compute_cube(@num){
     Feint @i;
@@ -36,18 +35,10 @@ Team() {
 }
 ---------------------------------------------------------------
 Team() {
-    Feint @scores[1];
-    Feint @scores[3] = {1,2,3,4};
-    Feint @array2d[2][3];
-    Feint @grid[2][3] = {{1, 2, 3},{4, 5, 6}};
-   
-    @scores[2] = 80;  
-    Feint @sum = @scores[0] + @scores[1];
-    
-Feint @value = @grid[1][2]; 
-    
- 
-    Announce("Third score: " & @scores[2]);
-    Announce("Value from grid: " & @value);
+    Zone Feint @scores[1];
+    Zone Feint @scores[3] = {1,2,3,4};
+    Zone Feint @array2d[2][3];
+    Zone Feint @grid[2][3] = {{1, 2, ""},{4, 5, 6}};
 }
+--------------------------------------------------------------
 
