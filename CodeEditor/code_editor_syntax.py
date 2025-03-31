@@ -659,6 +659,50 @@ class App(customtkinter.CTk):
                 fg_color="#1f538d"  # Blue background when enabled
             )
 
+    # def sidebar_button_syntax(self):
+    #     self.clear_terminal_output()
+    #     self.editor_frame.clear_error_highlights()
+        
+    #     # Get the tokens from the lexical analyzer table
+    #     tokens = []
+    #     for widget in self.scrollable_frame.winfo_children():
+    #         if isinstance(widget, customtkinter.CTkFrame) and widget.grid_info()['row'] > 0:  # Skip header row
+    #             # Get token type and lexeme from the table
+    #             lexeme_label = widget.winfo_children()[0]
+    #             token_label = widget.winfo_children()[1]
+                
+    #             lexeme = lexeme_label.cget("text")
+    #             token_type = token_label.cget("text")
+                
+    #             # Create Token object with token type as both type and value
+    #             token = Token(TokenType[token_type], token_type)
+    #             tokens.append(token)
+        
+    #     # If no tokens found, show error
+    #     if not tokens:
+    #         self.append_terminal_output("No tokens to analyze. Run lexical analysis first.", text_color="red")
+    #         return
+        
+    #     # If tokens found, proceed with syntax analysis
+    #     result = parse(tokens)
+    #     if result is True:  # Check if result is specifically True
+    #         self.append_terminal_output("No Syntax Errors", text_color="green")
+    #         self.sideBtnSemantic.configure(
+    #             state="normal",
+    #             fg_color="#1f538d"  # Blue background when enabled
+    #         )
+    #     else:  # Result is a SyntaxError object
+    #         # Format the error message to match the console output format
+    #         error_msg = f"Syntax Error at line {result.line_number}, column {result.column}: Expected Token: {{{result.expected}}}, Unexpected Token: {result.token}"
+    #         # Display in terminal output
+    #         self.append_terminal_output(error_msg, text_color="red")
+    #         # Highlight the error in the code editor
+    #         if hasattr(result, 'line_number') and hasattr(result, 'column'):
+    #             self.editor_frame.highlight_error(result.line_number, result.column)
+    #         self.sideBtnSemantic.configure(
+    #             state="disabled",
+    #             fg_color="#2B2B2B"  # Dark background when disabled
+    #         )
     def sidebar_button_syntax(self):
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
@@ -666,42 +710,38 @@ class App(customtkinter.CTk):
         # Get the tokens from the lexical analyzer table
         tokens = []
         for widget in self.scrollable_frame.winfo_children():
-            if isinstance(widget, customtkinter.CTkFrame) and widget.grid_info()['row'] > 0:  # Skip header row
-                # Get token type and lexeme from the table
+            if isinstance(widget, customtkinter.CTkFrame) and widget.grid_info()['row'] > 0:
                 lexeme_label = widget.winfo_children()[0]
                 token_label = widget.winfo_children()[1]
                 
                 lexeme = lexeme_label.cget("text")
                 token_type = token_label.cget("text")
                 
-                # Create Token object with token type as both type and value
                 token = Token(TokenType[token_type], token_type)
                 tokens.append(token)
         
-        # If no tokens found, show error
         if not tokens:
             self.append_terminal_output("No tokens to analyze. Run lexical analysis first.", text_color="red")
             return
         
-        # If tokens found, proceed with syntax analysis
-        result = parse(tokens)
-        if result is True:  # Check if result is specifically True
-            self.append_terminal_output("No Syntax Errors", text_color="green")
-            self.sideBtnSemantic.configure(
-                state="normal",
-                fg_color="#1f538d"  # Blue background when enabled
-            )
-        else:  # Result is a SyntaxError object
-            # Format the error message to match the console output format
-            error_msg = f"Syntax Error at line {result.line_number}, column {result.column}: Expected Token: {{{result.expected}}}, Unexpected Token: {result.token}"
-            # Display in terminal output
+        try:
+            result = parse(tokens)
+            if result:
+                self.append_terminal_output("No syntax error/s", text_color="green")
+                self.sideBtnSemantic.configure(
+                    state="normal",
+                    fg_color="#1f538d"
+                )
+        except SyntaxError as e:
+            error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: Expected Token: {{{e.expected}}}, Unexpected Token: {e.token}"
             self.append_terminal_output(error_msg, text_color="red")
-            # Highlight the error in the code editor
-            if hasattr(result, 'line_number') and hasattr(result, 'column'):
-                self.editor_frame.highlight_error(result.line_number, result.column)
+            
+            if hasattr(e, 'line_number') and hasattr(e, 'column'):
+                self.editor_frame.highlight_error(e.line_number, e.column)
+                
             self.sideBtnSemantic.configure(
                 state="disabled",
-                fg_color="#2B2B2B"  # Dark background when disabled
+                fg_color="#2B2B2B"
             )
 
     def sidebar_button_semantic(self):

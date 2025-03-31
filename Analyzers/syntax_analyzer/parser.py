@@ -1,17 +1,13 @@
 from Analyzers.lexical_analyzer.tokens import TokenType, Token
 from typing import List, Optional
-from typing import List, Optional, Union  # Add Union here
+from Analyzers.syntax_analyzer.errors import SyntaxError 
 
-class SyntaxError:
-    def __init__(self, message, line_number=None, column=None, token=None, expected=None):
-        self.message = message
-        self.line_number = line_number
-        self.column = column
-        self.token = token if token else "unknown"
-        self.expected = expected if expected else "unknown"
-
-    def __str__(self):
-        return f"Expected Token: {{{self.expected}}}, Unexpected Token: {self.token}"
+# class SyntaxError(Exception):
+#     """Custom exception for syntax errors"""
+#     def __init__(self, message, line_number=None, column=None):
+#         super().__init__(message)
+#         self.line_number = line_number
+#         self.column = column
 
 class Parser:
     # Define First Sets as class variables
@@ -34,14 +30,33 @@ class Parser:
         'const_dec': {TokenType.CONST}
     }
 
+    # def __init__(self, tokens: List[Token]):
+    #     self.tokens = tokens
+    #     self.current = 0
+    #     self.current_token = self.tokens[0] if tokens else None
+    #     self.line_number = 1  # Track line numbers
+    #     self.column = 0      # Track column position
+    #     self.expected_tokens = set()  # Add this to track expected tokens
     def __init__(self, tokens: List[Token]):
         self.tokens = tokens
         self.current = 0
         self.current_token = self.tokens[0] if tokens else None
-        self.line_number = 1  # Track line numbers
-        self.column = 0      # Track column position
-        self.expected_tokens = set()  # Add this to track expected tokens
+        self.line_number = 1
+        self.column = 0
+        self.expected_tokens = set()
+        self.line_starts = {1: 0}  # Track the starting position of each line
+        self.current_line_content = ""  # Track content of current line
 
+    # def skip_whitespace_and_comments(self):
+    #     """Helper method to skip whitespace, newlines and comments"""
+    #     while self.current_token and self.current_token.type in [
+    #         TokenType.SPACE,
+    #         TokenType.TAB,
+    #         TokenType.NEWLINE,
+    #         TokenType.COMMENT,
+    #         TokenType.MULTI_COMMENT
+    #     ]:
+    #         self.advance()
     def skip_whitespace_and_comments(self):
         """Helper method to skip whitespace, newlines and comments"""
         while self.current_token and self.current_token.type in [
@@ -51,18 +66,60 @@ class Parser:
             TokenType.COMMENT,
             TokenType.MULTI_COMMENT
         ]:
-            self.advance()
+            # Update position tracking for whitespace/comments
+            if self.current_token.type == TokenType.NEWLINE:
+                self.line_number += 1
+                self.column = 0
+                self.line_starts[self.line_number] = 0
+                self.current_line_content = ""
+            elif self.current_token.type in [TokenType.SPACE, TokenType.TAB]:
+                # Add spaces to line content
+                self.current_line_content += " " * (1 if self.current_token.type == TokenType.TAB else 1)
+                
+            self.current += 1
+            if self.current < len(self.tokens):
+                self.current_token = self.tokens[self.current]
+            else:
+                self.current_token = None
+                break
 
+    # ADDED
+    def update_position(self, token):
+        """Update line and column position based on token content"""
+        if token.type == TokenType.NEWLINE:
+            self.line_number += 1
+            self.column = 0
+            self.line_starts[self.line_number] = 0
+            self.current_line_content = ""
+        else:
+            # Only update column for non-whitespace tokens
+            if token.type not in [TokenType.SPACE, TokenType.TAB]:
+                token_value = token.value if hasattr(token, 'value') and token.value else ""
+                self.column = len(self.current_line_content)
+                self.current_line_content += token_value
+
+    # def advance(self) -> None:
+    #     """Advance to next token and update position tracking"""
+    #     self.current += 1
+    #     if self.current < len(self.tokens):
+    #         self.current_token = self.tokens[self.current]
+    #         # Update line and column based on token position
+    #         if hasattr(self.current_token, 'line'):
+    #             self.line_number = self.current_token.line
+    #         if hasattr(self.current_token, 'column'):
+    #             self.column = self.current_token.column
+    #         # Skip any whitespace or comments after advancing
+    #         self.skip_whitespace_and_comments()
+    #     else:
+    #         self.current_token = None
     def advance(self) -> None:
         """Advance to next token and update position tracking"""
+        if self.current_token:
+            self.update_position(self.current_token)
+            
         self.current += 1
         if self.current < len(self.tokens):
             self.current_token = self.tokens[self.current]
-            # Update line and column based on token position
-            if hasattr(self.current_token, 'line'):
-                self.line_number = self.current_token.line
-            if hasattr(self.current_token, 'column'):
-                self.column = self.current_token.column
             # Skip any whitespace or comments after advancing
             self.skip_whitespace_and_comments()
         else:
@@ -81,21 +138,40 @@ class Parser:
             return True
         return False
 
+    # def expect(self, token_type: TokenType) -> None:
+    #     """Expect a specific token type, raise error if not found"""
+    #     if self.current_token and self.current_token.type == token_type and \
+    #        self.current_token.value.upper() == token_type.value.upper():  # Make case-insensitive comparison
+    #         self.advance()
+    #     else:
+    #         self.expected_tokens.add(token_type)
+    #         raise SyntaxError(
+    #             f"Expected Token: {{{', '.join(t.value for t in self.expected_tokens)}}}, "
+    #             f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}",
+    #             self.line_number,
+    #             self.column
+    #         )
     def expect(self, token_type: TokenType) -> None:
         """Expect a specific token type, raise error if not found"""
+        # Calculate exact column position for potential error
+        error_column = self.column
+        
         if self.current_token and self.current_token.type == token_type and \
-           self.current_token.value.upper() == token_type.value.upper():  # Make case-insensitive comparison
+        self.current_token.value.upper() == token_type.value.upper():
             self.advance()
         else:
             self.expected_tokens.add(token_type)
+            expected_tokens_str = ', '.join(t.value for t in self.expected_tokens)
+            unexpected_token = self.current_token.value if self.current_token else 'EOF'
+            
             raise SyntaxError(
-                f"Expected Token: {{{', '.join(t.value for t in self.expected_tokens)}}}, "
-                f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}",
-                self.line_number,
-                self.column
+                f"Expected Token: {{{expected_tokens_str}}}, Unexpected Token: {unexpected_token}",
+                self.line_number, 
+                error_column,  # Use the stored column position
+                expected=expected_tokens_str,
+                token=unexpected_token
             )
             
-
     def parse(self) -> None:
         """Start parsing the program"""
         try:
@@ -168,9 +244,13 @@ class Parser:
         self.parse_feint_init_end()
 
     def parse_feint_init(self) -> None:
-        """<feint_init> → = <feint_lit>"""
+        """<feint_init> → λ | = <feint_lit> <feint_init_end>"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
         self.expect(TokenType.ASSIGN)
         self.parse_feint_lit()
+        self.parse_feint_init_end()  
 
     def parse_feint_lit(self) -> None:
         """<feint_lit> → Feint Literal"""
@@ -201,9 +281,13 @@ class Parser:
         self.parse_floater_init_end()
 
     def parse_floater_init(self) -> None:
-        """<floater_init> → = <floater_lit>"""
+        """<floater_init> → λ |  = <floater_lit> <floater_init_end>"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
         self.expect(TokenType.ASSIGN)
         self.parse_floater_lit()
+        self.parse_floater_init_end()
 
     def parse_floater_lit(self) -> None:
         """<floater_lit> → Floater Literal"""
@@ -234,11 +318,14 @@ class Parser:
         self.parse_chant_init_end()
 
     def parse_chant_init(self) -> None:
-        """<chant_init> → = "<chant_lit>" """
+        """<chant_init> → λ | = "<chant_lit>" """
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
         self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.QUOTE)
         self.parse_chant_lit()
-        self.expect(TokenType.QUOTE)
+        self.parse_chant_init_end()
+        
 
     def parse_chant_lit(self) -> None:
         """<chant_lit> → Chant Literal"""
@@ -269,7 +356,10 @@ class Parser:
         self.parse_stat_init_end()
         
     def parse_stat_init(self) -> None:
-        """<stat_init> → = <stat_value>"""
+        """<stat_init> → λ | = <stat_value>"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
         self.expect(TokenType.ASSIGN)
         self.parse_stat_value()
         
@@ -292,7 +382,7 @@ class Parser:
         self.parse_more_stat()
         
     def parse_const_dec(self) -> None:
-        """<const_dec> → Const @identifier <more_const>;"""
+        """<const_dec> → Const <variable_dec>;"""
         self.expect(TokenType.CONST)
         self.parse_variable_dec()
         
@@ -305,8 +395,6 @@ class Parser:
             self.parse_floater_array()
         elif self.current_token.type == TokenType.CHANT:
             self.parse_chant_array()
-        elif self.current_token.type == TokenType.STAT:
-            self.parse_stat_array()
         
     def parse_feint_array(self) -> None:
         """<feint_array> → Feint @identifier [<feint_lit>]<2D_array><feint_array_init>;"""
@@ -334,28 +422,33 @@ class Parser:
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
         self.parse_feint_row()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
         
     def parse_feint_row(self) -> None:
         """<feint_row> → <feint_lit><more_feint_lit> | {<feint_lit><more_feint_lit>} <2D_feint_row>"""
-        self.parse_feint_lit()
-        self.parse_more_feint_lit()
-        if self.current_token.type == TokenType.ARRAY_INDEX_LEFT:
-            self.expect(TokenType.ARRAY_INDEX_LEFT)
+        if self.current_token.type == TokenType.CODE_BLOCK_LEFT:
+            self.expect(TokenType.CODE_BLOCK_LEFT)
+            self.parse_feint_lit()
+            self.parse_more_feint_lit()
+            self.expect(TokenType.CODE_BLOCK_RIGHT)
             self.parse_2D_feint_row()
-            self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        else:
+            self.parse_feint_lit()
+            self.parse_more_feint_lit()
+    
+    def parse_2D_feint_row(self) -> None:
+        """<2D_feint_row> → λ | , {<feint_lit><more_feint_lit>} <2D_feint_row> """
         if not self.current_token or self.current_token.type != TokenType.COMMA:
             return  # λ case
         
         self.expect(TokenType.COMMA)
-        self.parse_feint_row()
-        
-    def parse_2D_feint_row(self) -> None:
-        """<2D_feint_row> → λ | <feint_lit><more_feint_lit>"""
+        self.expect(TokenType.CODE_BLOCK_LEFT)
         self.parse_feint_lit()
         self.parse_more_feint_lit() # Recursive call
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.parse_2D_feint_row()
 
     def parse_more_feint_lit(self) -> None:
         """<more_feint_lit> → λ | <feint_lit><more_feint_lit>"""
@@ -365,7 +458,116 @@ class Parser:
         self.expect(TokenType.COMMA)
         self.parse_feint_lit()
         self.parse_more_feint_lit() # Recursive call
+        
+    def parse_floater_array(self) -> None:
+        """<floater_array> → Floater @identifier [<feint_lit>]<2D_array><floater_array_init>;"""
+        self.expect(TokenType.FLOATER)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.parse_feint_lit()
+        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        self.parse_2D_array()
+        self.parse_floater_array_init()
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_floater_array_init(self) -> None:
+        """<floater_array_init> → λ | = {<floater_row>}"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
+        self.expect(TokenType.ASSIGN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_floater_row()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        
+    def parse_floater_row(self) -> None:
+        """<floater_row> → <floater_lit><more_floater_lit> | {<floater_lit><more_floater_lit>} <2D_floater_row>"""
+        if self.current_token.type == TokenType.CODE_BLOCK_LEFT:
+            self.expect(TokenType.CODE_BLOCK_LEFT)
+            self.parse_floater_lit()
+            self.parse_more_floater_lit()
+            self.expect(TokenType.CODE_BLOCK_RIGHT)
+            self.parse_2D_floater_row()
+        else:
+            self.parse_floater_lit()
+            self.parse_more_floater_lit()
+    
+    def parse_2D_floater_row(self) -> None:
+        """<2D_floater_row> → λ |, {<floater_lit><more_floater_lit>} <2D_floater_row>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_floater_lit()
+        self.parse_more_floater_lit() # Recursive call
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.parse_2D_floater_row()
 
+    def parse_more_floater_lit(self) -> None:
+        """<more_floater_lit> → λ | <floater_lit><more_floater_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.parse_floater_lit()
+        self.parse_more_floater_lit() # Recursive call  
+        
+    def parse_chant_array(self) -> None:
+        """<chant_array> → Chant @identifier [<feint_lit>]<2D_array><chant_array_init>;"""
+        self.expect(TokenType.CHANT)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.ARRAY_INDEX_LEFT)
+        self.parse_feint_lit()
+        self.expect(TokenType.ARRAY_INDEX_RIGHT)
+        self.parse_2D_array()
+        self.parse_chant_array_init()
+        self.expect(TokenType.SEMICOLON)    
+
+    def parse_chant_array_init(self) -> None:
+        """<chant_array_init> → λ | = {<chant_row>}"""
+        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
+            return  # λ case
+        
+        self.expect(TokenType.ASSIGN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_chant_row()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        
+    def parse_chant_row(self) -> None:
+        """<chant_row> → <chant_lit><more_chant_lit> | {<chant_lit><more_chant_lit>} <2D_chant_row>"""
+        if self.current_token.type == TokenType.CODE_BLOCK_LEFT:
+            self.expect(TokenType.CODE_BLOCK_LEFT)
+            self.parse_chant_lit()
+            self.parse_more_chant_lit()
+            self.expect(TokenType.CODE_BLOCK_RIGHT)
+            self.parse_2D_chant_row()
+        else:   
+            self.parse_chant_lit()
+            self.parse_more_chant_lit()
+            
+    def parse_2D_chant_row(self) -> None:
+        """<2D_chant_row> → λ | , {<chant_lit><more_chant_lit>} <2D_chant_row>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_chant_lit()
+        self.parse_more_chant_lit() # Recursive call
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.parse_2D_chant_row()
+        
+    def parse_more_chant_lit(self) -> None:
+        """<more_chant_lit> → λ | <chant_lit><more_chant_lit>"""
+        if not self.current_token or self.current_token.type != TokenType.COMMA:
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.parse_chant_lit()
+        self.parse_more_chant_lit() # Recursive call    
+        
+        
     def parse_function_decl(self) -> None:
         """<function_decl> → Wilt <function_declared> | Dunk <dunk_func_declared> | λ"""
         # First set of function_decl
@@ -485,7 +687,26 @@ class Parser:
                 self.column
             )
 
-def parse(tokens: List[Token]) -> Union[bool, SyntaxError]:
+# def parse(tokens: List[Token]) -> bool:
+#     """
+#     Main parsing function that creates a Parser instance and runs the parsing process.
+    
+#     Args:
+#         tokens: List of tokens from the lexical analyzer
+    
+#     Returns:
+#         bool: True if parsing successful, False if syntax errors found
+#     """
+#     try:
+#         parser = Parser(tokens)
+#         parser.parse_program()
+#         print("\033[92mSyntax Analysis Complete: No syntax errors found!\033[0m")
+#         return True
+#     except SyntaxError as e:
+#         error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: {str(e)}"
+#         print(f"\033[91m{error_msg}\033[0m")
+#         return False
+def parse(tokens: List[Token]) -> bool:
     """
     Main parsing function that creates a Parser instance and runs the parsing process.
     
@@ -493,20 +714,13 @@ def parse(tokens: List[Token]) -> Union[bool, SyntaxError]:
         tokens: List of tokens from the lexical analyzer
     
     Returns:
-        bool: True if parsing successful
-        SyntaxError: If syntax errors are found
+        bool: True if parsing successful, False if syntax errors found
     """
     try:
         parser = Parser(tokens)
         parser.parse_program()
         print("\033[92mSyntax Analysis Complete: No syntax errors found!\033[0m")
         return True
-    except Exception as e:
-        # Convert the exception to your custom SyntaxError object
-        if hasattr(e, 'line_number') and hasattr(e, 'expected'):
-            error = SyntaxError(str(e), e.line_number, e.column, e.token, e.expected)
-        else:
-            error = SyntaxError(str(e), 0, 0)
-        
-        print(f"\033[91m{error}\033[0m")
-        return error
+    except SyntaxError as e:
+        # Instead of printing to console, re-raise the error so it can be caught by the editor
+        raise
