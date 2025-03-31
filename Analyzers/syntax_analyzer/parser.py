@@ -1,12 +1,17 @@
 from Analyzers.lexical_analyzer.tokens import TokenType, Token
 from typing import List, Optional
+from typing import List, Optional, Union  # Add Union here
 
-class SyntaxError(Exception):
-    """Custom exception for syntax errors"""
-    def __init__(self, message, line_number=None, column=None):
-        super().__init__(message)
+class SyntaxError:
+    def __init__(self, message, line_number=None, column=None, token=None, expected=None):
+        self.message = message
         self.line_number = line_number
         self.column = column
+        self.token = token if token else "unknown"
+        self.expected = expected if expected else "unknown"
+
+    def __str__(self):
+        return f"Expected Token: {{{self.expected}}}, Unexpected Token: {self.token}"
 
 class Parser:
     # Define First Sets as class variables
@@ -281,6 +286,7 @@ class Parser:
         
         self.expect(TokenType.ASSIGN)
         self.parse_stat_value()
+        self.parse_stat_init_end()
         
     def parse_stat_value(self) -> None:
         """<stat_value> → Win | Loss"""
@@ -597,7 +603,7 @@ class Parser:
                 self.column
             )
 
-def parse(tokens: List[Token]) -> bool:
+def parse(tokens: List[Token]) -> Union[bool, SyntaxError]:
     """
     Main parsing function that creates a Parser instance and runs the parsing process.
     
@@ -605,14 +611,20 @@ def parse(tokens: List[Token]) -> bool:
         tokens: List of tokens from the lexical analyzer
     
     Returns:
-        bool: True if parsing successful, False if syntax errors found
+        bool: True if parsing successful
+        SyntaxError: If syntax errors are found
     """
     try:
         parser = Parser(tokens)
         parser.parse_program()
         print("\033[92mSyntax Analysis Complete: No syntax errors found!\033[0m")
         return True
-    except SyntaxError as e:
-        error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: {str(e)}"
-        print(f"\033[91m{error_msg}\033[0m")
-        return False
+    except Exception as e:
+        # Convert the exception to your custom SyntaxError object
+        if hasattr(e, 'line_number') and hasattr(e, 'expected'):
+            error = SyntaxError(str(e), e.line_number, e.column, e.token, e.expected)
+        else:
+            error = SyntaxError(str(e), 0, 0)
+        
+        print(f"\033[91m{error}\033[0m")
+        return error
