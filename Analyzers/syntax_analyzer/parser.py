@@ -163,12 +163,13 @@ class Parser:
         self.parse_feint_init_end()
 
     def parse_feint_init(self) -> None:
-        """<feint_init> → λ | = <feint_lit>"""
+        """<feint_init> → λ | = <feint_lit> <feint_init_end>"""
         if not self.current_token or self.current_token.type != TokenType.ASSIGN:
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
-        self.parse_feint_lit()  
+        self.parse_feint_lit()
+        self.parse_feint_init_end()  
 
     def parse_feint_lit(self) -> None:
         """<feint_lit> → Feint Literal"""
@@ -199,12 +200,13 @@ class Parser:
         self.parse_floater_init_end()
 
     def parse_floater_init(self) -> None:
-        """<floater_init> → λ |  = <floater_lit>"""
+        """<floater_init> → λ |  = <floater_lit> <floater_init_end>"""
         if not self.current_token or self.current_token.type != TokenType.ASSIGN:
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
         self.parse_floater_lit()
+        self.parse_floater_init_end()
 
     def parse_floater_lit(self) -> None:
         """<floater_lit> → Floater Literal"""
@@ -240,9 +242,9 @@ class Parser:
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.QUOTE)
         self.parse_chant_lit()
-        self.expect(TokenType.QUOTE)
+        self.parse_chant_init_end()
+        
 
     def parse_chant_lit(self) -> None:
         """<chant_lit> → Chant Literal"""
@@ -299,7 +301,7 @@ class Parser:
         self.parse_more_stat()
         
     def parse_const_dec(self) -> None:
-        """<const_dec> → Const @identifier <more_const>;"""
+        """<const_dec> → Const <variable_dec>;"""
         self.expect(TokenType.CONST)
         self.parse_variable_dec()
         
@@ -312,8 +314,6 @@ class Parser:
             self.parse_floater_array()
         elif self.current_token.type == TokenType.CHANT:
             self.parse_chant_array()
-        elif self.current_token.type == TokenType.STAT:
-            self.parse_stat_array()
         
     def parse_feint_array(self) -> None:
         """<feint_array> → Feint @identifier [<feint_lit>]<2D_array><feint_array_init>;"""
@@ -476,53 +476,6 @@ class Parser:
         self.expect(TokenType.COMMA)
         self.parse_chant_lit()
         self.parse_more_chant_lit() # Recursive call    
-        
-    def parse_stat_array(self) -> None:
-        """<stat_array> → Stat @identifier [<feint_lit>]<2D_array><stat_array_init>;"""
-        self.expect(TokenType.STAT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
-        self.parse_feint_lit()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
-        self.parse_2D_array()
-        self.parse_stat_array_init()
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_stat_array_init(self) -> None:
-        """<stat_array_init> → λ | = {<stat_row>}"""
-        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
-            return  # λ case
-        
-        self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_stat_row()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-        
-    def parse_stat_row(self) -> None:
-        """<stat_row> → <stat_lit><more_stat_lit> | {<stat_lit><more_stat_lit>} <2D_stat_row>"""
-        if self.current_token.type == TokenType.CODE_BLOCK_LEFT:
-            self.expect(TokenType.CODE_BLOCK_LEFT)
-            self.parse_stat_lit()
-            self.parse_more_stat_lit()
-            self.expect(TokenType.CODE_BLOCK_RIGHT)
-            self.parse_2D_stat_row()
-        else:
-            self.parse_stat_lit()
-            self.parse_more_stat_lit()
-            
-    def parse_2D_stat_row(self) -> None:
-        """<2D_stat_row> → λ | <stat_lit><more_stat_lit>"""
-        if not self.current_token or self.current_token.type != TokenType.COMMA:
-            return  # λ case 
-        
-    def parse_more_stat_lit(self) -> None:  
-        """<more_stat_lit> → λ | <stat_lit><more_stat_lit>"""
-        if not self.current_token or self.current_token.type != TokenType.COMMA:
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.parse_stat_lit()
-        self.parse_more_stat_lit() # Recursive call
         
         
     def parse_function_decl(self) -> None:
