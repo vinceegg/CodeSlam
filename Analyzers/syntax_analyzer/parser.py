@@ -55,13 +55,13 @@ class Parser:
                 error_msg += "unexpected "
             
             error_msg += f"token '{token_value}' of type {token_type}.\n"
-            error_msg += f"Expected one of: {', '.join(str(t) for t in expected_tokens)}"
+            error_msg += f"Expected one of: {', '.join(str(t.value) for t in expected_tokens)}"
             
             raise SyntaxError(
                 error_msg,
                 self.line_number,
                 self.column,
-                expected=', '.join(str(t) for t in expected_tokens),
+                expected=', '.join(str(t.value) for t in expected_tokens),
                 token=token_value,
                 nonterminal=nonterminal,
                 production_rule=production_rule
@@ -69,13 +69,13 @@ class Parser:
         else:
             error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
             error_msg += f"Unexpected end of file while parsing {nonterminal}.\n"
-            error_msg += f"Expected one of: {', '.join(str(t) for t in expected_tokens)}"
+            error_msg += f"Expected one of: {', '.join(str(t.value) for t in expected_tokens)}"
             
             raise SyntaxError(
                 error_msg,
                 self.line_number,
                 self.column,
-                expected=', '.join(str(t) for t in expected_tokens),
+                expected=', '.join(str(t.value) for t in expected_tokens),
                 token="EOF",
                 nonterminal=nonterminal
             )
@@ -202,7 +202,7 @@ class Parser:
         # Check if current token is in FIRST(function_def)
         if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("function_def")):
             self.parse_function_def()
-        self.skip_whitespace_and_comments()
+            
         # Team block is required and should be the last part of the program
         self.parse_team_block()
 
