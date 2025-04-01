@@ -159,7 +159,7 @@ class Parser:
         'function_statements': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
                                TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH,
                                TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.TIMEOUT,
-                               TokenType.RESUME, TokenType.VAR_INIT, TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NOT_OP, TokenType.NEGA_FEINTLIT, TokenType.NEGA_FLOATERLIT, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
+                               TokenType.RESUME, TokenType.VAR_INIT, TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NOT_OP, TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
         # <team_block>
         'team_block': {TokenType.TEAM},
         # <statement>
@@ -169,7 +169,7 @@ class Parser:
                      TokenType.RESUME, TokenType.VAR_INIT},
         # <expression>
         'expression': {TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT,
-                      TokenType.VAR_INIT, TokenType.NOT_OP, TokenType.NEGA_FEINTLIT, TokenType.NEGA_FLOATERLIT, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
+                      TokenType.VAR_INIT, TokenType.NOT_OP, TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
         # <variable_dec>
         'variable_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
         # <array_dec>
@@ -188,25 +188,25 @@ class Parser:
         'output': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT, 
                   TokenType.LEFT_PAREN, TokenType.VAR_INIT, TokenType.WIN, TokenType.LOSS},
         # <other_outputs>
-        'other_outputs': {TokenType.AMPERSAND},
+        'other_outputs': {TokenType.CHANT_CONCAT},
         # <literal>
-        'literal': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGA_FEINTLIT, 
-                   TokenType.NEGA_FLOATERLIT, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
+        'literal': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
+                   TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
         # <nega_feint_lit>
-        'nega_feint_lit': {TokenType.NEGA_FEINTLIT},
+        'nega_feint_lit': {TokenType.NEGAFEINT},
         # <nega_floater_lit>
-        'nega_floater_lit': {TokenType.NEGA_FLOATERLIT},
+        'nega_floater_lit': {TokenType.NEGAFLOATER},
         # <arithmetic_expression>
         'arithmetic_expression': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
-                                 TokenType.NEGA_FEINTLIT, TokenType.NEGA_FLOATERLIT, TokenType.LEFT_PAREN,
+                                 TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.LEFT_PAREN,
                                  TokenType.FEINT, TokenType.FLOATER},
         # <arith_term>
         'arith_term': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
-                      TokenType.NEGA_FEINTLIT, TokenType.NEGA_FLOATERLIT, TokenType.LEFT_PAREN,
+                      TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.LEFT_PAREN,
                       TokenType.FEINT, TokenType.FLOATER},
         # <number>
         'number': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
-                  TokenType.NEGA_FEINTLIT, TokenType.NEGA_FLOATERLIT},
+                  TokenType.NEGAFEINT, TokenType.NEGAFLOATER},
         # <number_type_cast>
         'number_type_cast': {TokenType.FEINT, TokenType.FLOATER},
         # <feint_type_casting>
@@ -218,31 +218,31 @@ class Parser:
         # <stat_type_casting>
         'stat_type_casting': {TokenType.STAT},
         # <more_arith_term>
-        'more_arith_term': {TokenType.PLUS, TokenType.MINUS, TokenType.MULT, TokenType.DIV, TokenType.MOD},
+        'more_arith_term': {TokenType.ADD, TokenType.SUB, TokenType.MUL, TokenType.DIV, TokenType.MOD},
         # <relational_expression>
         'relational_expression': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
-                                TokenType.NEGA_FEINTLIT, TokenType.NEGA_FLOATERLIT, TokenType.LEFT_PAREN,
+                                TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.LEFT_PAREN,
                                 TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
                                 TokenType.WIN, TokenType.LOSS, TokenType.CHANTLIT},
         # <relational_operand>
         'relational_operand': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
-                              TokenType.NEGA_FEINTLIT, TokenType.NEGA_FLOATERLIT, TokenType.FEINT, 
+                              TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.FEINT, 
                               TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
         # <relational_operator>
-        'relational_operator': {TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUALS, 
-                              TokenType.LESS_THAN_EQUAL, TokenType.GREATER_THAN_EQUAL, TokenType.NOT_EQUALS},
+        'relational_operator': {TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
+                              TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
         # <other_relational_operator>
-        'other_relational_operator': {TokenType.EQUALS, TokenType.NOT_EQUALS},
+        'other_relational_operator': {TokenType.EQUAL, TokenType.NOT_EQUAL},
         # <logical_expression>
         'logical_expression': {TokenType.NOT_OP, TokenType.LEFT_PAREN, TokenType.FEINTLIT, 
-                             TokenType.FLOATERLIT, TokenType.VAR_INIT, TokenType.NEGA_FEINTLIT, 
-                             TokenType.NEGA_FLOATERLIT, TokenType.FEINT, TokenType.FLOATER, 
+                             TokenType.FLOATERLIT, TokenType.VAR_INIT, TokenType.NEGAFEINT, 
+                             TokenType.NEGAFLOATER, TokenType.FEINT, TokenType.FLOATER, 
                              TokenType.CHANT, TokenType.STAT, TokenType.WIN, TokenType.LOSS, 
                              TokenType.CHANTLIT},
         # <logic_term>
         'logic_term': {TokenType.NOT_OP, TokenType.LEFT_PAREN, TokenType.FEINTLIT, 
-                      TokenType.FLOATERLIT, TokenType.VAR_INIT, TokenType.NEGA_FEINTLIT, 
-                      TokenType.NEGA_FLOATERLIT, TokenType.FEINT, TokenType.FLOATER, 
+                      TokenType.FLOATERLIT, TokenType.VAR_INIT, TokenType.NEGAFEINT, 
+                      TokenType.NEGAFLOATER, TokenType.FEINT, TokenType.FLOATER, 
                       TokenType.CHANT, TokenType.STAT, TokenType.WIN, TokenType.LOSS, 
                       TokenType.CHANTLIT},
         # <more_logic_term>
@@ -250,22 +250,22 @@ class Parser:
         # <assignment_expression>
         'assignment_expression': {TokenType.VAR_INIT},
         # <assign_operator>
-        'assign_operator': {TokenType.ASSIGN, TokenType.PLUS_ASSIGN, TokenType.MINUS_ASSIGN, 
-                          TokenType.MULT_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN},
+        'assign_operator': {TokenType.ASSIGN, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN, 
+                          TokenType.MUL_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN},
         # <assign_operand>
         'assign_operand': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
-                          TokenType.NEGA_FEINTLIT, TokenType.NEGA_FLOATERLIT, TokenType.LEFT_PAREN,
+                          TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.LEFT_PAREN,
                           TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
                           TokenType.WIN, TokenType.LOSS, TokenType.CHANTLIT, TokenType.NOT_OP},
         # <function_call>
         'function_call': {TokenType.VAR_INIT},
         # <arguments>
-        'arguments': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGA_FEINTLIT, 
-                     TokenType.NEGA_FLOATERLIT, TokenType.CHANTLIT, TokenType.WIN, 
+        'arguments': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
+                     TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, 
                      TokenType.LOSS, TokenType.VAR_INIT},
         # <arg>
-        'arg': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGA_FEINTLIT, 
-               TokenType.NEGA_FLOATERLIT, TokenType.CHANTLIT, TokenType.WIN, 
+        'arg': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
+               TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, 
                TokenType.LOSS, TokenType.VAR_INIT},
         # <more_args>
         'more_args': {TokenType.COMMA},
@@ -281,7 +281,7 @@ class Parser:
         'dribble_statement': {TokenType.DRIBBLE},
         # <condition>
         'condition': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
-                     TokenType.NEGA_FEINTLIT, TokenType.NEGA_FLOATERLIT, TokenType.LEFT_PAREN,
+                     TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.LEFT_PAREN,
                      TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
                      TokenType.WIN, TokenType.LOSS, TokenType.CHANTLIT, TokenType.NOT_OP},
         # <pass_statement>
@@ -903,6 +903,10 @@ class Parser:
         elif self.current_token.type == TokenType.DUNK:
             self.advance()
             self.parse_dunk_func_declared()
+    def parse_function_declared(self) -> None:
+        """<function_declared> → <function_param> <function_statements>"""
+        self.parse_function_param()
+        self.parse_function_statements()
             
     def parse_function_def(self) -> None:
         """<function_def> → Wilt <function_declared> | Dunk <dunk_func_declared> | λ"""
