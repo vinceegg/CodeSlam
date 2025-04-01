@@ -188,7 +188,8 @@ class Parser:
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("program", expected_tokens)
-
+            
+        self.skip_whitespace_and_comments()
         # All three of these can be null (λ), so we only parse them if we see tokens in their FIRST sets
         
         # Check if current token is in FIRST(global_decl)

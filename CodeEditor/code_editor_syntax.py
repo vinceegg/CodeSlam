@@ -733,7 +733,10 @@ class App(customtkinter.CTk):
                     fg_color="#1f538d"
                 )
         except SyntaxError as e:
-            error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: Unexpected Token: {e.token}\nExpected Token: {{{e.expected}}}"
+            if e.token == "EOF":
+                error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: Expected Token: {{{e.expected}}}"
+            else:
+                error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: Unexpected Token: {e.token}\nExpected Token: {{{e.expected}}}"
             self.append_terminal_output(error_msg, text_color="red")
             
             if hasattr(e, 'line_number') and hasattr(e, 'column'):
