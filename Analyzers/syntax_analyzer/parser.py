@@ -748,15 +748,109 @@ class Parser:
         elif self.match_token_type(self.current_token, TokenType.DUNK):
             self.advance()
             self.parse_dunk_func_declared()
+        else:
+            self.error_handler("function_def", first_set)
             
-    def parse_function_param(self) -> None:
-        """<function_param> → λ | <param><params>"""
+    def parse_function_declared(self) -> None:
+        """<function_declared> → <feint_function> | <floater_function> | <chant_function> | <stat_function>"""
+        self.current_nonterminal = "function_declared"
+        expected_tokens = self.get_expected_tokens("function_declared")
+        
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            self.error_handler("function_declared", expected_tokens)
+            
+        if self.match_token_type(self.current_token, TokenType.FEINT):
+            self.parse_feint_function()
+        elif self.match_token_type(self.current_token, TokenType.FLOATER):
+            self.parse_floater_function()
+        elif self.match_token_type(self.current_token, TokenType.CHANT):
+            self.parse_chant_function()
+        elif self.match_token_type(self.current_token, TokenType.STAT):
+            self.parse_stat_function()
+        else:
+            self.error_handler("function_declared")
+            
+    def parse_feint_function(self) -> None:
+        """<feint_function> → Feint @identifier(<func_parameters>) {<function_statements> <rebound_statement>}"""
+        self.expect(TokenType.FEINT)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.LEFT_PAREN)
+        self.parse_func_parameters()
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        # self.parse_function_statements()    
+        # self.parse_rebound_statement()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+    
+    def parse_floater_function(self) -> None:
+        """<floater_function> → Floater @identifier(<func_parameters>) {<function_statements> <rebound_statement>}"""
+        self.expect(TokenType.FLOATER)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.LEFT_PAREN)
+        self.parse_func_parameters()
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        # self.parse_function_statements()    
+        # self.parse_rebound_statement()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        
+        
+    def parse_chant_function(self) -> None:
+        """<chant_function> → Chant @identifier(<func_parameters>) {<function_statements> <rebound_statement>}"""
+        self.expect(TokenType.CHANT)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.LEFT_PAREN)
+        self.parse_func_parameters()
+        self.expect(TokenType.RIGHT_PAREN)  
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        # self.parse_function_statements()    
+        # self.parse_rebound_statement()
+        self.expect(TokenType.CODE_BLOCK_RIGHT) 
+        
+    def parse_stat_function(self) -> None:
+        """<stat_function> → Stat @identifier(<func_parameters>) {<function_statements> <rebound_statement>}"""
+        self.expect(TokenType.STAT)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.LEFT_PAREN)
+        self.parse_func_parameters()
+        self.expect(TokenType.RIGHT_PAREN)  
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        # self.parse_function_statements()    
+        # self.parse_rebound_statement()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+
+    def parse_func_parameters(self) -> None:
+        """<func_parameters> → λ | <param><params>"""
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.VAR_INIT):
             return  # λ case
         
         self.parse_param()
         self.parse_params()
+        
+    def parse_param(self) -> None:
+        """<param> → @identifier"""
+        self.expect(TokenType.VAR_INIT)
+        
+    def parse_params(self) -> None:
+        """<params> → λ | , @identifier <func_parameters>"""
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
+            return  # λ case
+        
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_func_parameters()
+        
+    def parse_dunk_func_declared(self) -> None:
+        """<dunk_func_declared> → Dunk @identifier(<func_parameters>) {<function_statements> <rebound_statement>}"""
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.LEFT_PAREN)
+        self.parse_func_parameters()
+        self.expect(TokenType.RIGHT_PAREN)  
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        # self.parse_function_statements()    
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
 
+    
     def parse_team_block(self) -> None:
         """<team_block> → Team() { <local_decl> <other_statements> }"""
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['team_block']):

@@ -128,50 +128,14 @@ FIRST_SETS = {
     'dunk_func_declared': {TokenType.VAR_INIT},
     # <feint_function>
     'feint_function': {TokenType.FEINT},
-    # <feint_parameters>  
-    'feint_parameters': {TokenType.VAR_INIT},
-    # <feint_param>
-    'feint_param': {TokenType.VAR_INIT},
-    # <feint_params>
-    'feint_params': {TokenType.COMMA},
-    # <floater_function>
-    'floater_function': {TokenType.FLOATER},
-    # <floater_parameters>
-    'floater_parameters': {TokenType.VAR_INIT},
-    # <floater_param>
-    'floater_param': {TokenType.VAR_INIT},
-    # <floater_params>
-    'floater_params': {TokenType.COMMA},
-    # <chant_function>
-    'chant_function': {TokenType.CHANT},
-    # <chant_parameters>
-    'chant_parameters': {TokenType.VAR_INIT},
-    # <chant_param>
-    'chant_param': {TokenType.VAR_INIT},
-    # <chant_params>
-    'chant_params': {TokenType.COMMA},  
-    # <stat_function>
-    'stat_function': {TokenType.STAT},
-    # <stat_parameters>
-    'stat_parameters': {TokenType.VAR_INIT},
-    # <stat_param>
-    'stat_param': {TokenType.VAR_INIT},
-    # <stat_params>
-    'stat_params': {TokenType.COMMA},
     # <dunk_function>
     'dunk_function': {TokenType.VAR_INIT},
-    # <dunk_parameters>
-    'dunk_parameters': {TokenType.VAR_INIT},
-    # <dunk_param>
-    'dunk_param': {TokenType.VAR_INIT},
-    # <dunk_params>
-    'dunk_params': {TokenType.COMMA},
     # <function_def>
     'function_def': {TokenType.WILT, TokenType.DUNK},
     # <function_defined>
     'function_defined': {TokenType.VAR_INIT},
-    # <function_param>
-    'function_param': {TokenType.VAR_INIT},
+    # <func_parameters>
+    'func_parameters': {TokenType.VAR_INIT},
     # <param>
     'param': {TokenType.VAR_INIT},
     # <params>

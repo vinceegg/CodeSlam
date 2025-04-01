@@ -243,76 +243,21 @@ PREDICT_SETS = {
     # <feint_function> productions
     ('feint_function', TokenType.FEINT): 108,
 
-    # <feint_parameters> productions
-    ('feint_parameters', TokenType.FEINT): 110,
-    ('feint_parameters', TokenType.RIGHT_PAREN): 109,
-
-    # <feint_param> productions
-    ('feint_param', TokenType.FEINT): 111,
-
-    # <feint_params> productions
-    ('feint_params', TokenType.COMMA): 113,
-    ('feint_params', TokenType.RIGHT_PAREN): 112,
-
     # <floater_function> productions
     ('floater_function', TokenType.FLOATER): 114,
-
-    # <floater_parameters> productions
-    ('floater_parameters', TokenType.FLOATER): 116,
-    ('floater_parameters', TokenType.RIGHT_PAREN): 115,
-
-    # <floater_param> productions
-    ('floater_param', TokenType.FLOATER): 117,
-
-    # <floater_params> productions
-    ('floater_params', TokenType.COMMA): 119,
-    ('floater_params', TokenType.RIGHT_PAREN): 118,
 
     # <chant_function> productions
     ('chant_function', TokenType.CHANT): 120,
 
-    # <chant_parameters> productions
-    ('chant_parameters', TokenType.CHANT): 122,
-    ('chant_parameters', TokenType.RIGHT_PAREN): 121,
-
-    # <chant_param> productions
-    ('chant_param', TokenType.CHANT): 123,
-
-    # <chant_params> productions
-    ('chant_params', TokenType.COMMA): 125,
-    ('chant_params', TokenType.RIGHT_PAREN): 124,
-
     # <stat_function> productions
     ('stat_function', TokenType.STAT): 126,
-
-    # <stat_parameters> productions
-    ('stat_parameters', TokenType.STAT): 128,
-    ('stat_parameters', TokenType.RIGHT_PAREN): 127,
-
-    # <stat_param> productions
-    ('stat_param', TokenType.STAT): 129,
-
-    # <stat_params> productions
-    ('stat_params', TokenType.COMMA): 131,
-    ('stat_params', TokenType.RIGHT_PAREN): 130,
 
     # <dunk_function> productions
     ('dunk_function', TokenType.VAR_INIT): 132,
 
-    # <dunk_parameters> productions
-    ('dunk_parameters', TokenType.VAR_INIT): 134,
-    ('dunk_parameters', TokenType.RIGHT_PAREN): 133,
-
-    # <dunk_param> productions
-    ('dunk_param', TokenType.VAR_INIT): 135,
-
-    # <dunk_params> productions
-    ('dunk_params', TokenType.COMMA): 137,
-    ('dunk_params', TokenType.RIGHT_PAREN): 136,
-
     # <function_param> productions
-    ('function_param', TokenType.VAR_INIT): 138,
-    ('function_param', TokenType.RIGHT_PAREN): 139,
+    ('func_parameters', TokenType.VAR_INIT): 138,
+    ('func_parameters', TokenType.RIGHT_PAREN): 139,
 
     # <param> productions
     ('param', TokenType.VAR_INIT): 140,
