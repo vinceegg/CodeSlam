@@ -54,7 +54,7 @@ class TokenType(Enum):
     FLOATERLIT = "FLOATERLIT"       # Float Literal: Represents a floating-point value
     NEGAFEINT = "NEGAFEINT"         # Negative: Negates the numerical values, making positive negative and vice versa
     NEGAFLOATER = "NEGAFLOATER"     # Negative: Negates the numerical values, making positive negative and vice versa
-    CHANTLIT = "CHANT_LIT"          # String Literal: Represents a string value
+    CHANTLIT = "CHANTLIT"          # String Literal: Represents a string value
 
     # Relational Operators
     EQUAL = "EQUAL"                    # Equal to: Checks if two values are equal
