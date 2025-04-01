@@ -670,7 +670,10 @@ class Parser:
             raise SyntaxError(
                 "Expected Team block at the end of program",
                 self.line_number,
-                self.column
+                self.column,
+                expected="TEAM",
+                token="EOF" if not self.current_token else self.current_token.value,
+                nonterminal="team_block"
             )
 
         self.expect(TokenType.TEAM)
