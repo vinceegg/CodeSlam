@@ -189,9 +189,21 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("program", expected_tokens)
 
-        self.parse_global_decl()
-        self.parse_function_decl()
-        self.parse_function_def()
+        # All three of these can be null (λ), so we only parse them if we see tokens in their FIRST sets
+        
+        # Check if current token is in FIRST(global_decl)
+        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("global_decl")):
+            self.parse_global_decl()
+        
+        # Check if current token is in FIRST(function_decl)
+        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("function_decl")):
+            self.parse_function_decl()
+        
+        # Check if current token is in FIRST(function_def)
+        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("function_def")):
+            self.parse_function_def()
+        self.skip_whitespace_and_comments()
+        # Team block is required and should be the last part of the program
         self.parse_team_block()
 
     def parse_global_decl(self) -> None:
@@ -199,11 +211,11 @@ class Parser:
         self.current_nonterminal = "global_decl"
         expected_tokens = self.get_expected_tokens("global_decl")
         
+        # If we have a token that's in FIRST(global_declaration)
         if self.current_token and any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.parse_global_declaration()
-            self.parse_global_decl()
-        elif self.current_token and not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("global_decl", expected_tokens)
+            self.parse_global_decl()  # Recursive call
+        # The λ case is handled implicitly by just returning
 
     def parse_global_declaration(self) -> None:
         """<global_declaration> → <variable_dec> | <const_dec> | <array_dec>"""
@@ -214,9 +226,9 @@ class Parser:
             self.error_handler("global_declaration", expected_tokens)
 
         if self.match_token_type(self.current_token, TokenType.CONST):
-                self.parse_const_dec()
+            self.parse_const_dec()
         elif self.match_token_type(self.current_token, TokenType.ZONE):
-                self.parse_array_dec()
+            self.parse_array_dec()
         else:
             self.parse_variable_dec()
 
@@ -229,13 +241,13 @@ class Parser:
             self.error_handler("variable_dec", expected_tokens)
 
         if self.match_token_type(self.current_token, TokenType.FEINT):
-                self.parse_feint_dec()
+            self.parse_feint_dec()
         elif self.match_token_type(self.current_token, TokenType.FLOATER):
-                self.parse_floater_dec()
+            self.parse_floater_dec()
         elif self.match_token_type(self.current_token, TokenType.CHANT):
-                self.parse_chant_dec()
+            self.parse_chant_dec()
         elif self.match_token_type(self.current_token, TokenType.STAT):
-                self.parse_stat_dec()
+            self.parse_stat_dec()
 
     def parse_feint_dec(self) -> None:
         """<feint_dec> → Feint @identifier <more_feint>;"""
@@ -245,35 +257,37 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("feint_dec", expected_tokens)
 
-            self.expect(TokenType.FEINT)
-            self.expect(TokenType.VAR_INIT)
-            self.parse_more_feint()
-            self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.FEINT)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_feint()
+        self.expect(TokenType.SEMICOLON)
 
     def parse_more_feint(self) -> None:
         """<more_feint> → λ | <feint_init><feint_init_end>"""
         self.current_nonterminal = "more_feint"
         expected_tokens = self.get_expected_tokens("more_feint")
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("more_feint", expected_tokens)
+        # Only proceed if we see an ASSIGN token, otherwise return (λ case)
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
+            return  # λ case
 
-        if self.match_token_type(self.current_token, TokenType.ASSIGN):
-            self.parse_feint_init()
-            self.parse_feint_init_end()
+        # If we get here, we have an ASSIGN token
+        self.parse_feint_init()
+        self.parse_feint_init_end()
 
     def parse_feint_init(self) -> None:
         """<feint_init> → λ | = <feint_lit> <feint_init_end>"""
         self.current_nonterminal = "feint_init"
         expected_tokens = self.get_expected_tokens("feint_init")
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("feint_init", expected_tokens)
+        # Only proceed if we see an ASSIGN token, otherwise return (λ case)
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
+            return  # λ case
 
-        if self.match_token_type(self.current_token, TokenType.ASSIGN):
-            self.expect(TokenType.ASSIGN)
-            self.parse_feint_lit()
-            self.parse_feint_init_end()  
+        # If we get here, we have an ASSIGN token
+        self.expect(TokenType.ASSIGN)
+        self.parse_feint_lit()
+        self.parse_feint_init_end()
 
     def parse_feint_lit(self) -> None:
         """<feint_lit> → Feint Literal"""
@@ -290,13 +304,14 @@ class Parser:
         self.current_nonterminal = "feint_init_end"
         expected_tokens = self.get_expected_tokens("feint_init_end")
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("feint_init_end", expected_tokens)
+        # Only proceed if we see a COMMA token, otherwise return (λ case)
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
+            return  # λ case
 
-        if self.match_token_type(self.current_token, TokenType.COMMA):
-            self.expect(TokenType.COMMA)
-            self.expect(TokenType.VAR_INIT)
-            self.parse_more_feint()
+        # If we get here, we have a COMMA token
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_feint()
 
     def parse_floater_dec(self) -> None:
         """<floater_dec> → Floater @identifier <more_floater>;"""
@@ -603,12 +618,13 @@ class Parser:
         
     def parse_function_decl(self) -> None:
         """<function_decl> → Wilt <function_declared> | Dunk <dunk_func_declared> | λ"""
+        self.current_nonterminal = "function_decl"
         # First set of function_decl
         first_set = {TokenType.WILT, TokenType.DUNK}
         
         # If no token or token not in first set, it's λ case
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in first_set):
-            return  # λ case
+            return  # λ case - just return to handle the empty case
             
         if self.match_token_type(self.current_token, TokenType.WILT):
             self.advance()
@@ -616,6 +632,7 @@ class Parser:
         elif self.match_token_type(self.current_token, TokenType.DUNK):
             self.advance()
             self.parse_dunk_func_declared()
+
     def parse_function_declared(self) -> None:
         """<function_declared> → <function_param> <function_statements>"""
         self.parse_function_param()
@@ -623,11 +640,13 @@ class Parser:
             
     def parse_function_def(self) -> None:
         """<function_def> → Wilt <function_declared> | Dunk <dunk_func_declared> | λ"""
+        self.current_nonterminal = "function_def"
         # First set of function_def
         first_set = {TokenType.WILT, TokenType.DUNK}
         
+        # If no token or token not in first set, it's λ case
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in first_set):
-            return  # λ case
+            return  # λ case - just return to handle the empty case
         
         if self.match_token_type(self.current_token, TokenType.WILT):
             self.advance()
