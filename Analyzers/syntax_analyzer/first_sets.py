@@ -54,6 +54,38 @@ FIRST_SETS = {
     'stat_init_end': {TokenType.COMMA},
     # <const_dec>
     'const_dec': {TokenType.CONST},
+    # <const_feint>
+    'const_feint': {TokenType.FEINT},
+    # <feint_const_init>
+    'feint_const_init': {TokenType.ASSIGN},
+    # <feint_const>
+    'feint_const': {TokenType.ASSIGN},
+    # <feint_const_end>
+    'feint_const_end': {TokenType.COMMA},
+    # <const_floater>
+    'const_floater': {TokenType.FLOATER},
+    # <floater_const_init>
+    'floater_const_init': {TokenType.ASSIGN},
+    # <floater_const>
+    'floater_const': {TokenType.ASSIGN},
+    # <floater_const_end>
+    'floater_const_end': {TokenType.COMMA},
+    # <const_chant>
+    'const_chant': {TokenType.CHANT},
+    # <chant_const_init>
+    'chant_const_init': {TokenType.ASSIGN},
+    # <chant_const>
+    'chant_const': {TokenType.ASSIGN},
+    # <chant_const_end>
+    'chant_const_end': {TokenType.COMMA},
+    # <const_stat>
+    'const_stat': {TokenType.STAT},
+    # <stat_const_init>
+    'stat_const_init': {TokenType.ASSIGN},
+    # <stat_const>
+    'stat_const': {TokenType.ASSIGN},
+    # <stat_const_end>
+    'stat_const_end': {TokenType.COMMA},
     # <array_dec>
     'array_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT},
     # <feint_array>
@@ -97,33 +129,33 @@ FIRST_SETS = {
     # <feint_function>
     'feint_function': {TokenType.FEINT},
     # <feint_parameters>  
-    'feint_parameters': {TokenType.FEINT},
+    'feint_parameters': {TokenType.VAR_INIT},
     # <feint_param>
-    'feint_param': {TokenType.FEINT},
+    'feint_param': {TokenType.VAR_INIT},
     # <feint_params>
     'feint_params': {TokenType.COMMA},
     # <floater_function>
     'floater_function': {TokenType.FLOATER},
     # <floater_parameters>
-    'floater_parameters': {TokenType.FLOATER},
+    'floater_parameters': {TokenType.VAR_INIT},
     # <floater_param>
-    'floater_param': {TokenType.FLOATER},
+    'floater_param': {TokenType.VAR_INIT},
     # <floater_params>
     'floater_params': {TokenType.COMMA},
     # <chant_function>
     'chant_function': {TokenType.CHANT},
     # <chant_parameters>
-    'chant_parameters': {TokenType.CHANT},
+    'chant_parameters': {TokenType.VAR_INIT},
     # <chant_param>
-    'chant_param': {TokenType.CHANT},
+    'chant_param': {TokenType.VAR_INIT},
     # <chant_params>
     'chant_params': {TokenType.COMMA},  
     # <stat_function>
     'stat_function': {TokenType.STAT},
     # <stat_parameters>
-    'stat_parameters': {TokenType.STAT},
+    'stat_parameters': {TokenType.VAR_INIT},
     # <stat_param>
-    'stat_param': {TokenType.STAT},
+    'stat_param': {TokenType.VAR_INIT},
     # <stat_params>
     'stat_params': {TokenType.COMMA},
     # <dunk_function>

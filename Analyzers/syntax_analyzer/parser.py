@@ -182,29 +182,22 @@ class Parser:
             raise
 
     def parse_program(self) -> None:
-        """<program> → <global_decl> <function_decl> <function_def> <team_block>""" 
+        """<program> → <global_decl> <function_def> <team_block>"""
         self.current_nonterminal = "program"
         expected_tokens = self.get_expected_tokens("program")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("program", expected_tokens)
-            
-        self.skip_whitespace_and_comments()
-        # All three of these can be null (λ), so we only parse them if we see tokens in their FIRST sets
-        
+
         # Check if current token is in FIRST(global_decl)
         if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("global_decl")):
             self.parse_global_decl()
-        
-        # Check if current token is in FIRST(function_decl)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("function_decl")):
-            self.parse_function_decl()
         
         # Check if current token is in FIRST(function_def)
         if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("function_def")):
             self.parse_function_def()
             
-        # Team block is required and should be the last part of the program
+        # Team block is required
         self.parse_team_block()
 
     def parse_global_decl(self) -> None:
@@ -414,12 +407,15 @@ class Parser:
         
     def parse_stat_value(self) -> None:
         """<stat_value> → Win | Loss"""
-        if self.match_token_type(self.current_token, TokenType.WIN):
-            self.expect(TokenType.WIN)
-        elif self.match_token_type(self.current_token, TokenType.LOSS):
-            self.expect(TokenType.LOSS)
-        else:
-            raise SyntaxError(f"Expected stat value, got {self.current_token.type}", self.line_number, self.column)
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['stat_value']):
+            raise SyntaxError(
+                "Expected stat value, got",
+                self.line_number,
+                self.column,
+                expected="WIN, LOSS",
+                token="EOF" if not self.current_token else self.current_token.value,
+                nonterminal="stat_value"
+            )
         
     def parse_stat_init_end(self) -> None:
         """<stat_init_end> → λ | ", @identifier <more_stat_init>" """
@@ -431,9 +427,128 @@ class Parser:
         self.parse_more_stat()
         
     def parse_const_dec(self) -> None:
-        """<const_dec> → Const <variable_dec>;"""
+        """<const_dec> → <const_feint> | <const_floater> | <const_chant> | <const_stat>"""
+        self.current_nonterminal = "const_dec"
+        expected_tokens = self.get_expected_tokens("const_dec")
+        
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            self.error_handler("const_dec", expected_tokens)    
+        
         self.expect(TokenType.CONST)
-        self.parse_variable_dec()
+        if self.match_token_type(self.current_token, TokenType.FEINT):
+            self.parse_const_feint()
+        elif self.match_token_type(self.current_token, TokenType.FLOATER):
+            self.parse_const_floater()
+        elif self.match_token_type(self.current_token, TokenType.CHANT):
+            self.parse_const_chant()
+        elif self.match_token_type(self.current_token, TokenType.STAT):
+            self.parse_const_stat()
+        else:
+            self.error_handler("const_dec")
+            
+    def parse_const_feint(self) -> None:
+        """<const_feint> → Feint @identifier <feint_const_init>;"""
+        self.expect(TokenType.FEINT)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_feint_const_init()
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_feint_const_init(self) -> None:
+        """<feint_const_init> → <feint_const><feint_const_end>"""
+        self.parse_feint_const()
+        self.parse_feint_const_end()
+        
+    def parse_feint_const(self) -> None:
+        """<feint_const> → = <feint_lit>"""
+        self.expect(TokenType.ASSIGN)
+        self.parse_feint_lit()
+        
+    def parse_feint_const_end(self) -> None:
+        """<feint_const_end> → ", @identifier <feint_const_init>" | λ"""
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
+            return  # λ case
+            
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_feint_const_init()
+        
+    def parse_const_floater(self) -> None:
+        """<const_floater> → Floater @identifier <floater_const_init>;"""
+        self.expect(TokenType.FLOATER)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_floater_const_init()
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_floater_const_init(self) -> None:
+        """<floater_const_init> → <floater_const><floater_const_end>"""
+        self.parse_floater_const()
+        self.parse_floater_const_end()
+        
+    def parse_floater_const(self) -> None:
+        """<floater_const> → = <floater_lit>"""
+        self.expect(TokenType.ASSIGN)
+        self.parse_floater_lit()
+        
+    def parse_floater_const_end(self) -> None:
+        """<floater_const_end> → ", @identifier <floater_const_init>" | λ"""
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
+            return  # λ case
+            
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_floater_const_init()
+        
+    def parse_const_chant(self) -> None:
+        """<const_chant> → Chant @identifier <chant_const_init>;"""
+        self.expect(TokenType.CHANT)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_chant_const_init()
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_chant_const_init(self) -> None:
+        """<chant_const_init> → <chant_const><chant_const_end>"""
+        self.parse_chant_const()
+        self.parse_chant_const_end()
+        
+    def parse_chant_const(self) -> None:
+        """<chant_const> → = <chant_lit>"""
+        self.expect(TokenType.ASSIGN)
+        self.parse_chant_lit()
+        
+    def parse_chant_const_end(self) -> None:
+        """<chant_const_end> → ", @identifier <chant_const_init>" | λ"""
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
+            return  # λ case
+            
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_chant_const_init()
+        
+    def parse_const_stat(self) -> None:
+        """<const_stat> → Stat @identifier <stat_const_init>;"""
+        self.expect(TokenType.STAT)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_stat_const_init()
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_stat_const_init(self) -> None:
+        """<stat_const_init> → <stat_const><stat_const_end>"""
+        self.parse_stat_const()
+        self.parse_stat_const_end()
+        
+    def parse_stat_const(self) -> None:
+        """<stat_const> → = <stat_value>"""
+        self.expect(TokenType.ASSIGN)
+        self.parse_stat_value()
+        
+    def parse_stat_const_end(self) -> None:
+        """<stat_const_end> → ", @identifier <stat_const_init>" | λ"""
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
+            return  # λ case
+            
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_stat_const_init()
         
     def parse_array_dec(self) -> None:
         """<array_dec> → Zone <feint_array> <floater_array> <chant_array> <stat_array>;"""
@@ -617,28 +732,6 @@ class Parser:
         self.parse_more_chant_lit() # Recursive call    
         
         
-    def parse_function_decl(self) -> None:
-        """<function_decl> → Wilt <function_declared> | Dunk <dunk_func_declared> | λ"""
-        self.current_nonterminal = "function_decl"
-        # First set of function_decl
-        first_set = {TokenType.WILT, TokenType.DUNK}
-        
-        # If no token or token not in first set, it's λ case
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in first_set):
-            return  # λ case - just return to handle the empty case
-            
-        if self.match_token_type(self.current_token, TokenType.WILT):
-            self.advance()
-            self.parse_function_declared()
-        elif self.match_token_type(self.current_token, TokenType.DUNK):
-            self.advance()
-            self.parse_dunk_func_declared()
-
-    def parse_function_declared(self) -> None:
-        """<function_declared> → <function_param> <function_statements>"""
-        self.parse_function_param()
-        self.parse_function_statements()
-            
     def parse_function_def(self) -> None:
         """<function_def> → Wilt <function_declared> | Dunk <dunk_func_declared> | λ"""
         self.current_nonterminal = "function_def"
@@ -697,8 +790,6 @@ class Parser:
         """<local_declaration> → <variable_dec> | <array_dec>"""
         if self.match_token_type(self.current_token, TokenType.ZONE):
             self.parse_array_dec()
-        elif self.match_token_type(self.current_token, TokenType.CONST):
-            self.parse_const_dec()
         else:
             self.parse_variable_dec()
         
