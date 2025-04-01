@@ -1,7 +1,8 @@
 from Analyzers.lexical_analyzer.tokens import TokenType, Token
-from typing import List, Optional
+from typing import List, Optional, Set
 from Analyzers.syntax_analyzer.errors import SyntaxError 
 from Analyzers.syntax_analyzer.first_sets import FIRST_SETS
+from Analyzers.syntax_analyzer.predict_sets import PREDICT_SETS
 
 # class SyntaxError(Exception):
 #     """Custom exception for syntax errors"""
@@ -20,6 +21,64 @@ class Parser:
         self.expected_tokens = set()
         self.line_starts = {1: 0}  # Track the starting position of each line
         self.current_line_content = ""  # Track content of current line
+        self.current_nonterminal = None  # Track current nonterminal being parsed
+
+    def get_expected_tokens(self, nonterminal: str) -> Set[TokenType]:
+        """Get all expected tokens for a nonterminal based on FIRST sets"""
+        if nonterminal in FIRST_SETS:
+            return FIRST_SETS[nonterminal]
+        return set()
+
+    def get_production_rule(self, nonterminal: str, token_type: TokenType) -> Optional[int]:
+        """Get the production rule number based on PREDICT sets"""
+        if (nonterminal, token_type) in PREDICT_SETS:
+            return PREDICT_SETS[(nonterminal, token_type)]
+        return None
+
+    def error_handler(self, nonterminal: str, expected_tokens: Set[TokenType] = None) -> None:
+        """Enhanced error handler that uses PREDICT sets and FIRST sets"""
+        if expected_tokens is None:
+            expected_tokens = self.get_expected_tokens(nonterminal)
+
+        if self.current_token:
+            token_type = self.current_token.type
+            token_value = self.current_token.value
+            production_rule = self.get_production_rule(nonterminal, token_type)
+            
+            # Build detailed error message
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += f"While parsing {nonterminal}, "
+            
+            if production_rule:
+                error_msg += f"expected production rule {production_rule} "
+            else:
+                error_msg += "unexpected "
+            
+            error_msg += f"token '{token_value}' of type {token_type}.\n"
+            error_msg += f"Expected one of: {', '.join(str(t) for t in expected_tokens)}"
+            
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected=', '.join(str(t) for t in expected_tokens),
+                token=token_value,
+                nonterminal=nonterminal,
+                production_rule=production_rule
+            )
+        else:
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += f"Unexpected end of file while parsing {nonterminal}.\n"
+            error_msg += f"Expected one of: {', '.join(str(t) for t in expected_tokens)}"
+            
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected=', '.join(str(t) for t in expected_tokens),
+                token="EOF",
+                nonterminal=nonterminal
+            )
 
     def skip_whitespace_and_comments(self):
         """Helper method to skip whitespace, newlines and comments"""
@@ -89,25 +148,12 @@ class Parser:
 
     def expect(self, token_type: TokenType) -> None:
         """Expect a specific token type, raise error if not found"""
-        # Calculate exact column position for potential error
-        error_column = self.column
-        
-        if self.current_token and self.current_token.type == token_type and \
-        self.current_token.value.upper() == token_type.value.upper():
+        if self.current_token and self.current_token.type == token_type:
             self.advance()
         else:
-            self.expected_tokens.add(token_type)
-            expected_tokens_str = ', '.join(t.value for t in self.expected_tokens)
-            unexpected_token = self.current_token.value if self.current_token else 'EOF'
-            
-            raise SyntaxError(
-                f"Expected Token: {{{expected_tokens_str}}}, Unexpected Token: {unexpected_token}",
-                self.line_number, 
-                error_column,  # Use the stored column position
-                expected=expected_tokens_str,
-                token=unexpected_token
-            )
-            
+            expected_tokens = {token_type}
+            self.error_handler(self.current_nonterminal, expected_tokens)
+
     def parse(self) -> None:
         """Start parsing the program"""
         try:
@@ -117,16 +163,12 @@ class Parser:
             raise
 
     def parse_program(self) -> None:
-        """<program> → <global_decl> <function_decl> <function_def> <team_block>""" 
-        # Check if current token is in FIRST(program)
-        if self.current_token and self.current_token.type not in FIRST_SETS['program']:
-            self.expected_tokens = FIRST_SETS['program']  # Set all expected tokens
-            raise SyntaxError(
-                f"Expected Token: {{{', '.join(t.value for t in self.expected_tokens)}}}, "
-                f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}",
-                self.line_number,
-                self.column
-            )
+        """<program> → <global_decl> <function_decl> <function_def> <team_block>"""
+        self.current_nonterminal = "program"
+        expected_tokens = self.get_expected_tokens("program")
+        
+        if not self.current_token or self.current_token.type not in expected_tokens:
+            self.error_handler("program", expected_tokens)
 
         self.parse_global_decl()
         self.parse_function_decl()
@@ -135,79 +177,107 @@ class Parser:
 
     def parse_global_decl(self) -> None:
         """<global_decl> → <global_declaration><global_decl> | λ"""
-        # Check FIRST set for global_decl
-        if self.current_token and self.current_token.type in FIRST_SETS['global_decl']:
+        self.current_nonterminal = "global_decl"
+        expected_tokens = self.get_expected_tokens("global_decl")
+        
+        if self.current_token and self.current_token.type in expected_tokens:
             self.parse_global_declaration()
-            self.parse_global_decl()  # Recursive call
-        else:
-            raise SyntaxError(f"Expected {{{', '.join(t.value for t in self.expected_tokens)}}}, got {self.current_token.type}", self.line_number, self.column)
+            self.parse_global_decl()
+        elif self.current_token and self.current_token.type not in expected_tokens:
+            self.error_handler("global_decl", expected_tokens)
 
     def parse_global_declaration(self) -> None:
         """<global_declaration> → <variable_dec> | <const_dec> | <array_dec>"""
-        if self.current_token and self.current_token.type in FIRST_SETS['global_declaration']:
-            if self.current_token.type == TokenType.CONST:
-                self.parse_const_dec()
-            elif self.current_token.type == TokenType.ZONE:
-                self.parse_array_dec()
-            else:
-                self.parse_variable_dec()
+        self.current_nonterminal = "global_declaration"
+        expected_tokens = self.get_expected_tokens("global_declaration")
+        
+        if not self.current_token or self.current_token.type not in expected_tokens:
+            self.error_handler("global_declaration", expected_tokens)
+
+        if self.current_token.type == TokenType.CONST:
+            self.parse_const_dec()
+        elif self.current_token.type == TokenType.ZONE:
+            self.parse_array_dec()
         else:
-            raise SyntaxError(f"Expected {{{', '.join(t.value for t in self.expected_tokens)}}}, got {self.current_token.type}", self.line_number, self.column)
+            self.parse_variable_dec()
 
     def parse_variable_dec(self) -> None:
         """Parse variable declarations"""
-        if self.current_token and self.current_token.type in FIRST_SETS['variable_dec']:
-            if self.current_token.type == TokenType.FEINT:
-                self.parse_feint_dec()
-            elif self.current_token.type == TokenType.FLOATER:
-                self.parse_floater_dec()
-            elif self.current_token.type == TokenType.CHANT:
-                self.parse_chant_dec()
-            elif self.current_token.type == TokenType.STAT:
-                self.parse_stat_dec()
-        else:
-            raise SyntaxError(f"Expected {{{', '.join(t.value for t in self.expected_tokens)}}}, got {self.current_token.type}", self.line_number, self.column)
+        self.current_nonterminal = "variable_dec"
+        expected_tokens = self.get_expected_tokens("variable_dec")
+        
+        if not self.current_token or self.current_token.type not in expected_tokens:
+            self.error_handler("variable_dec", expected_tokens)
+
+        if self.current_token.type == TokenType.FEINT:
+            self.parse_feint_dec()
+        elif self.current_token.type == TokenType.FLOATER:
+            self.parse_floater_dec()
+        elif self.current_token.type == TokenType.CHANT:
+            self.parse_chant_dec()
+        elif self.current_token.type == TokenType.STAT:
+            self.parse_stat_dec()
 
     def parse_feint_dec(self) -> None:
         """<feint_dec> → Feint @identifier <more_feint>;"""
-        if self.current_token and self.current_token.type in FIRST_SETS['feint_dec']:
-            self.expect(TokenType.FEINT)
-            self.expect(TokenType.VAR_INIT)
-            self.parse_more_feint()  # Call the function for <more_feint>
-            self.expect(TokenType.SEMICOLON)
-        else:
-            raise SyntaxError(f"Expected {{{', '.join(t.value for t in self.expected_tokens)}}}, got {self.current_token.type}", self.line_number, self.column)
+        self.current_nonterminal = "feint_dec"
+        expected_tokens = self.get_expected_tokens("feint_dec")
+        
+        if not self.current_token or self.current_token.type not in expected_tokens:
+            self.error_handler("feint_dec", expected_tokens)
+
+        self.expect(TokenType.FEINT)
+        self.expect(TokenType.VAR_INIT)
+        self.parse_more_feint()
+        self.expect(TokenType.SEMICOLON)
 
     def parse_more_feint(self) -> None:
         """<more_feint> → λ | <feint_init><feint_init_end>"""
-        # First set of feint_init is {TokenType.ASSIGN}
-        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
-            return  # λ case
+        self.current_nonterminal = "more_feint"
+        expected_tokens = self.get_expected_tokens("more_feint")
         
-        self.parse_feint_init()
-        self.parse_feint_init_end()
+        if not self.current_token or self.current_token.type not in expected_tokens:
+            self.error_handler("more_feint", expected_tokens)
+
+        if self.current_token.type == TokenType.ASSIGN:
+            self.parse_feint_init()
+            self.parse_feint_init_end()
 
     def parse_feint_init(self) -> None:
         """<feint_init> → λ | = <feint_lit> <feint_init_end>"""
-        if not self.current_token or self.current_token.type != TokenType.ASSIGN:
-            return  # λ case
+        self.current_nonterminal = "feint_init"
+        expected_tokens = self.get_expected_tokens("feint_init")
         
-        self.expect(TokenType.ASSIGN)
-        self.parse_feint_lit()
-        self.parse_feint_init_end()  
+        if not self.current_token or self.current_token.type not in expected_tokens:
+            self.error_handler("feint_init", expected_tokens)
+
+        if self.current_token.type == TokenType.ASSIGN:
+            self.expect(TokenType.ASSIGN)
+            self.parse_feint_lit()
+            self.parse_feint_init_end()
 
     def parse_feint_lit(self) -> None:
         """<feint_lit> → Feint Literal"""
+        self.current_nonterminal = "feint_lit"
+        expected_tokens = self.get_expected_tokens("feint_lit")
+        
+        if not self.current_token or self.current_token.type not in expected_tokens:
+            self.error_handler("feint_lit", expected_tokens)
+
         self.expect(TokenType.FEINTLIT)
 
     def parse_feint_init_end(self) -> None:
         """<feint_init_end> → λ | ", @identifier <more_feint>" """
-        if not self.current_token or self.current_token.type != TokenType.COMMA:
-            return  # λ case
+        self.current_nonterminal = "feint_init_end"
+        expected_tokens = self.get_expected_tokens("feint_init_end")
         
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_more_feint()
+        if not self.current_token or self.current_token.type not in expected_tokens:
+            self.error_handler("feint_init_end", expected_tokens)
+
+        if self.current_token.type == TokenType.COMMA:
+            self.expect(TokenType.COMMA)
+            self.expect(TokenType.VAR_INIT)
+            self.parse_more_feint()
 
     def parse_floater_dec(self) -> None:
         """<floater_dec> → Floater @identifier <more_floater>;"""
@@ -590,24 +660,6 @@ class Parser:
         else:
             self.parse_variable_dec()
         
-
-    def error_handler(self, expected_tokens: List[TokenType]) -> None:
-        """Handle syntax errors by providing helpful error messages"""
-        if self.current_token:
-            token_type = self.current_token.type
-            token_value = self.current_token.value
-            raise SyntaxError(
-                f"Unexpected token '{token_value}' of type {token_type}. "
-                f"Expected one of: {', '.join(str(t) for t in expected_tokens)}",
-                self.line_number,
-                self.column
-            )
-        else:
-            raise SyntaxError(
-                f"Unexpected end of file. Expected one of: {', '.join(str(t) for t in expected_tokens)}",
-                self.line_number,
-                self.column
-            )
 
 def parse(tokens: List[Token]) -> bool:
     """
