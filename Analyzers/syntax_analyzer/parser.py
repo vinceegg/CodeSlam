@@ -939,12 +939,26 @@ class Parser:
         self.parse_output()
         self.parse_more_outputs()
     
+    def parse_inbound_statement(self) -> None:
+        """<inbound_statement> → Inbound(<inputs>);"""
+        self.expect(TokenType.INBOUND)
+        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.CHANTLIT)
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.SEMICOLON)
+        
     def parse_literal(self) -> None:
         """<literal> → <feint_lit> | <floater_lit> | <chant_lit> | <stat_value> | <array_access>"""
         if self.current_token and self.match_token_type(self.current_token, TokenType.FEINTLIT):
             self.parse_feint_lit()
         elif self.current_token and self.match_token_type(self.current_token, TokenType.FLOATERLIT):
             self.parse_floater_lit()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.NEGAFEINT):
+            self.parse_nega_feint_lit()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.NEGAFLOATER):
+            self.parse_nega_floater_lit()
         elif self.current_token and self.match_token_type(self.current_token, TokenType.CHANTLIT):
             self.parse_chant_lit()
         elif self.current_token and self.match_token_type(self.current_token, TokenType.STAT):
@@ -961,6 +975,19 @@ class Parser:
         self.expect(TokenType.REBOUND)
         #self.parse_expression()
         self.expect(TokenType.SEMICOLON)
+        
+    def parse_nega_feint_lit(self) -> None:
+        """<nega_feint_lit> → -<feint_lit>"""
+        self.expect(TokenType.NEGAFEINT)
+        self.parse_feint_lit()  
+        
+    def parse_nega_floater_lit(self) -> None:
+        """<nega_floater_lit> → -<floater_lit>"""
+        self.expect(TokenType.NEGAFLOATER)
+        self.parse_floater_lit()
+        
+        
+        
         
     
         
