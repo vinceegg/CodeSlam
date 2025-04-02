@@ -735,5 +735,125 @@ PREDICT_SETS = {
 
     # <other_type_cast> productions
     ('other_type_cast', TokenType.CHANT): 304,
-    ('other_type_cast', TokenType.STAT): 304
+    ('other_type_cast', TokenType.STAT): 304,
+
+    # <team_statement> productions
+    ('team_statement', TokenType.VAR_INIT): 122,
+    ('team_statement', TokenType.FEINT): 123,
+    ('team_statement', TokenType.FLOATER): 123,
+    ('team_statement', TokenType.CHANT): 123,
+    ('team_statement', TokenType.STAT): 123,
+    ('team_statement', TokenType.ANNOUNCE): 123,
+    ('team_statement', TokenType.INBOUND): 123,
+    ('team_statement', TokenType.DRIBBLE): 123,
+    ('team_statement', TokenType.SWITCH): 123,
+    ('team_statement', TokenType.FORWARD): 123,
+    ('team_statement', TokenType.PLAY): 123,
+    ('team_statement', TokenType.RUN): 123,
+
+    # <more_team_statements> productions
+    ('more_team_statements', TokenType.FEINT): 119,
+    ('more_team_statements', TokenType.FLOATER): 119,
+    ('more_team_statements', TokenType.CHANT): 119,
+    ('more_team_statements', TokenType.STAT): 119,
+    ('more_team_statements', TokenType.ANNOUNCE): 119,
+    ('more_team_statements', TokenType.INBOUND): 119,
+    ('more_team_statements', TokenType.DRIBBLE): 119,
+    ('more_team_statements', TokenType.SWITCH): 119,
+    ('more_team_statements', TokenType.FORWARD): 119,
+    ('more_team_statements', TokenType.PLAY): 119,
+    ('more_team_statements', TokenType.RUN): 119,
+    ('more_team_statements', TokenType.VAR_INIT): 119,
+
+    # <team_stmt_end> productions
+    ('team_stmt_end', TokenType.VAR_INIT): 120,
+    ('team_stmt_end', TokenType.FEINT): 120,
+    ('team_stmt_end', TokenType.FLOATER): 120,
+    ('team_stmt_end', TokenType.CHANT): 120,
+    ('team_stmt_end', TokenType.STAT): 120,
+    ('team_stmt_end', TokenType.ANNOUNCE): 120,
+    ('team_stmt_end', TokenType.INBOUND): 120,
+    ('team_stmt_end', TokenType.DRIBBLE): 120,
+    ('team_stmt_end', TokenType.SWITCH): 120,
+    ('team_stmt_end', TokenType.FORWARD): 120,
+    ('team_stmt_end', TokenType.PLAY): 120,
+    ('team_stmt_end', TokenType.RUN): 120,
+    ('team_stmt_end', TokenType.CODE_BLOCK_RIGHT): 121,
+
+    # <dribble_stmt> productions
+    ('dribble_stmt', TokenType.VAR_INIT): 280,
+    ('dribble_stmt', TokenType.FEINT): 280,
+    ('dribble_stmt', TokenType.FLOATER): 280,
+    ('dribble_stmt', TokenType.CHANT): 280,
+    ('dribble_stmt', TokenType.STAT): 280,
+    ('dribble_stmt', TokenType.ANNOUNCE): 280,
+    ('dribble_stmt', TokenType.INBOUND): 280,
+    ('dribble_stmt', TokenType.DRIBBLE): 280,
+    ('dribble_stmt', TokenType.SWITCH): 280,
+    ('dribble_stmt', TokenType.FORWARD): 280,
+    ('dribble_stmt', TokenType.PLAY): 280,
+    ('dribble_stmt', TokenType.RUN): 280,
+    ('dribble_stmt', TokenType.RESUME): 280,
+    ('dribble_stmt', TokenType.CODE_BLOCK_RIGHT): 281,
+
+    # <dribble_stmts> productions
+    ('dribble_stmts', TokenType.VAR_INIT): 281,
+    ('dribble_stmts', TokenType.FEINT): 281,
+    ('dribble_stmts', TokenType.FLOATER): 281,
+    ('dribble_stmts', TokenType.CHANT): 281,
+    ('dribble_stmts', TokenType.STAT): 281,
+    ('dribble_stmts', TokenType.ANNOUNCE): 281,
+    ('dribble_stmts', TokenType.INBOUND): 281,
+    ('dribble_stmts', TokenType.DRIBBLE): 281,
+    ('dribble_stmts', TokenType.SWITCH): 281,
+    ('dribble_stmts', TokenType.FORWARD): 281,
+    ('dribble_stmts', TokenType.PLAY): 281,
+    ('dribble_stmts', TokenType.RUN): 281,
+    ('dribble_stmts', TokenType.RESUME): 281,
+
+    # <more_dribble_stmts> productions
+    ('more_dribble_stmts', TokenType.RESUME): 282,
+    ('more_dribble_stmts', TokenType.VAR_INIT): 283,
+    ('more_dribble_stmts', TokenType.FEINT): 283,
+    ('more_dribble_stmts', TokenType.FLOATER): 283,
+    ('more_dribble_stmts', TokenType.CHANT): 283,
+    ('more_dribble_stmts', TokenType.STAT): 283,
+    ('more_dribble_stmts', TokenType.ANNOUNCE): 283,
+    ('more_dribble_stmts', TokenType.INBOUND): 283,
+    ('more_dribble_stmts', TokenType.DRIBBLE): 283,
+    ('more_dribble_stmts', TokenType.SWITCH): 283,
+    ('more_dribble_stmts', TokenType.FORWARD): 283,
+    ('more_dribble_stmts', TokenType.PLAY): 283,
+    ('more_dribble_stmts', TokenType.RUN): 283,
+
+    # <forward_lit> productions
+    ('forward_lit', TokenType.FEINTLIT): 257,
+    ('forward_lit', TokenType.VAR_INIT): 258,
+
+    # <forward_assign_operator> productions
+    ('forward_assign_operator', TokenType.ADD_ASSIGN): 264,
+    ('forward_assign_operator', TokenType.SUB_ASSIGN): 265,
+
+    # <resume_statement> productions
+    ('resume_statement', TokenType.RESUME): 266,
+    ('resume_statement', TokenType.VAR_INIT): 267,
+    ('resume_statement', TokenType.FEINT): 267,
+    ('resume_statement', TokenType.FLOATER): 267,
+    ('resume_statement', TokenType.CHANT): 267,
+    ('resume_statement', TokenType.STAT): 267,
+    ('resume_statement', TokenType.ANNOUNCE): 267,
+    ('resume_statement', TokenType.INBOUND): 267,
+    ('resume_statement', TokenType.DRIBBLE): 267,
+    ('resume_statement', TokenType.SWITCH): 267,
+    ('resume_statement', TokenType.FORWARD): 267,
+    ('resume_statement', TokenType.PLAY): 267,
+    ('resume_statement', TokenType.RUN): 267,
+
+    # <typecast_value> productions
+    ('typecast_value', TokenType.FEINTLIT): 275,
+    ('typecast_value', TokenType.FLOATERLIT): 276,
+    ('typecast_value', TokenType.CHANTLIT): 277,
+    ('typecast_value', TokenType.WIN): 278,
+    ('typecast_value', TokenType.LOSS): 278,
+    ('typecast_value', TokenType.VAR_INIT): 279
 } 
