@@ -938,16 +938,6 @@ class Parser:
         self.expect(TokenType.CHANT_CONCAT)
         self.parse_output()
         self.parse_more_outputs()
-    
-    def parse_inbound_statement(self) -> None:
-        """<inbound_statement> → Inbound(<inputs>);"""
-        self.expect(TokenType.INBOUND)
-        self.expect(TokenType.LEFT_PAREN)
-        self.expect(TokenType.CHANTLIT)
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.SEMICOLON)
         
     def parse_literal(self) -> None:
         """<literal> → <feint_lit> | <floater_lit> | <chant_lit> | <stat_value> | <array_access>"""
@@ -966,7 +956,138 @@ class Parser:
         elif self.current_token and self.match_token_type(self.current_token, TokenType.ARRAY_INDEX_LEFT):
             self.parse_array_access()
         
+    def parse_inbound_statement(self) -> None:
+        """<inbound_statement> → Inbound(<chant_lit>, @identifier);"""
+        self.expect(TokenType.INBOUND)
+        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.CHANTLIT)
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_dribble_statement(self) -> None:
+        """<dribble_statement> → Dribble (<condition>) { <dribble_stmts> } <pass_statement> <shoot_statement>"""
+        self.expect(TokenType.DRIBBLE)
+        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.CHANTLIT)
+        self.expect(TokenType.COMMA)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        # self.parse_dribble_stmts()
+        self.parse_other_statements()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.parse_pass_statement()
+        self.parse_shoot_statement()    
+        
+    def parse_pass_statement(self) -> None:
+        """<pass_statement> → Pass (<condition>) {<more_team_statements>} <pass_statement> | λ"""
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.PASS):
+            return  # λ case
+        
+        self.expect(TokenType.PASS)
+        self.expect(TokenType.LEFT_PAREN)
+        self.parse_condition()
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_more_team_statements()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.parse_pass_statement()
+        
+    def parse_shoot_statement(self) -> None:
+        """<shoot_statement> → Shoot (<condition>) {<more_team_statements>} <shoot_statement> | λ"""
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.SHOOT):
+            return  # λ case
+        
+        self.expect(TokenType.SHOOT)
+        self.expect(TokenType.LEFT_PAREN)
+        self.parse_condition()
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        # self.parse_more_team_statements()
+        self.parse_other_statements()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.parse_shoot_statement()
+        
+    def parse_condition(self) -> None:
+        """<condition> → <relational_expression> | <logical_expression>"""
+        if self.current_token and any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['relational_expression']):
+            self.parse_relational_expression()
+        elif self.current_token and any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['logical_expression']):
+            self.parse_logical_expression()
+        
+    # def parse_dribble_stmts(self) -> None:
+    #     """<dribble_stmts> → <more_dribble_stmts><dribble_stmt> | λ"""
+    #     if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['dribble_stmts']):
+    #         return  # λ case
+    #     self.parse_more_dribble_stmts()
+    #     self.parse_dribble_stmt()
+        
+    # def parse_more_dribble_stmts(self) -> None:
+    #     """<more_dribble_stmts> → λ | <resume_statement> <other_statements>"""
+    #     if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['dribble_stmts']):
+    #         return  # λ case
+        
+    #     self.parse_resume_statement()
+    #     self.parse_more_team_statements()
     
+    def parse_resume_statement(self) -> None:
+        """<resume_statement> → Resume;"""
+        self.expect(TokenType.RESUME)
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_timeout_statement(self) -> None:
+        """<timeout_statement> → Timeout;"""
+        self.expect(TokenType.TIMEOUT)
+        self.expect(TokenType.SEMICOLON)    
+        
+    def parse_switch_statement(self) -> None:
+        """<switch_statement> → Switch (@identifier) { <get_case>  <get_default>}"""
+        self.expect(TokenType.SWITCH)
+        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.parse_get_case()
+        self.parse_get_default()
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        
+    def parse_get_case(self) -> None:
+        """<get_case> → Get <get_value> : <more_team_statements> <timeout_statement> <get_case_end>"""
+        self.expect(TokenType.GET)
+        self.expect(TokenType.LEFT_PAREN)
+        self.parse_get_value()
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.COLON)
+        # self.parse_more_team_statements()
+        self.parse_other_statements()
+        self.expect(TokenType.TIMEOUT)
+        self.expect(TokenType.SEMICOLON)
+        self.parse_get_case_end()   
+        
+    def parse_get_value(self) -> None:
+        """<get_value> → <chant_lit> | <feint_lit> """
+        if self.current_token and any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['literal']):
+            self.parse_chant_lit()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.FEINTLIT):
+            self.parse_feint_lit()
+        else:
+            self.error_handler("get_value")
+            
+    def parse_get_case_end(self) -> None:
+        """<get_case_end> → λ | <get_case>"""
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['get_case']):
+            return  # λ case        
+        self.parse_get_case()
+        
+    def parse_get_default(self) -> None:
+        """<get_default> → Default : <more_team_statements>"""
+        self.expect(TokenType.DEFAULT)
+        self.expect(TokenType.COLON)
+        # self.parse_more_team_statements()
+        self.parse_other_statements()
+        
     def parse_rebound_statement(self) -> None:
         """<rebound_statement> → Rebound <expression>; | λ"""
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.REBOUND):
