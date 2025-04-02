@@ -317,6 +317,7 @@ PREDICT_SETS = {
     ('other_statements', TokenType.WIN): 146,
     ('other_statements', TokenType.LOSS): 146,
     ('other_statements', TokenType.CODE_BLOCK_RIGHT): 144,
+    ('other_statements', TokenType.REBOUND): 147,
 
     # <statement> productions
     ('statement', TokenType.FEINT): 148,
@@ -333,11 +334,12 @@ PREDICT_SETS = {
     ('statement', TokenType.TIMEOUT): 156,
     ('statement', TokenType.RESUME): 157,
     ('statement', TokenType.VAR_INIT): 158,
-    ('statement', TokenType.VAR_INIT): 159,
-    ('statement', TokenType.VAR_INIT): 160,
+    ('statement', TokenType.INCREMENT): 159,
+    ('statement', TokenType.DECREMENT): 160,
+    ('statement', TokenType.REBOUND): 161,
 
     # <array_manipulation> productions
-    ('array_manipulation', TokenType.VAR_INIT): 161,
+    # ('array_manipulation', TokenType.VAR_INIT): 161,
 
     # <element_index> productions
     ('element_index', TokenType.FEINTLIT): 162,

@@ -140,18 +140,28 @@ FIRST_SETS = {
     'param': {TokenType.VAR_INIT},
     # <params>
     'params': {TokenType.COMMA},
+    
+    # <team_block>
+    'team_block': {TokenType.TEAM},
+    
     # <function_statements>
     'function_statements': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
                            TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH,
                            TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.TIMEOUT,
                            TokenType.RESUME, TokenType.VAR_INIT, TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NOT_OP, TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
-    # <team_block>
-    'team_block': {TokenType.TEAM},
     # <statement>
     'statement': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
                  TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH,
                  TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.TIMEOUT,
                  TokenType.RESUME, TokenType.VAR_INIT},
+    
+    # <other_statements>
+    'other_statements': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
+                        TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH,
+                        TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.TIMEOUT,
+                        TokenType.RESUME, TokenType.VAR_INIT, TokenType.LEFT_PAREN, TokenType.FEINTLIT, 
+                        TokenType.FLOATERLIT, TokenType.NOT_OP, TokenType.REBOUND},
+    
     # <expression>
     'expression': {TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT,
                   TokenType.VAR_INIT, TokenType.NOT_OP, TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
@@ -325,12 +335,7 @@ FIRST_SETS = {
     'chant_typecast_value': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.WIN, TokenType.LOSS},
     # <stat_typecast_value>
     'stat_typecast_value': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT},
-    # <other_statements>
-    'other_statements': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
-                        TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH,
-                        TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.TIMEOUT,
-                        TokenType.RESUME, TokenType.VAR_INIT, TokenType.LEFT_PAREN, TokenType.FEINTLIT, 
-                        TokenType.FLOATERLIT, TokenType.NOT_OP},
+    
     # <other_type_cast>
     'other_type_cast': {TokenType.CHANT, TokenType.STAT}
 } 

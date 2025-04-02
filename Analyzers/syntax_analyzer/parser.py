@@ -778,8 +778,8 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        # self.parse_function_statements()    
-        # self.parse_rebound_statement()
+        self.parse_function_statements()    
+        self.parse_rebound_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT)
     
     def parse_floater_function(self) -> None:
@@ -790,8 +790,8 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        # self.parse_function_statements()    
-        # self.parse_rebound_statement()
+        self.parse_function_statements()    
+        self.parse_rebound_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT)
         
         
@@ -803,8 +803,8 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)  
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        # self.parse_function_statements()    
-        # self.parse_rebound_statement()
+        self.parse_function_statements()    
+        self.parse_rebound_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT) 
         
     def parse_stat_function(self) -> None:
@@ -815,8 +815,8 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)  
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        # self.parse_function_statements()    
-        # self.parse_rebound_statement()
+        self.parse_function_statements()    
+        self.parse_rebound_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT)
 
     def parse_func_parameters(self) -> None:
@@ -847,10 +847,123 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)  
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        # self.parse_function_statements()    
+        self.parse_function_statements()    
         self.expect(TokenType.CODE_BLOCK_RIGHT)
-
+        
+    def parse_function_statements(self) -> None:
+        """<function_statements> → <other_statements>"""            
+        self.parse_other_statements()
+        
+    def parse_other_statements(self) -> None:
+        """ <other_statements> → <statement> <other_statements> | λ """
+        # If no token or it's CODE_BLOCK_RIGHT, it's λ case
+        if (not self.current_token or 
+            self.match_token_type(self.current_token, TokenType.CODE_BLOCK_RIGHT) or
+            not any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("statement"))):
+            return  # λ case - just return to handle the empty case
+        
+        # Process a statement
+        self.parse_statement()
+        
+        # Check if we still have tokens that could form a statement before recursive call
+        if (self.current_token and 
+            not self.match_token_type(self.current_token, TokenType.CODE_BLOCK_RIGHT) and
+            any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("statement"))):
+            self.parse_other_statements()
     
+    def parse_statement(self) -> None:
+        """<statement> → <variable_dec> | <announce_statement> | <inbound_statement> | <dribble_statement> | <switch_statement> | <forward_statement> | <play_statement> | <run_play_statement> | <timeout_statement> | <increment>; | <decrement>; | <array_manipulation> | <rebound_statement> | λ"""
+        expected_tokens = self.get_expected_tokens("statement")
+        
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            return  # λ case - just return to handle the empty case
+        
+        if self.current_token and any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['local_decl']):
+            self.parse_local_declaration()
+            self.parse_local_decl()
+        elif self.match_token_type(self.current_token, TokenType.ANNOUNCE):
+            self.parse_announce_statement()
+        elif self.match_token_type(self.current_token, TokenType.INBOUND):
+            self.parse_inbound_statement()
+        elif self.match_token_type(self.current_token, TokenType.DRIBBLE):
+            self.parse_dribble_statement()
+        elif self.match_token_type(self.current_token, TokenType.SWITCH):
+            self.parse_switch_statement()
+        elif self.match_token_type(self.current_token, TokenType.FORWARD):
+            self.parse_forward_statement()
+        elif self.match_token_type(self.current_token, TokenType.PLAY):
+            self.parse_play_statement()     
+        elif self.match_token_type(self.current_token, TokenType.RUN):
+            self.parse_run_play_statement()
+        elif self.match_token_type(self.current_token, TokenType.TIMEOUT):
+            self.parse_timeout_statement()
+        elif self.match_token_type(self.current_token, TokenType.INCREMENT):
+            self.parse_increment()
+        elif self.match_token_type(self.current_token, TokenType.DECREMENT):
+            self.parse_decrement()
+            
+    def parse_announce_statement(self) -> None:
+        """<announce_statement> → Announce(<outputs>);"""
+        self.expect(TokenType.ANNOUNCE)
+        self.expect(TokenType.LEFT_PAREN)
+        self.parse_outputs()
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.SEMICOLON)
+        
+    def parse_outputs(self) -> None:
+        """<outputs> → <output> <more_outputs>"""
+        self.parse_output()
+        self.parse_more_outputs()
+        
+    def parse_output(self) -> None:
+        """<output> → <literal> | <expression> | @identifier | <stat_value> | <array_access>"""
+        if self.current_token and any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['literal']):
+            self.parse_literal()
+        elif self.current_token and any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['expression']):
+            self.parse_expression()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.VAR_INIT):
+            self.parse_identifier()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.STAT):
+            self.parse_stat_value()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.ARRAY_INDEX_LEFT):
+            self.parse_array_access()
+        else:   
+            self.error_handler("output")
+            
+    def parse_more_outputs(self) -> None:
+        """<more_outputs> → λ | , <output> <more_outputs>"""
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.CHANT_CONCAT):
+            return  # λ case
+        
+        self.expect(TokenType.CHANT_CONCAT)
+        self.parse_output()
+        self.parse_more_outputs()
+    
+    def parse_literal(self) -> None:
+        """<literal> → <feint_lit> | <floater_lit> | <chant_lit> | <stat_value> | <array_access>"""
+        if self.current_token and self.match_token_type(self.current_token, TokenType.FEINTLIT):
+            self.parse_feint_lit()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.FLOATERLIT):
+            self.parse_floater_lit()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.CHANTLIT):
+            self.parse_chant_lit()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.STAT):
+            self.parse_stat_value()
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.ARRAY_INDEX_LEFT):
+            self.parse_array_access()
+        
+    
+    def parse_rebound_statement(self) -> None:
+        """<rebound_statement> → Rebound <expression>; | λ"""
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.REBOUND):
+            return  # λ case
+        
+        self.expect(TokenType.REBOUND)
+        #self.parse_expression()
+        self.expect(TokenType.SEMICOLON)
+        
+    
+        
     def parse_team_block(self) -> None:
         """<team_block> → Team() { <local_decl> <other_statements> }"""
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in FIRST_SETS['team_block']):
