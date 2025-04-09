@@ -1234,16 +1234,6 @@ class Parser:
         elif any(self.match_token_type(self.current_token, t) for t in [TokenType.FEINT, TokenType.FLOATER]):
             self.parse_number_type_cast()
 
-    def parse_nega_feint_lit(self) -> None:
-        """<nega_feint_lit> → Negative Feint Literal"""
-        self.current_nonterminal = "nega_feint_lit"
-        expected_tokens = self.get_expected_tokens("nega_feint_lit")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("nega_feint_lit", expected_tokens)
-        
-        self.expect(TokenType.NEGAFEINT)
-
     def parse_nega_floater_lit(self) -> None:
         """<nega_floater_lit> → Negative Floater Literal"""
         self.current_nonterminal = "nega_floater_lit"
