@@ -1474,18 +1474,6 @@ class Parser:
         else:
             self.error_handler("chant_rel_operand", expected_tokens)
     
-    def parse_chant_lit(self) -> None:
-        """<chant_lit> → Chant Literal"""
-        self.current_nonterminal = "chant_lit"
-        
-        self.expect(TokenType.CHANTLIT)
-    
-    def parse_floater_lit(self) -> None:
-        """<floater_lit> → Floater Literal"""
-        self.current_nonterminal = "floater_lit"
-        
-        self.expect(TokenType.FLOATERLIT)
-    
     def parse_logical_expression(self) -> None:
         """<logical_expression> → <not_expr> | <compound_log_expr> | NOT <other_log_term>"""
         self.current_nonterminal = "logical_expression"
