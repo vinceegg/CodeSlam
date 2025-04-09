@@ -1304,12 +1304,6 @@ class Parser:
         self.parse_typecast_value()
         self.expect(TokenType.RIGHT_PAREN)
     
-    def parse_typecast_value(self) -> None:
-        """Helper method to parse a value inside a typecast"""
-        # Depending on what can be typecast in your language
-        # For now, we'll assume it can be an expression
-        self.parse_expression()
-    
     def parse_more_arith_term(self) -> None:
         """<more_arith_term> → λ | +<arith_term><more_arith_term> | -<arith_term><more_arith_term> | 
                               *<arith_term><more_arith_term> | /<arith_term><more_arith_term> | %<arith_term><more_arith_term>"""
@@ -1441,21 +1435,6 @@ class Parser:
             self.parse_stat_type_casting()
         else:
             self.error_handler("stat_rel_operand", expected_tokens)
-    
-    def parse_stat_value(self) -> None:
-        """<stat_value> → Win | Loss"""
-        self.current_nonterminal = "stat_value"
-        expected_tokens = {TokenType.WIN, TokenType.LOSS}
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("stat_value", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.WIN):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.LOSS):
-            pass  # Already consumed by match_token_type
-        else:
-            self.error_handler("stat_value", expected_tokens)
     
     def parse_chant_rel_operand(self) -> None:
         """<chant_rel_operand> → @identifier | <chant_type_casting> | <chant_lit>"""
