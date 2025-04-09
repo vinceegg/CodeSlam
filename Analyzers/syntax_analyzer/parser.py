@@ -1309,10 +1309,6 @@ class Parser:
         self.parse_typecast_value()
         self.expect(TokenType.RIGHT_PAREN)
 
-    def parse_typecast_value(self) -> None:
-        """Helper method to parse typecast value (can be any expression)"""
-        self.parse_expression()
-
     def parse_more_arith_term(self) -> None:
         """<more_arith_term> → λ | + <arith_term><more_arith_term> | - <arith_term><more_arith_term> | 
                             * <arith_term><more_arith_term> | / <arith_term><more_arith_term> | 
