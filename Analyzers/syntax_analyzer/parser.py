@@ -726,20 +726,6 @@ class Parser:
         
     """ VINCE AGAIN """
 
-    def parse_team_block(self) -> None:
-        """<team_block> → Team @identifier { <team_statements> }"""
-        self.current_nonterminal = "team_block"
-        expected_tokens = self.get_expected_tokens("team_block")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("team_block", expected_tokens)
-        
-        self.expect(TokenType.TEAM)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_team_statements()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
     def parse_function_def(self) -> None:
         """<function_def> → λ | Wilt <function_declared><function_def> | Dunk <dunk_func_declared><function_def>"""
         self.current_nonterminal = "function_def"
