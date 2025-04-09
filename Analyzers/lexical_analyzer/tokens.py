@@ -93,7 +93,7 @@ class TokenType(Enum):
     BACKSLASH_AND = "BACKSLASH_AND"             # Backslash And: Used to escape special characters
     BACKSLASH_AT = "BACKSLASH_AT"               # Backslash At: Used to escape special characters
     ESCAPE_SEQUENCE = "ESCAPE_SEQUENCE"         # Escape Sequence: Used to escape special characters
-    WILT = "WILT"                               
+    WILT = "WILT"                               # Wilt: Used to define a function
     INCREMENT = "INCREMENT"                     # Increment: Increases the value of a variable by 1
     DECREMENT = "DECREMENT"                     # Decrement: Decreases the value of a variable by 1
     GET_LITERAL = "GET_LITERAL"                 # Get Literal: Used to get the value of a variable
