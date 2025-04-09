@@ -1172,47 +1172,64 @@ class Parser:
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("expression", expected_tokens)
-
-        # Lookahead to determine which type of expression to parse
-        if self.current_token and self.match_token_type(self.current_token, TokenType.NOT_OP):
-            # NOT operator indicates logical expression
+        
+        # Check which type of expression we're dealing with based on current token
+        # Try to determine based on the token type and the FIRST sets of each expression type
+        
+        # First check if it's a logical expression (most specific)
+        if self.current_token and (
+            self.match_token_type(self.current_token, TokenType.NOT_OP) or 
+            self.match_token_type(self.current_token, TokenType.WIN) or 
+            self.match_token_type(self.current_token, TokenType.LOSS)
+        ):
             self.parse_logical_expression()
+        # Then check for relational operators
         elif self.peek() and any(self.match_token_type(self.peek(), t) for t in [
-            TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
-            TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL
+            TokenType.LESS_THAN, 
+            TokenType.GREATER_THAN, 
+            TokenType.EQUAL, 
+            TokenType.LESS_EQUAL, 
+            TokenType.GREATER_EQUAL, 
+            TokenType.NOT_EQUAL
         ]):
-            # Relational operators indicate relational expression
             self.parse_relational_expression()
+        # Default to arithmetic expression
         else:
-            # Default to arithmetic expression
             self.parse_arithmetic_expression()
-
+    
     def parse_arithmetic_expression(self) -> None:
-        """<arithmetic_expression> → <arith_term><more_arith_term>"""
+        """<arithmetic_expression> → <arith_term><more_arith_term> | (<arith_term><more_arith_term>)"""
         self.current_nonterminal = "arithmetic_expression"
         expected_tokens = self.get_expected_tokens("arithmetic_expression")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("arithmetic_expression", expected_tokens)
         
-        self.parse_arith_term()
-        self.parse_more_arith_term()
-
+        # Check if expression is enclosed in parentheses
+        if self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
+            self.parse_arith_term()
+            self.parse_more_arith_term()
+            self.expect(TokenType.RIGHT_PAREN)
+        else:
+            self.parse_arith_term()
+            self.parse_more_arith_term()
+    
     def parse_arith_term(self) -> None:
-        """<arith_term> → <number> | (<arithmetic_expression>)"""
+        """<arith_term> → <number> | (<number><more_arith_term>)"""
         self.current_nonterminal = "arith_term"
         expected_tokens = self.get_expected_tokens("arith_term")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("arith_term", expected_tokens)
         
+        # Check if term is enclosed in parentheses
         if self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-            self.expect(TokenType.LEFT_PAREN)
-            self.parse_arithmetic_expression()
+            self.parse_number()
+            self.parse_more_arith_term()
             self.expect(TokenType.RIGHT_PAREN)
         else:
             self.parse_number()
-
+    
     def parse_number(self) -> None:
         """<number> → <feint_lit> | <floater_lit> | @identifier | <nega_feint_lit> | <nega_floater_lit> | <number_type_cast>"""
         self.current_nonterminal = "number"
@@ -1226,14 +1243,16 @@ class Parser:
         elif self.match_token_type(self.current_token, TokenType.FLOATERLIT):
             self.parse_floater_lit()
         elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.expect(TokenType.VAR_INIT)
+            self.advance()  # Consume identifier
         elif self.match_token_type(self.current_token, TokenType.NEGAFEINT):
-            self.parse_nega_feint_lit()
+            self.advance()  # Consume negative feint literal
         elif self.match_token_type(self.current_token, TokenType.NEGAFLOATER):
-            self.parse_nega_floater_lit()
-        elif any(self.match_token_type(self.current_token, t) for t in [TokenType.FEINT, TokenType.FLOATER]):
+            self.advance()  # Consume negative floater literal
+        elif any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("number_type_cast")):
             self.parse_number_type_cast()
-
+        else:
+            self.error_handler("number", expected_tokens)
+    
     def parse_number_type_cast(self) -> None:
         """<number_type_cast> → <feint_type_casting> | <floater_type_casting>"""
         self.current_nonterminal = "number_type_cast"
@@ -1246,90 +1265,79 @@ class Parser:
             self.parse_feint_type_casting()
         elif self.match_token_type(self.current_token, TokenType.FLOATER):
             self.parse_floater_type_casting()
-
+        else:
+            self.error_handler("number_type_cast", expected_tokens)
+    
     def parse_feint_type_casting(self) -> None:
         """<feint_type_casting> → Feint(<typecast_value>)"""
         self.current_nonterminal = "feint_type_casting"
-        expected_tokens = self.get_expected_tokens("feint_type_casting")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("feint_type_casting", expected_tokens)
         
         self.expect(TokenType.FEINT)
         self.expect(TokenType.LEFT_PAREN)
         self.parse_typecast_value()
         self.expect(TokenType.RIGHT_PAREN)
-
+    
     def parse_floater_type_casting(self) -> None:
         """<floater_type_casting> → Floater(<typecast_value>)"""
         self.current_nonterminal = "floater_type_casting"
-        expected_tokens = self.get_expected_tokens("floater_type_casting")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("floater_type_casting", expected_tokens)
         
         self.expect(TokenType.FLOATER)
         self.expect(TokenType.LEFT_PAREN)
         self.parse_typecast_value()
         self.expect(TokenType.RIGHT_PAREN)
-
+    
     def parse_chant_type_casting(self) -> None:
         """<chant_type_casting> → Chant(<typecast_value>)"""
         self.current_nonterminal = "chant_type_casting"
-        expected_tokens = self.get_expected_tokens("chant_type_casting")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("chant_type_casting", expected_tokens)
         
         self.expect(TokenType.CHANT)
         self.expect(TokenType.LEFT_PAREN)
         self.parse_typecast_value()
         self.expect(TokenType.RIGHT_PAREN)
-
+    
     def parse_stat_type_casting(self) -> None:
         """<stat_type_casting> → Stat(<typecast_value>)"""
         self.current_nonterminal = "stat_type_casting"
-        expected_tokens = self.get_expected_tokens("stat_type_casting")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("stat_type_casting", expected_tokens)
         
         self.expect(TokenType.STAT)
         self.expect(TokenType.LEFT_PAREN)
         self.parse_typecast_value()
         self.expect(TokenType.RIGHT_PAREN)
-
+    
+    def parse_typecast_value(self) -> None:
+        """Helper method to parse a value inside a typecast"""
+        # Depending on what can be typecast in your language
+        # For now, we'll assume it can be an expression
+        self.parse_expression()
+    
     def parse_more_arith_term(self) -> None:
-        """<more_arith_term> → λ | + <arith_term><more_arith_term> | - <arith_term><more_arith_term> | 
-                            * <arith_term><more_arith_term> | / <arith_term><more_arith_term> | 
-                            % <arith_term><more_arith_term>"""
+        """<more_arith_term> → λ | +<arith_term><more_arith_term> | -<arith_term><more_arith_term> | 
+                              *<arith_term><more_arith_term> | /<arith_term><more_arith_term> | %<arith_term><more_arith_term>"""
         self.current_nonterminal = "more_arith_term"
         
-        # Check if current token is an arithmetic operator
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in [
-            TokenType.ADD, TokenType.SUB, TokenType.MUL, TokenType.DIV, TokenType.MOD
-        ]):
+        # Check if we have an arithmetic operator
+        if not self.current_token:
             return  # λ case
-        
-        # Handle each arithmetic operator
-        if self.match(TokenType.ADD):
+            
+        if self.match_token_type(self.current_token, TokenType.ADD):
             self.parse_arith_term()
             self.parse_more_arith_term()
-        elif self.match(TokenType.SUB):
+        elif self.match_token_type(self.current_token, TokenType.SUB):
             self.parse_arith_term()
             self.parse_more_arith_term()
-        elif self.match(TokenType.MUL):
+        elif self.match_token_type(self.current_token, TokenType.MUL):
             self.parse_arith_term()
             self.parse_more_arith_term()
-        elif self.match(TokenType.DIV):
+        elif self.match_token_type(self.current_token, TokenType.DIV):
             self.parse_arith_term()
             self.parse_more_arith_term()
-        elif self.match(TokenType.MOD):
+        elif self.match_token_type(self.current_token, TokenType.MOD):
             self.parse_arith_term()
-            self.parse_more_arith_term()    
-
+            self.parse_more_arith_term()
+        # If no operator, return (λ case)
+    
     def parse_relational_expression(self) -> None:
-        """<relational_expression> → <number_rel_operand><relational_operator><number_rel_operand> |
+        """<relational_expression> → <number_rel_operand><relational_operator><number_rel_operand> | 
                                     <stat_rel_operand><other_relational_operator><stat_rel_operand> |
                                     <chant_rel_operand><other_relational_operator><chant_rel_operand> |
                                     <arithmetic_expression><relational_operator><arithmetic_expression>"""
@@ -1339,23 +1347,33 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("relational_expression", expected_tokens)
         
-        # Lookahead to determine which type of relational expression
-        if self.current_token and self.match_token_type(self.current_token, TokenType.WIN) or self.match_token_type(self.current_token, TokenType.LOSS):
-            # Stat relational expression
+        # Need to check the type of first operand to determine which rule to follow
+        if self.match_token_type(self.current_token, TokenType.STAT):
+            # Stat comparison
             self.parse_stat_rel_operand()
             self.parse_other_relational_operator()
             self.parse_stat_rel_operand()
-        elif self.current_token and self.match_token_type(self.current_token, TokenType.CHANTLIT):
-            # Chant relational expression
+        elif self.match_token_type(self.current_token, TokenType.CHANT) or self.match_token_type(self.current_token, TokenType.CHANTLIT):
+            # Chant comparison
             self.parse_chant_rel_operand()
             self.parse_other_relational_operator()
             self.parse_chant_rel_operand()
         else:
-            # Default to number/arithmetic relational expression
-            self.parse_arithmetic_expression()
-            self.parse_relational_operator()
-            self.parse_arithmetic_expression()
-
+            # Number comparison or arithmetic expression comparison
+            peek_token = self.peek()
+            if peek_token and any(self.match_token_type(peek_token, t) for t in [
+                TokenType.ADD, TokenType.SUB, TokenType.MUL, TokenType.DIV, TokenType.MOD
+            ]):
+                # It's an arithmetic expression
+                self.parse_arithmetic_expression()
+                self.parse_relational_operator()
+                self.parse_arithmetic_expression()
+            else:
+                # Simple number comparison
+                self.parse_number_rel_operand()
+                self.parse_relational_operator()
+                self.parse_number_rel_operand()
+    
     def parse_number_rel_operand(self) -> None:
         """<number_rel_operand> → <number> | <number_type_cast>"""
         self.current_nonterminal = "number_rel_operand"
@@ -1368,7 +1386,7 @@ class Parser:
             self.parse_number_type_cast()
         else:
             self.parse_number()
-
+    
     def parse_relational_operator(self) -> None:
         """<relational_operator> → < | > | == | <= | >= | !="""
         self.current_nonterminal = "relational_operator"
@@ -1377,19 +1395,21 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("relational_operator", expected_tokens)
         
-        if self.match(TokenType.LESS_THAN):
-            pass  # Already advanced in match
-        elif self.match(TokenType.GREATER_THAN):
-            pass  # Already advanced in match
-        elif self.match(TokenType.EQUAL):
-            pass  # Already advanced in match
-        elif self.match(TokenType.LESS_EQUAL):
-            pass  # Already advanced in match
-        elif self.match(TokenType.GREATER_EQUAL):
-            pass  # Already advanced in match
-        elif self.match(TokenType.NOT_EQUAL):
-            pass  # Already advanced in match
-
+        if self.match_token_type(self.current_token, TokenType.LESS_THAN):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.GREATER_THAN):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.EQUAL):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.LESS_EQUAL):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.GREATER_EQUAL):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.NOT_EQUAL):
+            pass  # Already consumed by match_token_type
+        else:
+            self.error_handler("relational_operator", expected_tokens)
+    
     def parse_other_relational_operator(self) -> None:
         """<other_relational_operator> → == | !="""
         self.current_nonterminal = "other_relational_operator"
@@ -1398,11 +1418,13 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("other_relational_operator", expected_tokens)
         
-        if self.match(TokenType.EQUAL):
-            pass  # Already advanced in match
-        elif self.match(TokenType.NOT_EQUAL):
-            pass  # Already advanced in match
-
+        if self.match_token_type(self.current_token, TokenType.EQUAL):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.NOT_EQUAL):
+            pass  # Already consumed by match_token_type
+        else:
+            self.error_handler("other_relational_operator", expected_tokens)
+    
     def parse_stat_rel_operand(self) -> None:
         """<stat_rel_operand> → <stat_value> | @identifier | <stat_type_casting>"""
         self.current_nonterminal = "stat_rel_operand"
@@ -1413,22 +1435,28 @@ class Parser:
         
         if self.match_token_type(self.current_token, TokenType.WIN) or self.match_token_type(self.current_token, TokenType.LOSS):
             self.parse_stat_value()
-        elif self.match(TokenType.VAR_INIT):
-            pass  # Already advanced in match
+        elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
+            self.advance()  # Consume identifier
         elif self.match_token_type(self.current_token, TokenType.STAT):
             self.parse_stat_type_casting()
-
-    def parse_stat_value(self) -> None:
-        """<stat_value> → WIN | LOSS"""
-        self.current_nonterminal = "stat_value"
-        
-        if self.match(TokenType.WIN):
-            pass  # Already advanced in match
-        elif self.match(TokenType.LOSS):
-            pass  # Already advanced in match
         else:
-            self.error_handler("stat_value", {TokenType.WIN, TokenType.LOSS})
-
+            self.error_handler("stat_rel_operand", expected_tokens)
+    
+    def parse_stat_value(self) -> None:
+        """<stat_value> → Win | Loss"""
+        self.current_nonterminal = "stat_value"
+        expected_tokens = {TokenType.WIN, TokenType.LOSS}
+        
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            self.error_handler("stat_value", expected_tokens)
+        
+        if self.match_token_type(self.current_token, TokenType.WIN):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.LOSS):
+            pass  # Already consumed by match_token_type
+        else:
+            self.error_handler("stat_value", expected_tokens)
+    
     def parse_chant_rel_operand(self) -> None:
         """<chant_rel_operand> → @identifier | <chant_type_casting> | <chant_lit>"""
         self.current_nonterminal = "chant_rel_operand"
@@ -1437,15 +1465,29 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("chant_rel_operand", expected_tokens)
         
-        if self.match(TokenType.VAR_INIT):
-            pass  # Already advanced in match
+        if self.match_token_type(self.current_token, TokenType.VAR_INIT):
+            self.advance()  # Consume identifier
         elif self.match_token_type(self.current_token, TokenType.CHANT):
             self.parse_chant_type_casting()
         elif self.match_token_type(self.current_token, TokenType.CHANTLIT):
             self.parse_chant_lit()
-
+        else:
+            self.error_handler("chant_rel_operand", expected_tokens)
+    
+    def parse_chant_lit(self) -> None:
+        """<chant_lit> → Chant Literal"""
+        self.current_nonterminal = "chant_lit"
+        
+        self.expect(TokenType.CHANTLIT)
+    
+    def parse_floater_lit(self) -> None:
+        """<floater_lit> → Floater Literal"""
+        self.current_nonterminal = "floater_lit"
+        
+        self.expect(TokenType.FLOATERLIT)
+    
     def parse_logical_expression(self) -> None:
-        """<logical_expression> → <not_expr> | <compound_log_expr>"""
+        """<logical_expression> → <not_expr> | <compound_log_expr> | NOT <other_log_term>"""
         self.current_nonterminal = "logical_expression"
         expected_tokens = self.get_expected_tokens("logical_expression")
         
@@ -1453,26 +1495,31 @@ class Parser:
             self.error_handler("logical_expression", expected_tokens)
         
         if self.match_token_type(self.current_token, TokenType.NOT_OP):
-            self.parse_not_expr()
-        else:
+            self.parse_other_log_term()
+        elif self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("compound_log_expr")):
             self.parse_compound_log_expr()
-
+        else:
+            self.parse_not_expr()
+    
     def parse_not_expr(self) -> None:
-        """<not_expr> → NOT <other_log_term>"""
+        """<not_expr> → NOT"""
         self.current_nonterminal = "not_expr"
         
         self.expect(TokenType.NOT_OP)
-        self.parse_other_log_term()
-
+    
     def parse_compound_log_expr(self) -> None:
         """<compound_log_expr> → <log_term><log_operator><log_term><more_log_term>"""
         self.current_nonterminal = "compound_log_expr"
+        expected_tokens = self.get_expected_tokens("compound_log_expr")
+        
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            self.error_handler("compound_log_expr", expected_tokens)
         
         self.parse_log_term()
         self.parse_log_operator()
         self.parse_log_term()
         self.parse_more_log_term()
-
+    
     def parse_log_term(self) -> None:
         """<log_term> → <not_expr> | <other_log_term>"""
         self.current_nonterminal = "log_term"
@@ -1485,7 +1532,7 @@ class Parser:
             self.parse_not_expr()
         else:
             self.parse_other_log_term()
-
+    
     def parse_other_log_term(self) -> None:
         """<other_log_term> → <stat_value> | (<relational_expression>) | <number>"""
         self.current_nonterminal = "other_log_term"
@@ -1496,24 +1543,24 @@ class Parser:
         
         if self.match_token_type(self.current_token, TokenType.WIN) or self.match_token_type(self.current_token, TokenType.LOSS):
             self.parse_stat_value()
-        elif self.match(TokenType.LEFT_PAREN):
+        elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
             self.parse_relational_expression()
             self.expect(TokenType.RIGHT_PAREN)
         else:
             self.parse_number()
-
+    
     def parse_more_log_term(self) -> None:
         """<more_log_term> → λ | <log_operator><log_term><more_log_term>"""
         self.current_nonterminal = "more_log_term"
         
-        # Check if we should continue or return (λ case)
+        # Check if we have a logical operator
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in [TokenType.AND_OP, TokenType.OR_OP]):
             return  # λ case
         
         self.parse_log_operator()
         self.parse_log_term()
         self.parse_more_log_term()
-
+    
     def parse_log_operator(self) -> None:
         """<log_operator> → AND | OR"""
         self.current_nonterminal = "log_operator"
@@ -1522,24 +1569,24 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("log_operator", expected_tokens)
         
-        if self.match(TokenType.AND_OP):
-            pass  # Already advanced in match
-        elif self.match(TokenType.OR_OP):
-            pass  # Already advanced in match
-
+        if self.match_token_type(self.current_token, TokenType.AND_OP):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.OR_OP):
+            pass  # Already consumed by match_token_type
+        else:
+            self.error_handler("log_operator", expected_tokens)
+    
     def parse_assignment_expression(self) -> None:
-        """<assignment_expression> → @identifier <assign_operator> <assign_operand>;"""
+        """<assignment_expression> → <assign_operator><assign_operand>"""
         self.current_nonterminal = "assignment_expression"
         expected_tokens = self.get_expected_tokens("assignment_expression")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("assignment_expression", expected_tokens)
         
-        self.expect(TokenType.VAR_INIT)
         self.parse_assign_operator()
         self.parse_assign_operand()
-        self.expect(TokenType.SEMICOLON)
-
+    
     def parse_assign_operator(self) -> None:
         """<assign_operator> → = | += | -= | *= | /= | %="""
         self.current_nonterminal = "assign_operator"
@@ -1548,19 +1595,21 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("assign_operator", expected_tokens)
         
-        if self.match(TokenType.ASSIGN):
-            pass  # Already advanced in match
-        elif self.match(TokenType.ADD_ASSIGN):
-            pass  # Already advanced in match
-        elif self.match(TokenType.SUB_ASSIGN):
-            pass  # Already advanced in match
-        elif self.match(TokenType.MUL_ASSIGN):
-            pass  # Already advanced in match
-        elif self.match(TokenType.DIV_ASSIGN):
-            pass  # Already advanced in match
-        elif self.match(TokenType.MOD_ASSIGN):
-            pass  # Already advanced in match
-
+        if self.match_token_type(self.current_token, TokenType.ASSIGN):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.ADD_ASSIGN):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.SUB_ASSIGN):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.MUL_ASSIGN):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.DIV_ASSIGN):
+            pass  # Already consumed by match_token_type
+        elif self.match_token_type(self.current_token, TokenType.MOD_ASSIGN):
+            pass  # Already consumed by match_token_type
+        else:
+            self.error_handler("assign_operator", expected_tokens)
+    
     def parse_assign_operand(self) -> None:
         """<assign_operand> → <arithmetic_expression> | <relational_expression> | <logical_expression> | <function_call>"""
         self.current_nonterminal = "assign_operand"
@@ -1569,13 +1618,11 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("assign_operand", expected_tokens)
         
-        # Check for function call first (special case)
-        if self.current_token and self.match_token_type(self.current_token, TokenType.VAR_INIT) and self.peek() and self.match_token_type(self.peek(), TokenType.LEFT_PAREN):
+        # Check if it's a function call
+        if self.match_token_type(self.current_token, TokenType.VAR_INIT) and self.peek() and self.match_token_type(self.peek(), TokenType.LEFT_PAREN):
             self.parse_function_call()
-            return
-        
-        # Then try to determine the type of expression
-        if self.current_token and self.match_token_type(self.current_token, TokenType.NOT_OP):
+        # Otherwise, determine which type of expression
+        elif self.current_token and any(self.match_token_type(self.current_token, t) for t in [TokenType.NOT_OP, TokenType.WIN, TokenType.LOSS]):
             self.parse_logical_expression()
         elif self.peek() and any(self.match_token_type(self.peek(), t) for t in [
             TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
