@@ -228,9 +228,10 @@ class Parser:
         if not self.current_token:
             self.error_handler("statement", {
                 TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT,
-                TokenType.ANNOUNCE, TokenType.VAR_INIT, TokenType.DRIBBLE
+                TokenType.ANNOUNCE, TokenType.VAR_INIT, TokenType.DRIBBLE, TokenType.FORWARD,
+                TokenType.SWITCH, TokenType.TIMEOUT, TokenType.INBOUND
             })
-                
+                    
         # Check statement type based on first token
         if self.current_token.type in [TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT]:
             # Variable declaration (for any data type)
@@ -238,6 +239,9 @@ class Parser:
         elif self.current_token.type == TokenType.ANNOUNCE:
             # Announce (print) statement
             self.parse_announce_statement()
+        elif self.current_token.type == TokenType.INBOUND:
+            # Inbound (input) statement
+            self.parse_inbound_statement()
         elif self.current_token.type == TokenType.VAR_INIT:
             # Check if this is a standalone function call or variable assignment
             var_token = self.current_token
@@ -258,12 +262,203 @@ class Parser:
         elif self.current_token.type == TokenType.DRIBBLE:
             # Conditional statement (if-else)
             self.parse_conditional_statement()
+        elif self.current_token.type == TokenType.FORWARD:
+            # For loop statement
+            self.parse_for_loop_statement()
+        elif self.current_token.type == TokenType.SWITCH:
+            # Switch statement
+            self.parse_switch_statement()
+        elif self.current_token.type == TokenType.TIMEOUT:
+            # Timeout (break) statement
+            self.parse_timeout_statement()
         else:
             # Other statement types would go here
             self.error_handler("statement", {
                 TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT,
-                TokenType.ANNOUNCE, TokenType.VAR_INIT, TokenType.DRIBBLE
+                TokenType.ANNOUNCE, TokenType.VAR_INIT, TokenType.DRIBBLE, TokenType.FORWARD,
+                TokenType.SWITCH, TokenType.TIMEOUT, TokenType.INBOUND
             })
+
+    def parse_inbound_statement(self) -> None:
+        """Parse an inbound (input) statement"""
+        self.current_nonterminal = "inbound_statement"
+        
+        # Match INBOUND keyword
+        self.expect(TokenType.INBOUND)
+        
+        # Match opening parenthesis
+        self.expect(TokenType.LEFT_PAREN)
+        
+        # Parse prompt string
+        self.parse_expression()
+        
+        # Expect comma
+        self.expect(TokenType.COMMA)
+        
+        # Expect variable to store input
+        self.expect(TokenType.VAR_INIT)
+        
+        # Match closing parenthesis
+        self.expect(TokenType.RIGHT_PAREN)
+        
+        # Match semicolon
+        self.expect(TokenType.SEMICOLON)
+
+    def parse_switch_statement(self) -> None:
+        """Parse a switch statement"""
+        self.current_nonterminal = "switch_statement"
+        
+        # Match SWITCH keyword
+        self.expect(TokenType.SWITCH)
+        
+        # Match left parenthesis
+        self.expect(TokenType.LEFT_PAREN)
+        
+        # Parse switch expression
+        self.parse_expression()
+        
+        # Match right parenthesis
+        self.expect(TokenType.RIGHT_PAREN)
+        
+        # Match opening brace
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        
+        # Parse case statements
+        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT:
+            if self.current_token.type == TokenType.GET:
+                self.parse_case_statement()
+            elif self.current_token.type == TokenType.DEFAULT:
+                self.parse_default_statement()
+                break  # Default should be the last statement in switch
+            else:
+                self.error_handler("switch_statement", {TokenType.GET, TokenType.DEFAULT, TokenType.CODE_BLOCK_RIGHT})
+        
+        # Match closing brace
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+
+    def parse_case_statement(self) -> None:
+        """Parse a case statement within a switch"""
+        self.current_nonterminal = "case_statement"
+        
+        # Match GET keyword (case)
+        self.expect(TokenType.GET)
+        
+        # Parse case value
+        self.parse_expression()
+        
+        # Match colon
+        self.expect(TokenType.COLON)
+        
+        # Parse statements until timeout/next case/default/end of switch
+        while self.current_token and self.current_token.type not in [
+            TokenType.GET, TokenType.DEFAULT, TokenType.CODE_BLOCK_RIGHT, TokenType.TIMEOUT
+        ]:
+            self.parse_statement()
+        
+        # Handle TIMEOUT statement if present (optional)
+        if self.current_token and self.current_token.type == TokenType.TIMEOUT:
+            self.parse_timeout_statement()
+
+    def parse_default_statement(self) -> None:
+        """Parse a default statement within a switch"""
+        self.current_nonterminal = "default_statement"
+        
+        # Match DEFAULT keyword
+        self.expect(TokenType.DEFAULT)
+        
+        # Match colon
+        self.expect(TokenType.COLON)
+        
+        # Parse statements until timeout/end of switch
+        while self.current_token and self.current_token.type not in [
+            TokenType.CODE_BLOCK_RIGHT, TokenType.TIMEOUT
+        ]:
+            self.parse_statement()
+        
+        # Handle TIMEOUT statement if present (optional)
+        if self.current_token and self.current_token.type == TokenType.TIMEOUT:
+            self.parse_timeout_statement()
+
+    def parse_timeout_statement(self) -> None:
+        """Parse a timeout (break) statement"""
+        self.current_nonterminal = "timeout_statement"
+        
+        # Match TIMEOUT keyword
+        self.expect(TokenType.TIMEOUT)
+        
+        # Match semicolon
+        self.expect(TokenType.SEMICOLON)
+
+    def parse_for_loop_statement(self) -> None:
+        """Parse a for loop statement"""
+        self.current_nonterminal = "for_loop_statement"
+        
+        # Match FORWARD keyword (for)
+        self.expect(TokenType.FORWARD)
+        
+        # Match left parenthesis
+        self.expect(TokenType.LEFT_PAREN)
+        
+        # Parse initialization part (can be variable declaration or assignment)
+        if self.current_token and self.current_token.type in [TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT]:
+            # Variable declaration
+            self.parse_variable_declaration()
+        elif self.current_token and self.current_token.type == TokenType.VAR_INIT:
+            # Variable assignment
+            self.parse_variable_assignment()
+        else:
+            self.error_handler("for_loop_initialization", {
+                TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT, TokenType.VAR_INIT
+            })
+        
+        # Parse condition part (but without semicolon at the end)
+        self.parse_conditional_expression()
+        self.expect(TokenType.SEMICOLON)
+        
+        # Parse update part (increment/decrement or assignment)
+        if self.current_token and self.current_token.type == TokenType.VAR_INIT:
+            variable_name = self.current_token.value
+            self.advance()
+            
+            # Check for increment/decrement
+            if self.current_token and self.current_token.type in [TokenType.INCREMENT, TokenType.DECREMENT]:
+                # Increment/decrement operators
+                self.advance()
+            else:
+                # Assume it's an assignment, go back to variable
+                self.current -= 1
+                self.current_token = self.tokens[self.current]
+                self.skip_whitespace_and_comments()
+                self.parse_variable_assignment_without_semicolon()
+        else:
+            self.error_handler("for_loop_update", {TokenType.VAR_INIT})
+        
+        # Match right parenthesis
+        self.expect(TokenType.RIGHT_PAREN)
+        
+        # Match opening brace
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        
+        # Parse statements inside the loop block
+        self.parse_statement_list()
+        
+        # Match closing brace
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+
+    def parse_variable_assignment_without_semicolon(self) -> None:
+        """Parse a variable assignment without expecting a semicolon"""
+        self.current_nonterminal = "variable_assignment_without_semicolon"
+        
+        # Match variable identifier (starting with @)
+        self.expect(TokenType.VAR_INIT)
+        
+        # Match assignment operator
+        self.expect(TokenType.ASSIGN)
+        
+        # Parse expression
+        self.parse_expression()
+        
+        # No semicolon expected
 
     def parse_function_call_statement(self) -> None:
         """Parse a function call as a standalone statement"""
