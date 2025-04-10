@@ -165,7 +165,7 @@ class Parser:
             self.advance()
             return True
         return False
-            
+    
     def parse(self) -> None:
         """Start parsing the program"""
         try:
@@ -173,1908 +173,447 @@ class Parser:
         except SyntaxError as e:
             print(f"Syntax Error: {str(e)}")
             raise
-
+    
     def parse_program(self) -> None:
-        """<program> → <global_decl> <function_def> <team_block>"""
+        """Parse the root production of the grammar - a program"""
         self.current_nonterminal = "program"
-        expected_tokens = self.get_expected_tokens("program")
+        self.skip_whitespace_and_comments()
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("program", expected_tokens)
-
-        # Check if current token is in FIRST(global_decl)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("global_decl")):
-            self.parse_global_decl()
+        # Parse declarations until end of file
+        while self.current_token:
+            if self.current_token.type == TokenType.TEAM:
+                self.parse_team_declaration()
+            elif self.current_token.type == TokenType.DUNK:
+                self.parse_function_declaration()
+            else:
+                expected_tokens = {TokenType.TEAM, TokenType.DUNK}
+                self.error_handler("program", expected_tokens)
         
-        # Check if current token is in FIRST(function_def)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("function_def")):
-            self.parse_function_def()
-            
-        # Team block is required
-        self.parse_team_block()
-
-    def parse_global_decl(self) -> None:
-        """<global_decl> → <global_declaration><global_decl> | λ"""
-        self.current_nonterminal = "global_decl"
-        expected_tokens = self.get_expected_tokens("global_decl")
-        
-        # If we have a token that's in FIRST(global_declaration)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.parse_global_declaration()
-            self.parse_global_decl()  # Recursive call
-        # The λ case is handled implicitly by just returning
-
-    def parse_global_declaration(self) -> None:
-        """<global_declaration> → <variable_dec> | <const_dec> | <array_dec>"""
-        self.current_nonterminal = "global_declaration"
-        expected_tokens = self.get_expected_tokens("global_declaration")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("global_declaration", expected_tokens)
-
-        if self.match_token_type(self.current_token, TokenType.CONST):
-            self.parse_const_dec()
-        elif self.match_token_type(self.current_token, TokenType.ZONE):
-            self.parse_array_dec()
-        else:
-            self.parse_variable_dec()
-
-    def parse_variable_dec(self) -> None:
-        """Parse variable declarations"""
-        self.current_nonterminal = "variable_dec"
-        expected_tokens = self.get_expected_tokens("variable_dec")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("variable_dec", expected_tokens)
-
-        if self.match_token_type(self.current_token, TokenType.FEINT):
-            self.parse_feint_dec()
-        elif self.match_token_type(self.current_token, TokenType.FLOATER):
-            self.parse_floater_dec()
-        elif self.match_token_type(self.current_token, TokenType.CHANT):
-            self.parse_chant_dec()
-        elif self.match_token_type(self.current_token, TokenType.STAT):
-            self.parse_stat_dec()
-
-    def parse_feint_dec(self) -> None:
-        """<feint_dec> → Feint @identifier <more_feint>;"""
-        self.current_nonterminal = "feint_dec"
-        expected_tokens = self.get_expected_tokens("feint_dec")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("feint_dec", expected_tokens)
-
-        self.expect(TokenType.FEINT)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_more_feint()
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_more_feint(self) -> None:
-        """<more_feint> → λ | <feint_init><feint_init_end>"""
-        self.current_nonterminal = "more_feint"
-        expected_tokens = self.get_expected_tokens("more_feint")
-        
-        # Only proceed if we see an ASSIGN token, otherwise return (λ case)
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
-
-        # If we get here, we have an ASSIGN token
-        self.parse_feint_init()
-        self.parse_feint_init_end()
-
-    def parse_feint_init(self) -> None:
-        """<feint_init> → λ | = <feint_lit> <feint_init_end>"""
-        self.current_nonterminal = "feint_init"
-        expected_tokens = self.get_expected_tokens("feint_init")
-        
-        # Only proceed if we see an ASSIGN token, otherwise return (λ case)
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
-
-        # If we get here, we have an ASSIGN token
-        self.expect(TokenType.ASSIGN)
-        self.parse_feint_lit()
-        self.parse_feint_init_end()
-
-    def parse_feint_lit(self) -> None:
-        """<feint_lit> → Feint Literal"""
-        self.current_nonterminal = "feint_lit"
-        expected_tokens = self.get_expected_tokens("feint_lit")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("feint_lit", expected_tokens)
-
-        self.expect(TokenType.FEINTLIT)
-
-    def parse_feint_init_end(self) -> None:
-        """<feint_init_end> → λ | ", @identifier <more_feint>" """
-        self.current_nonterminal = "feint_init_end"
-        expected_tokens = self.get_expected_tokens("feint_init_end")
-        
-        # Only proceed if we see a COMMA token, otherwise return (λ case)
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-
-        # If we get here, we have a COMMA token
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_more_feint()
-
-    def parse_floater_dec(self) -> None:
-        """<floater_dec> → Floater @identifier <more_floater>;"""
-        self.expect(TokenType.FLOATER)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_more_floater()
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_more_floater(self) -> None:
-        """<more_floater> → λ | <floater_init><floater_init_end>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
-        
-        self.parse_floater_init()
-        self.parse_floater_init_end()
-
-    def parse_floater_init(self) -> None:
-        """<floater_init> → λ |  = <floater_lit> <floater_init_end>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
-        
-        self.expect(TokenType.ASSIGN)
-        self.parse_floater_lit()
-        self.parse_floater_init_end()
-
-    def parse_floater_lit(self) -> None:
-        """<floater_lit> → Floater Literal"""
-        self.expect(TokenType.FLOATERLIT)
-
-    def parse_floater_init_end(self) -> None:
-        """<floater_init_end> → λ | ", @identifier <more_floater>" """
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_more_floater()
-
-    def parse_chant_dec(self) -> None:
-        """<chant_dec> → Chant @identifier <more_chant>;"""
-        self.expect(TokenType.CHANT)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_more_chant()
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_more_chant(self) -> None:
-        """<more_chant> → λ | <chant_init><chant_init_end>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
-        
-        self.parse_chant_init()
-        self.parse_chant_init_end()
-
-    def parse_chant_init(self) -> None:
-        """<chant_init> → λ | = "<chant_lit>" """
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
-        
-        self.expect(TokenType.ASSIGN)
-        self.parse_chant_lit()
-        self.parse_chant_init_end()
-        
-
-    def parse_chant_lit(self) -> None:
-        """<chant_lit> → Chant Literal"""
-        self.expect(TokenType.CHANTLIT)
-
-    def parse_chant_init_end(self) -> None:
-        """<chant_init_end> → λ | ", @identifier <more_chant>" """
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_more_chant()
+        # No need to check for remaining tokens as we process them all above
     
-    def parse_stat_dec(self) -> None:
-        """<stat_dec> → Stat @identifier <more_stat>;"""
-        self.expect(TokenType.STAT)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_more_stat()
-        self.expect(TokenType.SEMICOLON)
+    def parse_team_declaration(self) -> None:
+        """Parse a team declaration (equivalent to main function)"""
+        self.current_nonterminal = "team_declaration"
         
-    def parse_more_stat(self) -> None:
-        """<more_stat> → λ | <stat_init><stat_init_end>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
+        # Match TEAM keyword
+        self.expect(TokenType.TEAM)
         
-        self.parse_stat_init()
-        self.parse_stat_init_end()
+        # Match left parenthesis
+        self.expect(TokenType.LEFT_PAREN)
         
-    def parse_stat_init(self) -> None:
-        """<stat_init> → λ | = <stat_value>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
+        # Match right parenthesis
+        self.expect(TokenType.RIGHT_PAREN)
         
-        self.expect(TokenType.ASSIGN)
-        self.parse_stat_value()
-        
-    def parse_stat_value(self) -> None:
-        """<stat_value> → Win | Loss"""
-        self.current_nonterminal = "stat_value"
-        expected_tokens = self.get_expected_tokens("stat_value")
-        
-        if self.match_token_type(self.current_token, TokenType.WIN):
-            self.expect(TokenType.WIN)
-        elif self.match_token_type(self.current_token, TokenType.LOSS):
-            self.expect(TokenType.LOSS)
-        else:
-            self.error_handler("stat_value", expected_tokens)
-        
-    def parse_stat_init_end(self) -> None:
-        """<stat_init_end> → λ | ", @identifier <more_stat_init>" """
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_more_stat()
-        
-    def parse_const_dec(self) -> None:
-        """<const_dec> → <const_feint> | <const_floater> | <const_chant> | <const_stat>"""
-        self.current_nonterminal = "const_dec"
-        expected_tokens = self.get_expected_tokens("const_dec")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("const_dec", expected_tokens)    
-        
-        # self.expect(TokenType.CONST)
-        if self.match_token_type(self.current_token, TokenType.FEINT):
-            self.parse_const_feint()
-        elif self.match_token_type(self.current_token, TokenType.FLOATER):
-            self.parse_const_floater()
-        elif self.match_token_type(self.current_token, TokenType.CHANT):
-            self.parse_const_chant()
-        elif self.match_token_type(self.current_token, TokenType.STAT):
-            self.parse_const_stat()
-        else:
-            self.error_handler("const_dec")
-            
-    def parse_const_feint(self) -> None:
-        """<const_feint> → Feint @identifier <feint_const_init>;"""
-        self.expect(TokenType.FEINT)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_feint_const_init()
-        self.expect(TokenType.SEMICOLON)
-        
-    def parse_feint_const_init(self) -> None:
-        """<feint_const_init> → <feint_const><feint_const_end>"""
-        self.parse_feint_const()
-        self.parse_feint_const_end()
-        
-    def parse_feint_const(self) -> None:
-        """<feint_const> → = <feint_lit>"""
-        self.expect(TokenType.ASSIGN)
-        self.parse_feint_lit()
-        
-    def parse_feint_const_end(self) -> None:
-        """<feint_const_end> → ", @identifier <feint_const_init>" | λ"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-            
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_feint_const_init()
-        
-    def parse_const_floater(self) -> None:
-        """<const_floater> → Floater @identifier <floater_const_init>;"""
-        self.expect(TokenType.FLOATER)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_floater_const_init()
-        self.expect(TokenType.SEMICOLON)
-        
-    def parse_floater_const_init(self) -> None:
-        """<floater_const_init> → <floater_const><floater_const_end>"""
-        self.parse_floater_const()
-        self.parse_floater_const_end()
-        
-    def parse_floater_const(self) -> None:
-        """<floater_const> → = <floater_lit>"""
-        self.expect(TokenType.ASSIGN)
-        self.parse_floater_lit()
-        
-    def parse_floater_const_end(self) -> None:
-        """<floater_const_end> → ", @identifier <floater_const_init>" | λ"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-            
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_floater_const_init()
-        
-    def parse_const_chant(self) -> None:
-        """<const_chant> → Chant @identifier <chant_const_init>;"""
-        self.expect(TokenType.CHANT)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_chant_const_init()
-        self.expect(TokenType.SEMICOLON)
-        
-    def parse_chant_const_init(self) -> None:
-        """<chant_const_init> → <chant_const><chant_const_end>"""
-        self.parse_chant_const()
-        self.parse_chant_const_end()
-        
-    def parse_chant_const(self) -> None:
-        """<chant_const> → = <chant_lit>"""
-        self.expect(TokenType.ASSIGN)
-        self.parse_chant_lit()
-        
-    def parse_chant_const_end(self) -> None:
-        """<chant_const_end> → ", @identifier <chant_const_init>" | λ"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-            
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_chant_const_init()
-        
-    def parse_const_stat(self) -> None:
-        """<const_stat> → Stat @identifier <stat_const_init>;"""
-        self.expect(TokenType.STAT)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_stat_const_init()
-        self.expect(TokenType.SEMICOLON)
-        
-    def parse_stat_const_init(self) -> None:
-        """<stat_const_init> → <stat_const><stat_const_end>"""
-        self.parse_stat_const()
-        self.parse_stat_const_end()
-        
-    def parse_stat_const(self) -> None:
-        """<stat_const> → = <stat_value>"""
-        self.expect(TokenType.ASSIGN)
-        self.parse_stat_value()
-        
-    def parse_stat_const_end(self) -> None:
-        """<stat_const_end> → ", @identifier <stat_const_init>" | λ"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-            
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_stat_const_init()
-        
-    def parse_array_dec(self) -> None:
-        """<array_dec> → <feint_array> <floater_array> <chant_array> <stat_array>;"""
-        #self.expect(TokenType.ZONE)
-        if self.match_token_type(self.current_token, TokenType.FEINT):
-            self.parse_feint_array()
-        elif self.match_token_type(self.current_token, TokenType.FLOATER):
-            self.parse_floater_array()
-        elif self.match_token_type(self.current_token, TokenType.CHANT):
-            self.parse_chant_array()
-        
-    def parse_feint_array(self) -> None:
-        """<feint_array> → Feint @identifier [<feint_lit>]<2D_array><feint_array_init>;"""
-        self.expect(TokenType.FEINT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
-        self.parse_feint_lit()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
-        self.parse_2D_array()
-        self.parse_feint_array_init()
-        self.expect(TokenType.SEMICOLON)
-        
-    def parse_2D_array(self) -> None:
-        """<2D_array> → λ |  [<feint_lit>]"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ARRAY_INDEX_LEFT):
-            return  # λ case
-        
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
-        self.parse_feint_lit()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
-        
-    def parse_feint_array_init(self) -> None:
-        """<feint_array_init> → λ | = {<feint_row>}"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
-        
-        self.expect(TokenType.ASSIGN)
+        # Match opening brace
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_feint_row()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
         
-    def parse_feint_row(self) -> None:
-        """<feint_row> → <feint_lit><more_feint_lit> | {<feint_lit><more_feint_lit>} <2D_feint_row>"""
-        if self.match_token_type(self.current_token, TokenType.CODE_BLOCK_LEFT):
-            self.expect(TokenType.CODE_BLOCK_LEFT)
-            self.parse_feint_lit()
-            self.parse_more_feint_lit()
-            self.expect(TokenType.CODE_BLOCK_RIGHT)
-            self.parse_2D_feint_row()
-        else:
-            self.parse_feint_lit()
-            self.parse_more_feint_lit()
+        # Parse statements inside the team block
+        self.parse_statement_list()
+        
+        # Match closing brace
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
     
-    def parse_2D_feint_row(self) -> None:
-        """<2D_feint_row> → λ | , {<feint_lit><more_feint_lit>} <2D_feint_row> """
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
+    def parse_statement_list(self) -> None:
+        """Parse a list of statements"""
+        self.current_nonterminal = "statement_list"
         
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_feint_lit()
-        self.parse_more_feint_lit() # Recursive call
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-        self.parse_2D_feint_row()
-
-    def parse_more_feint_lit(self) -> None:
-        """<more_feint_lit> → λ | <feint_lit><more_feint_lit>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.parse_feint_lit()
-        self.parse_more_feint_lit() # Recursive call
-        
-    def parse_floater_array(self) -> None:
-        """<floater_array> → Floater @identifier [<feint_lit>]<2D_array><floater_array_init>;"""
-        self.expect(TokenType.FLOATER)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
-        self.parse_feint_lit()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
-        self.parse_2D_array()
-        self.parse_floater_array_init()
-        self.expect(TokenType.SEMICOLON)
-        
-    def parse_floater_array_init(self) -> None:
-        """<floater_array_init> → λ | = {<floater_row>}"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
-        
-        self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_floater_row()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-        
-    def parse_floater_row(self) -> None:
-        """<floater_row> → <floater_lit><more_floater_lit> | {<floater_lit><more_floater_lit>} <2D_floater_row>"""
-        if self.match_token_type(self.current_token, TokenType.CODE_BLOCK_LEFT):
-            self.expect(TokenType.CODE_BLOCK_LEFT)
-            self.parse_floater_lit()
-            self.parse_more_floater_lit()
-            self.expect(TokenType.CODE_BLOCK_RIGHT)
-            self.parse_2D_floater_row()
-        else:
-            self.parse_floater_lit()
-            self.parse_more_floater_lit()
+        # Parse statements until we hit a closing brace
+        while self.current_token and self.current_token.type != TokenType.CODE_BLOCK_RIGHT:
+            self.parse_statement()
     
-    def parse_2D_floater_row(self) -> None:
-        """<2D_floater_row> → λ |, {<floater_lit><more_floater_lit>} <2D_floater_row>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_floater_lit()
-        self.parse_more_floater_lit() # Recursive call
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-        self.parse_2D_floater_row()
-
-    def parse_more_floater_lit(self) -> None:
-        """<more_floater_lit> → λ | <floater_lit><more_floater_lit>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.parse_floater_lit()
-        self.parse_more_floater_lit() # Recursive call  
-        
-    def parse_chant_array(self) -> None:
-        """<chant_array> → Chant @identifier [<feint_lit>]<2D_array><chant_array_init>;"""
-        self.expect(TokenType.CHANT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
-        self.parse_feint_lit()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
-        self.parse_2D_array()
-        self.parse_chant_array_init()
-        self.expect(TokenType.SEMICOLON)    
-
-    def parse_chant_array_init(self) -> None:
-        """<chant_array_init> → λ | = {<chant_row>}"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            return  # λ case
-        
-        self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_chant_row()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-        
-    def parse_chant_row(self) -> None:
-        """<chant_row> → <chant_lit><more_chant_lit> | {<chant_lit><more_chant_lit>} <2D_chant_row>"""
-        if self.match_token_type(self.current_token, TokenType.CODE_BLOCK_LEFT):
-            self.expect(TokenType.CODE_BLOCK_LEFT)
-            self.parse_chant_lit()
-            self.parse_more_chant_lit()
-            self.expect(TokenType.CODE_BLOCK_RIGHT)
-            self.parse_2D_chant_row()
-        else:   
-            self.parse_chant_lit()
-            self.parse_more_chant_lit()
-            
-    def parse_2D_chant_row(self) -> None:
-        """<2D_chant_row> → λ | , {<chant_lit><more_chant_lit>} <2D_chant_row>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_chant_lit()
-        self.parse_more_chant_lit() # Recursive call
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-        self.parse_2D_chant_row()
-        
-    def parse_more_chant_lit(self) -> None:
-        """<more_chant_lit> → λ | <chant_lit><more_chant_lit>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.parse_chant_lit()
-        self.parse_more_chant_lit() # Recursive call    
-        
-    """ VINCE AGAIN """
-
-    def parse_function_def(self) -> None:
-        """<function_def> → λ | Wilt <function_declared><function_def> | Dunk <dunk_func_declared><function_def>"""
-        self.current_nonterminal = "function_def"
-        expected_tokens = self.get_expected_tokens("function_def")
-        
-         # If we have a token that's in FIRST(function_def)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            if self.match_token_type(self.current_token, TokenType.WILT):
-                self.expect(TokenType.WILT)
-                self.parse_function_declared()
-                self.parse_function_def()  # Recursive call
-            elif self.match_token_type(self.current_token, TokenType.DUNK):
-                self.expect(TokenType.DUNK)
-                self.parse_dunk_func_declared()
-                self.parse_function_def()  # Recursive call
-        # The λ case is handled implicitly by just returning
-
-    def parse_function_declared(self) -> None:
-        """<function_declared> → <feint_function> | <floater_function> | <chant_function> | <stat_function>"""
-        self.current_nonterminal = "function_declared"
-        expected_tokens = self.get_expected_tokens("function_declared")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("function_declared", expected_tokens)
-
-        if self.match_token_type(self.current_token, TokenType.FEINT):
-            self.parse_feint_function()
-        elif self.match_token_type(self.current_token, TokenType.FLOATER):
-            self.parse_floater_function()
-        elif self.match_token_type(self.current_token, TokenType.CHANT):
-            self.parse_chant_function()
-        elif self.match_token_type(self.current_token, TokenType.STAT):
-            self.parse_stat_function()
-
-    def parse_feint_function(self) -> None:
-        """<feint_function> → Feint @identifier(<func_parameters>) {<function_statement> <rebound_statement>}"""
-        self.current_nonterminal = "feint_function"
-        expected_tokens = self.get_expected_tokens("feint_function")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("feint_function", expected_tokens)
-        
-        self.expect(TokenType.FEINT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_func_parameters()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_function_statement()
-        self.parse_rebound_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
-    def parse_floater_function(self) -> None:
-        """<floater_function> → Floater @identifier(<func_parameters>) {<function_statement> <rebound_statement>}"""
-        self.current_nonterminal = "floater_function"
-        expected_tokens = self.get_expected_tokens("floater_function")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("floater_function", expected_tokens)
-        
-        self.expect(TokenType.FLOATER)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_func_parameters()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_function_statement()
-        self.parse_rebound_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
-    def parse_chant_function(self) -> None:
-        """<chant_function> → Chant @identifier(<func_parameters>) {<function_statement> <rebound_statement>}"""
-        self.current_nonterminal = "chant_function"
-        expected_tokens = self.get_expected_tokens("chant_function")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("chant_function", expected_tokens)
-        
-        self.expect(TokenType.CHANT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_func_parameters()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_function_statement()
-        self.parse_rebound_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
-    def parse_stat_function(self) -> None:
-        """<stat_function> → Stat @identifier(<func_parameters>) {<function_statement> <rebound_statement>}"""
-        self.current_nonterminal = "stat_function"
-        expected_tokens = self.get_expected_tokens("stat_function")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("stat_function", expected_tokens)
-        
-        self.expect(TokenType.STAT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_func_parameters()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_function_statement()
-        self.parse_rebound_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
-    def parse_dunk_func_declared(self) -> None:
-        """<dunk_func_declared> → <dunk_function>"""
-        self.current_nonterminal = "dunk_func_declared"
-        expected_tokens = self.get_expected_tokens("dunk_func_declared")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("dunk_func_declared", expected_tokens)
-        
-        self.parse_dunk_function()
-
-    def parse_dunk_function(self) -> None:
-        """<dunk_function> → @identifier(<func_parameters>) {<function_statement>}"""
-        self.current_nonterminal = "dunk_function"
-        expected_tokens = self.get_expected_tokens("dunk_function")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("dunk_function", expected_tokens)
-        
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_func_parameters()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_function_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
-    def parse_func_parameters(self) -> None:
-        """<func_parameters> → λ | @identifier <param_end>"""
-        self.current_nonterminal = "func_parameters"
-        expected_tokens = self.get_expected_tokens("func_parameters")
-        
-        # If current token is RIGHT_PAREN, then it's the λ case (empty parameter list)
-        if not self.current_token or self.match_token_type(self.current_token, TokenType.RIGHT_PAREN):
-            return  # λ case
-        
-        self.expect(TokenType.VAR_INIT)
-        self.parse_param_end()
-
-    def parse_param_end(self) -> None:
-        """<param_end> → λ | , @identifier <param_end>"""
-        self.current_nonterminal = "param_end"
-        expected_tokens = self.get_expected_tokens("param_end")
-        
-        # If current token is RIGHT_PAREN, then it's the λ case (end of parameter list)
-        if not self.current_token or self.match_token_type(self.current_token, TokenType.RIGHT_PAREN):
-            return  # λ case
-        
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_param_end()  # Recursive call
-
-    def parse_function_statement(self) -> None:
-        """<function_statement> → <statement><function_statement> | λ"""
-        self.current_nonterminal = "function_statement"
-        expected_tokens = self.get_expected_tokens("function_statement")
-        
-        # If not a statement start, it's the λ case
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            return  # λ case
-        
-        self.parse_statement()
-        self.parse_function_statement()  # Recursive call
-
-    def parse_team_statement(self) -> None:
-        """<team_statement> → <statement><team_statement> | λ"""
-        self.current_nonterminal = "team_statement"
-        expected_tokens = self.get_expected_tokens("team_statement")
-        
-        # If not a statement start, it's the λ case
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            return  # λ case
-        
-        self.parse_statement()
-        self.parse_team_statement()  # Recursive call
-
     def parse_statement(self) -> None:
-        """<statement> → <variable_dec> | <announce_statement> | <inbound_statement> | <dribble_statement> | <switch_statement> | <forward_statement> | <play_statement> | <run_play_statement> | @identifier <follow_statement>;"""
+        """Parse a single statement"""
         self.current_nonterminal = "statement"
-        expected_tokens = self.get_expected_tokens("statement")
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("statement", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINT) or \
-        self.match_token_type(self.current_token, TokenType.FLOATER) or \
-        self.match_token_type(self.current_token, TokenType.CHANT) or \
-        self.match_token_type(self.current_token, TokenType.STAT):
-            self.parse_variable_dec()
-        elif self.match_token_type(self.current_token, TokenType.ANNOUNCE):
-            self.parse_announce_statement()
-        elif self.match_token_type(self.current_token, TokenType.INBOUND):
-            self.parse_inbound_statement()
-        elif self.match_token_type(self.current_token, TokenType.DRIBBLE):
-            self.parse_dribble_statement()
-        elif self.match_token_type(self.current_token, TokenType.SWITCH):
-            self.parse_switch_statement()
-        elif self.match_token_type(self.current_token, TokenType.FORWARD):
-            self.parse_forward_statement()
-        elif self.match_token_type(self.current_token, TokenType.PLAY):
-            self.parse_play_statement()
-        elif self.match_token_type(self.current_token, TokenType.RUN):
-            self.parse_run_play_statement()
-        elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.expect(TokenType.VAR_INIT)
-            self.parse_follow_statement()
-            # ; end of statement    
-            self.expect(TokenType.SEMICOLON)
-        
-
-    def parse_follow_statement(self) -> None:
-        """<follow_statement> → <increment>; | <decrement>; | <function_call>; | <assignment_expression><team_statements> | <array_manipulation>"""
-        self.current_nonterminal = "follow_statement"
-        expected_tokens = self.get_expected_tokens("follow_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("follow_statement", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.INCREMENT):
-            self.parse_increment()
-        elif self.match_token_type(self.current_token, TokenType.DECREMENT):
-            self.parse_decrement()
-        elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-            self.parse_function_call()
-        elif self.match_token_type(self.current_token, TokenType.ASSIGN):
-            self.parse_assignment_expression()
-        elif self.match_token_type(self.current_token, TokenType.ARRAY_INDEX_LEFT):
-            self.parse_array_manipulation()
-
-    def parse_array_manipulation(self) -> None:
-        """<array_manipulation> → [<element_index>]<2d_manipulation><array_man>"""
-        self.current_nonterminal = "array_manipulation"
-        expected_tokens = self.get_expected_tokens("array_manipulation")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("array_manipulation", expected_tokens)
-        
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
-        self.parse_element_index()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
-        self.parse_2d_manipulation()
-        self.parse_array_man()
-
-    def parse_element_index(self) -> None:
-        """<element_index> → <feint_lit> | @identifier"""
-        self.current_nonterminal = "element_index"
-        expected_tokens = self.get_expected_tokens("element_index")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("element_index", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-            self.parse_feint_lit()
-        else:
-            self.expect(TokenType.VAR_INIT)
-
-    def parse_2d_manipulation(self) -> None:
-        """<2d_manipulation> → [<element_index>] | λ"""
-        self.current_nonterminal = "2d_manipulation"
-        expected_tokens = self.get_expected_tokens("2d_manipulation")
-        
-        # If current token is not ARRAY_INDEX_LEFT or we're at semicolon/assign, then it's the λ case
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ARRAY_INDEX_LEFT):
-            return  # λ case
-        
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
-        self.parse_element_index()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
-
-    def parse_array_man(self) -> None:
-        """<array_man> → = <array_elem> | λ"""
-        self.current_nonterminal = "array_man"
-        expected_tokens = self.get_expected_tokens("array_man")
-        
-        # If current token is not ASSIGN or it's semicolon, then it's the λ case
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
-            self.expect(TokenType.SEMICOLON)
-            return  # λ case
-        
-        self.expect(TokenType.ASSIGN)
-        self.parse_array_elem()
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_array_elem(self) -> None:
-        """<array_elem> → <feint_lit> | <floater_lit> | <chant_lit> | @identifier | <expression>"""
-        self.current_nonterminal = "array_elem"
-        expected_tokens = self.get_expected_tokens("array_elem")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("array_elem", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-            self.parse_feint_lit()
-        elif self.match_token_type(self.current_token, TokenType.FLOATERLIT):
-            self.parse_floater_lit()
-        elif self.match_token_type(self.current_token, TokenType.CHANTLIT):
-            self.parse_chant_lit()
-        elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.expect(TokenType.VAR_INIT)
-        elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-            self.parse_expression()
-
-    def parse_rebound_statement(self) -> None:
-        """<rebound_statement> → Rebound <rebound_value>;"""
-        self.current_nonterminal = "rebound_statement"
-        expected_tokens = self.get_expected_tokens("rebound_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("rebound_statement", expected_tokens)
-        
-        self.expect(TokenType.REBOUND)
-        self.parse_rebound_value()
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_rebound_value(self) -> None:
-        """<rebound_value> → <literal> | @identifier | <expression>"""
-        self.current_nonterminal = "rebound_value"
-        expected_tokens = self.get_expected_tokens("rebound_value")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("rebound_value", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT) or \
-        self.match_token_type(self.current_token, TokenType.FLOATERLIT) or \
-        self.match_token_type(self.current_token, TokenType.NEGAFEINT) or \
-        self.match_token_type(self.current_token, TokenType.NEGAFLOATER) or \
-        self.match_token_type(self.current_token, TokenType.CHANTLIT) or \
-        self.match_token_type(self.current_token, TokenType.WIN) or \
-        self.match_token_type(self.current_token, TokenType.LOSS):
-            self.parse_literal()
-        elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.expect(TokenType.VAR_INIT)
-        elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-            self.expect(TokenType.LEFT_PAREN)
-            self.parse_expression()
-            self.expect(TokenType.RIGHT_PAREN)
-
-    def parse_announce_statement(self) -> None:
-        """<announce_statement> → Announce(<outputs>);"""
-        self.current_nonterminal = "announce_statement"
-        expected_tokens = self.get_expected_tokens("announce_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("announce_statement", expected_tokens)
-        
-        self.expect(TokenType.ANNOUNCE)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_outputs()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_outputs(self) -> None:
-        """<outputs> → <output><other_outputs>"""
-        self.current_nonterminal = "outputs"
-        expected_tokens = self.get_expected_tokens("outputs")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("outputs", expected_tokens)
-        
-        self.parse_output()
-        self.parse_other_outputs()
-
-    def parse_output(self) -> None:
-        """<output> → <literal> | <expression> | @identifier | <stat_value> | <array_access>"""
-        self.current_nonterminal = "output"
-        expected_tokens = self.get_expected_tokens("output")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("output", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT) or \
-        self.match_token_type(self.current_token, TokenType.FLOATERLIT) or \
-        self.match_token_type(self.current_token, TokenType.NEGAFEINT) or \
-        self.match_token_type(self.current_token, TokenType.NEGAFLOATER) or \
-        self.match_token_type(self.current_token, TokenType.CHANTLIT) or \
-        self.match_token_type(self.current_token, TokenType.WIN) or \
-        self.match_token_type(self.current_token, TokenType.LOSS):
-            self.parse_literal()
-        elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-            self.parse_expression()
-        elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            # Check next token to determine if it's an array access
-            next_token = self.peek()
-            if next_token and self.match_token_type(next_token, TokenType.ARRAY_INDEX_LEFT):
-                self.parse_array_access()
-            else:
-                self.expect(TokenType.VAR_INIT)
-        elif self.match_token_type(self.current_token, TokenType.WIN) or \
-            self.match_token_type(self.current_token, TokenType.LOSS):
-            self.parse_stat_value()
-
-    def parse_array_access(self) -> None:
-        """<array_access> → @identifier[<element_index>]<2d_manipulation>"""
-        self.current_nonterminal = "array_access"
-        expected_tokens = self.get_expected_tokens("array_access")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("array_access", expected_tokens)
-        
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.ARRAY_INDEX_LEFT)
-        self.parse_element_index()
-        self.expect(TokenType.ARRAY_INDEX_RIGHT)
-        self.parse_2d_manipulation()
-
-    def parse_other_outputs(self) -> None:
-        """<other_outputs> → λ | & <outputs>"""
-        self.current_nonterminal = "other_outputs"
-        
-        # If current token is not CHANT_CONCAT, then it's the λ case
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.CHANT_CONCAT):
-            return  # λ case
-        
-        self.expect(TokenType.CHANT_CONCAT)
-        self.parse_outputs()
-
-    def parse_literal(self) -> None:
-        """<literal> → <feint_lit> | <floater_lit> | <nega_feint_lit> | <nega_floater_lit> | <chant_lit> | <stat_value>"""
-        self.current_nonterminal = "literal"
-        expected_tokens = self.get_expected_tokens("literal")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("literal", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-            self.parse_feint_lit()
-        elif self.match_token_type(self.current_token, TokenType.FLOATERLIT):
-            self.parse_floater_lit()
-        elif self.match_token_type(self.current_token, TokenType.NEGAFEINT):
-            self.parse_nega_feint_lit()
-        elif self.match_token_type(self.current_token, TokenType.NEGAFLOATER):
-            self.parse_nega_floater_lit()
-        elif self.match_token_type(self.current_token, TokenType.CHANTLIT):
-            self.parse_chant_lit()
-        elif self.match_token_type(self.current_token, TokenType.WIN) or \
-            self.match_token_type(self.current_token, TokenType.LOSS):
-            self.parse_stat_value()
-
-    def parse_nega_feint_lit(self) -> None:
-        """<nega_feint_lit> → Negative Feint Literal"""
-        self.current_nonterminal = "nega_feint_lit"
-        expected_tokens = self.get_expected_tokens("nega_feint_lit")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("nega_feint_lit", expected_tokens)
-        
-        self.expect(TokenType.NEGAFEINT)
-
-    def parse_nega_floater_lit(self) -> None:
-        """<nega_floater_lit> → Negative Floater Literal"""
-        self.current_nonterminal = "nega_floater_lit"
-        expected_tokens = self.get_expected_tokens("nega_floater_lit")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("nega_floater_lit", expected_tokens)
-        
-        self.expect(TokenType.NEGAFLOATER)
-
-    """ VINCE START HERE """
-
-    def parse_expression(self) -> None:
-        """<expression> → <arithmetic_expression> | <relational_expression> | <logical_expression>"""
-        self.current_nonterminal = "expression"
-        expected_tokens = self.get_expected_tokens("expression")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("expression", expected_tokens)
-        
-        # Check which type of expression we're dealing with based on current token
-        # Try to determine based on the token type and the FIRST sets of each expression type
-        
-        # First check if it's a logical expression (most specific)
-        if self.current_token and (
-            self.match_token_type(self.current_token, TokenType.NOT_OP) or 
-            self.match_token_type(self.current_token, TokenType.WIN) or 
-            self.match_token_type(self.current_token, TokenType.LOSS)
-        ):
-            self.parse_logical_expression()
-        # Then check for relational operators
-        elif self.peek() and any(self.match_token_type(self.peek(), t) for t in [
-            TokenType.LESS_THAN, 
-            TokenType.GREATER_THAN, 
-            TokenType.EQUAL, 
-            TokenType.LESS_EQUAL, 
-            TokenType.GREATER_EQUAL, 
-            TokenType.NOT_EQUAL
-        ]):
-            self.parse_relational_expression()
-        # Default to arithmetic expression
-        else:
-            self.parse_arithmetic_expression()
-    
-    def parse_arithmetic_expression(self) -> None:
-        """<arithmetic_expression> → <arith_term><more_arith_term> | (<arith_term><more_arith_term>)"""
-        self.current_nonterminal = "arithmetic_expression"
-        expected_tokens = self.get_expected_tokens("arithmetic_expression")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("arithmetic_expression", expected_tokens)
-        
-        # Check if expression is enclosed in parentheses
-        if self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-            self.parse_arith_term()
-            self.parse_more_arith_term()
-            self.expect(TokenType.RIGHT_PAREN)
-        else:
-            self.parse_arith_term()
-            self.parse_more_arith_term()
-    
-    def parse_arith_term(self) -> None:
-        """<arith_term> → <number> | (<number><more_arith_term>)"""
-        self.current_nonterminal = "arith_term"
-        expected_tokens = self.get_expected_tokens("arith_term")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("arith_term", expected_tokens)
-        
-        # Check if term is enclosed in parentheses
-        if self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-            self.parse_number()
-            self.parse_more_arith_term()
-            self.expect(TokenType.RIGHT_PAREN)
-        else:
-            self.parse_number()
-    
-    def parse_number(self) -> None:
-        """<number> → <feint_lit> | <floater_lit> | @identifier | <nega_feint_lit> | <nega_floater_lit> | <number_type_cast>"""
-        self.current_nonterminal = "number"
-        expected_tokens = self.get_expected_tokens("number")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("number", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-            self.parse_feint_lit()
-        elif self.match_token_type(self.current_token, TokenType.FLOATERLIT):
-            self.parse_floater_lit()
-        elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.advance()  # Consume identifier
-        elif self.match_token_type(self.current_token, TokenType.NEGAFEINT):
-            self.advance()  # Consume negative feint literal
-        elif self.match_token_type(self.current_token, TokenType.NEGAFLOATER):
-            self.advance()  # Consume negative floater literal
-        elif any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("number_type_cast")):
-            self.parse_number_type_cast()
-        else:
-            self.error_handler("number", expected_tokens)
-    
-    def parse_number_type_cast(self) -> None:
-        """<number_type_cast> → <feint_type_casting> | <floater_type_casting>"""
-        self.current_nonterminal = "number_type_cast"
-        expected_tokens = self.get_expected_tokens("number_type_cast")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("number_type_cast", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINT):
-            self.parse_feint_type_casting()
-        elif self.match_token_type(self.current_token, TokenType.FLOATER):
-            self.parse_floater_type_casting()
-        else:
-            self.error_handler("number_type_cast", expected_tokens)
-    
-    def parse_feint_type_casting(self) -> None:
-        """<feint_type_casting> → Feint(<typecast_value>)"""
-        self.current_nonterminal = "feint_type_casting"
-        
-        self.expect(TokenType.FEINT)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_typecast_value()
-        self.expect(TokenType.RIGHT_PAREN)
-    
-    def parse_floater_type_casting(self) -> None:
-        """<floater_type_casting> → Floater(<typecast_value>)"""
-        self.current_nonterminal = "floater_type_casting"
-        
-        self.expect(TokenType.FLOATER)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_typecast_value()
-        self.expect(TokenType.RIGHT_PAREN)
-    
-    def parse_chant_type_casting(self) -> None:
-        """<chant_type_casting> → Chant(<typecast_value>)"""
-        self.current_nonterminal = "chant_type_casting"
-        
-        self.expect(TokenType.CHANT)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_typecast_value()
-        self.expect(TokenType.RIGHT_PAREN)
-    
-    def parse_stat_type_casting(self) -> None:
-        """<stat_type_casting> → Stat(<typecast_value>)"""
-        self.current_nonterminal = "stat_type_casting"
-        
-        self.expect(TokenType.STAT)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_typecast_value()
-        self.expect(TokenType.RIGHT_PAREN)
-    
-    def parse_more_arith_term(self) -> None:
-        """<more_arith_term> → λ | +<arith_term><more_arith_term> | -<arith_term><more_arith_term> | 
-                              *<arith_term><more_arith_term> | /<arith_term><more_arith_term> | %<arith_term><more_arith_term>"""
-        self.current_nonterminal = "more_arith_term"
-        
-        # Check if we have an arithmetic operator
         if not self.current_token:
-            return  # λ case
+            self.error_handler("statement", {
+                TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT,
+                TokenType.ANNOUNCE, TokenType.VAR_INIT, TokenType.DRIBBLE
+            })
+                
+        # Check statement type based on first token
+        if self.current_token.type in [TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT]:
+            # Variable declaration (for any data type)
+            self.parse_variable_declaration()
+        elif self.current_token.type == TokenType.ANNOUNCE:
+            # Announce (print) statement
+            self.parse_announce_statement()
+        elif self.current_token.type == TokenType.VAR_INIT:
+            # Check if this is a standalone function call or variable assignment
+            var_token = self.current_token
+            self.advance()  # Move past the variable name
             
-        if self.match_token_type(self.current_token, TokenType.ADD):
-            self.parse_arith_term()
-            self.parse_more_arith_term()
-        elif self.match_token_type(self.current_token, TokenType.SUB):
-            self.parse_arith_term()
-            self.parse_more_arith_term()
-        elif self.match_token_type(self.current_token, TokenType.MUL):
-            self.parse_arith_term()
-            self.parse_more_arith_term()
-        elif self.match_token_type(self.current_token, TokenType.DIV):
-            self.parse_arith_term()
-            self.parse_more_arith_term()
-        elif self.match_token_type(self.current_token, TokenType.MOD):
-            self.parse_arith_term()
-            self.parse_more_arith_term()
-        # If no operator, return (λ case)
-    
-    def parse_relational_expression(self) -> None:
-        """<relational_expression> → <number_rel_operand><relational_operator><number_rel_operand> | 
-                                    <stat_rel_operand><other_relational_operator><stat_rel_operand> |
-                                    <chant_rel_operand><other_relational_operator><chant_rel_operand> |
-                                    <arithmetic_expression><relational_operator><arithmetic_expression>"""
-        self.current_nonterminal = "relational_expression"
-        expected_tokens = self.get_expected_tokens("relational_expression")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("relational_expression", expected_tokens)
-        
-        # Need to check the type of first operand to determine which rule to follow
-        if self.match_token_type(self.current_token, TokenType.STAT):
-            # Stat comparison
-            self.parse_stat_rel_operand()
-            self.parse_other_relational_operator()
-            self.parse_stat_rel_operand()
-        elif self.match_token_type(self.current_token, TokenType.CHANT) or self.match_token_type(self.current_token, TokenType.CHANTLIT):
-            # Chant comparison
-            self.parse_chant_rel_operand()
-            self.parse_other_relational_operator()
-            self.parse_chant_rel_operand()
-        else:
-            # Number comparison or arithmetic expression comparison
-            peek_token = self.peek()
-            if peek_token and any(self.match_token_type(peek_token, t) for t in [
-                TokenType.ADD, TokenType.SUB, TokenType.MUL, TokenType.DIV, TokenType.MOD
-            ]):
-                # It's an arithmetic expression
-                self.parse_arithmetic_expression()
-                self.parse_relational_operator()
-                self.parse_arithmetic_expression()
+            if self.current_token and self.current_token.type == TokenType.LEFT_PAREN:
+                # This is a function call statement
+                self.current -= 1  # Move back to variable name for proper parsing
+                self.current_token = self.tokens[self.current]
+                self.skip_whitespace_and_comments()
+                self.parse_function_call_statement()
             else:
-                # Simple number comparison
-                self.parse_number_rel_operand()
-                self.parse_relational_operator()
-                self.parse_number_rel_operand()
-    
-    def parse_number_rel_operand(self) -> None:
-        """<number_rel_operand> → <number> | <number_type_cast>"""
-        self.current_nonterminal = "number_rel_operand"
-        expected_tokens = self.get_expected_tokens("number_rel_operand")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("number_rel_operand", expected_tokens)
-        
-        if any(self.match_token_type(self.current_token, t) for t in [TokenType.FEINT, TokenType.FLOATER]):
-            self.parse_number_type_cast()
+                # This is a variable assignment
+                self.current -= 1  # Move back to variable name for proper parsing
+                self.current_token = self.tokens[self.current]
+                self.skip_whitespace_and_comments()
+                self.parse_variable_assignment()
+        elif self.current_token.type == TokenType.DRIBBLE:
+            # Conditional statement (if-else)
+            self.parse_conditional_statement()
         else:
-            self.parse_number()
-    
-    def parse_relational_operator(self) -> None:
-        """<relational_operator> → < | > | == | <= | >= | !="""
-        self.current_nonterminal = "relational_operator"
-        expected_tokens = self.get_expected_tokens("relational_operator")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("relational_operator", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.LESS_THAN):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.GREATER_THAN):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.EQUAL):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.LESS_EQUAL):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.GREATER_EQUAL):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.NOT_EQUAL):
-            pass  # Already consumed by match_token_type
-        else:
-            self.error_handler("relational_operator", expected_tokens)
-    
-    def parse_other_relational_operator(self) -> None:
-        """<other_relational_operator> → == | !="""
-        self.current_nonterminal = "other_relational_operator"
-        expected_tokens = self.get_expected_tokens("other_relational_operator")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("other_relational_operator", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.EQUAL):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.NOT_EQUAL):
-            pass  # Already consumed by match_token_type
-        else:
-            self.error_handler("other_relational_operator", expected_tokens)
-    
-    def parse_stat_rel_operand(self) -> None:
-        """<stat_rel_operand> → <stat_value> | @identifier | <stat_type_casting>"""
-        self.current_nonterminal = "stat_rel_operand"
-        expected_tokens = self.get_expected_tokens("stat_rel_operand")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("stat_rel_operand", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.WIN) or self.match_token_type(self.current_token, TokenType.LOSS):
-            self.parse_stat_value()
-        elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.advance()  # Consume identifier
-        elif self.match_token_type(self.current_token, TokenType.STAT):
-            self.parse_stat_type_casting()
-        else:
-            self.error_handler("stat_rel_operand", expected_tokens)
-    
-    def parse_chant_rel_operand(self) -> None:
-        """<chant_rel_operand> → @identifier | <chant_type_casting> | <chant_lit>"""
-        self.current_nonterminal = "chant_rel_operand"
-        expected_tokens = self.get_expected_tokens("chant_rel_operand")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("chant_rel_operand", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.advance()  # Consume identifier
-        elif self.match_token_type(self.current_token, TokenType.CHANT):
-            self.parse_chant_type_casting()
-        elif self.match_token_type(self.current_token, TokenType.CHANTLIT):
-            self.parse_chant_lit()
-        else:
-            self.error_handler("chant_rel_operand", expected_tokens)
-    
-    def parse_logical_expression(self) -> None:
-        """<logical_expression> → <not_expr> | <compound_log_expr> | NOT <other_log_term>"""
-        self.current_nonterminal = "logical_expression"
-        expected_tokens = self.get_expected_tokens("logical_expression")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("logical_expression", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.NOT_OP):
-            self.parse_not_expr()
-        else:
-            self.parse_compound_log_expr()
+            # Other statement types would go here
+            self.error_handler("statement", {
+                TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT,
+                TokenType.ANNOUNCE, TokenType.VAR_INIT, TokenType.DRIBBLE
+            })
 
-    def parse_not_expr(self) -> None:
-        """<not_expr> → NOT <other_log_term>"""
-        self.current_nonterminal = "not_expr"
+    def parse_function_call_statement(self) -> None:
+        """Parse a function call as a standalone statement"""
+        self.current_nonterminal = "function_call_statement"
         
-        self.expect(TokenType.NOT_OP)
-        self.parse_other_log_term()
+        # Match variable identifier (function name with @)
+        self.expect(TokenType.VAR_INIT)
+        
+        # Parse the function call
+        self.parse_function_call()
+        
+        # The semicolon is already handled in parse_function_call
 
-    def parse_compound_log_expr(self) -> None:
-        """<compound_log_expr> → <log_term> <log_operator> <log_term> <more_log_term>"""
-        self.current_nonterminal = "compound_log_expr"
+    def parse_conditional_statement(self) -> None:
+        """Parse a conditional (if/else-if/else) statement"""
+        self.current_nonterminal = "conditional_statement"
         
-        self.parse_log_term()
-        self.parse_log_operator()
-        self.parse_log_term()
-        self.parse_more_log_term()
-
-    def parse_log_term(self) -> None:
-        """<log_term> → <not_expr> | <other_log_term>"""
-        self.current_nonterminal = "log_term"
-        expected_tokens = self.get_expected_tokens("log_term")
+        # Match DRIBBLE keyword (if)
+        self.expect(TokenType.DRIBBLE)
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("log_term", expected_tokens)
+        # Match left parenthesis
+        self.expect(TokenType.LEFT_PAREN)
         
-        if self.match_token_type(self.current_token, TokenType.NOT_OP):
-            self.parse_not_expr()
-        else:
-            self.parse_other_log_term()
-
-    def parse_other_log_term(self) -> None:
-        """<other_log_term> → <stat_value> | (<relational_expression>) | <number>"""
-        self.current_nonterminal = "other_log_term"
-        expected_tokens = self.get_expected_tokens("other_log_term")
+        # Parse conditional expression
+        self.parse_conditional_expression()
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("other_log_term", expected_tokens)
+        # Match right parenthesis
+        self.expect(TokenType.RIGHT_PAREN)
         
-        if self.match_token_type(self.current_token, TokenType.WIN) or self.match_token_type(self.current_token, TokenType.LOSS):
-            self.parse_stat_value()
-        elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-            self.parse_relational_expression()
+        # Match opening brace
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        
+        # Parse statements inside the if block
+        self.parse_statement_list()
+        
+        # Match closing brace
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        
+        # Check for else-if blocks (PASS)
+        while self.current_token and self.current_token.type == TokenType.PASS:
+            # Match PASS keyword (else-if)
+            self.expect(TokenType.PASS)
+            
+            # Match left parenthesis
+            self.expect(TokenType.LEFT_PAREN)
+            
+            # Parse conditional expression
+            self.parse_conditional_expression()
+            
+            # Match right parenthesis
             self.expect(TokenType.RIGHT_PAREN)
+            
+            # Match opening brace
+            self.expect(TokenType.CODE_BLOCK_LEFT)
+            
+            # Parse statements inside the else-if block
+            self.parse_statement_list()
+            
+            # Match closing brace
+            self.expect(TokenType.CODE_BLOCK_RIGHT)
+        
+        # Check if there's an else block (SHOOT)
+        if self.current_token and self.current_token.type == TokenType.SHOOT:
+            # Match SHOOT keyword (else)
+            self.expect(TokenType.SHOOT)
+            
+            # Match opening brace
+            self.expect(TokenType.CODE_BLOCK_LEFT)
+            
+            # Parse statements inside the else block
+            self.parse_statement_list()
+            
+            # Match closing brace
+            self.expect(TokenType.CODE_BLOCK_RIGHT)
+
+    def parse_conditional_expression(self) -> None:
+        """Parse a conditional expression (potentially with logical operators and nested parentheses)"""
+        self.current_nonterminal = "conditional_expression"
+        
+        # Check for opening parenthesis for grouped condition
+        if self.current_token and self.current_token.type == TokenType.LEFT_PAREN:
+            self.advance()  # Skip opening parenthesis
+            self.parse_conditional_expression()  # Parse the inner condition
+            self.expect(TokenType.RIGHT_PAREN)  # Expect closing parenthesis
         else:
-            self.parse_number()
-    
-    def parse_more_log_term(self) -> None:
-        """<more_log_term> → λ | <log_operator><log_term><more_log_term>"""
-        self.current_nonterminal = "more_log_term"
-        
-        # Check if we have a logical operator
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in [TokenType.AND_OP, TokenType.OR_OP]):
-            return  # λ case
-        
-        self.parse_log_operator()
-        self.parse_log_term()
-        self.parse_more_log_term()
-    
-    def parse_log_operator(self) -> None:
-        """<log_operator> → AND | OR"""
-        self.current_nonterminal = "log_operator"
-        expected_tokens = self.get_expected_tokens("log_operator")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("log_operator", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.AND_OP):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.OR_OP):
-            pass  # Already consumed by match_token_type
-        else:
-            self.error_handler("log_operator", expected_tokens)
-    
-    def parse_assignment_expression(self) -> None:
-        """<assignment_expression> → <assign_operator><assign_operand>"""
-        self.current_nonterminal = "assignment_expression"
-        expected_tokens = self.get_expected_tokens("assignment_expression")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("assignment_expression", expected_tokens)
-        
-        self.parse_assign_operator()
-        self.parse_assign_operand()
-    
-    def parse_assign_operator(self) -> None:
-        """<assign_operator> → = | += | -= | *= | /= | %="""
-        self.current_nonterminal = "assign_operator"
-        expected_tokens = self.get_expected_tokens("assign_operator")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("assign_operator", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.ASSIGN):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.ADD_ASSIGN):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.SUB_ASSIGN):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.MUL_ASSIGN):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.DIV_ASSIGN):
-            pass  # Already consumed by match_token_type
-        elif self.match_token_type(self.current_token, TokenType.MOD_ASSIGN):
-            pass  # Already consumed by match_token_type
-        else:
-            self.error_handler("assign_operator", expected_tokens)
-    
-    def parse_assign_operand(self) -> None:
-        """<assign_operand> → <arithmetic_expression> | <relational_expression> | <logical_expression> | <function_call>"""
-        self.current_nonterminal = "assign_operand"
-        expected_tokens = self.get_expected_tokens("assign_operand")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("assign_operand", expected_tokens)
-        
-        # Check if it's a function call
-        if self.match_token_type(self.current_token, TokenType.VAR_INIT) and self.peek() and self.match_token_type(self.peek(), TokenType.LEFT_PAREN):
-            self.parse_function_call()
-        # Otherwise, determine which type of expression
-        elif self.current_token and any(self.match_token_type(self.current_token, t) for t in [TokenType.NOT_OP, TokenType.WIN, TokenType.LOSS]):
-            self.parse_logical_expression()
-        elif self.peek() and any(self.match_token_type(self.peek(), t) for t in [
-            TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
-            TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL
-        ]):
+            # Parse relational expression as normal
             self.parse_relational_expression()
+        
+        # Check for logical operators like AND_OP, OR_OP
+        while self.current_token and self.current_token.type in [TokenType.AND_OP, TokenType.OR_OP]:
+            # Match logical operator
+            operator_type = self.current_token.type
+            self.advance()
+            
+            # Check for opening parenthesis for the right operand
+            if self.current_token and self.current_token.type == TokenType.LEFT_PAREN:
+                self.advance()  # Skip opening parenthesis
+                self.parse_conditional_expression()  # Parse the inner condition
+                self.expect(TokenType.RIGHT_PAREN)  # Expect closing parenthesis
+            else:
+                # Parse relational expression as normal
+                self.parse_relational_expression()
+
+    def parse_relational_expression(self) -> None:
+        """Parse a relational expression with operators like ==, !=, <, >, etc."""
+        self.current_nonterminal = "relational_expression"
+        
+        # Parse first expression
+        self.parse_expression()
+        
+        # Check for relational operators
+        if self.current_token and self.current_token.type in [
+            TokenType.EQUAL, TokenType.NOT_EQUAL, 
+            TokenType.LESS_THAN, TokenType.GREATER_THAN,
+            TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL
+        ]:
+            # Match relational operator
+            self.advance()
+            
+            # Parse second expression
+            self.parse_expression()
+    
+    # MARK AS
+    
+    def parse_variable_declaration(self) -> None:
+        """Parse a variable declaration and initialization, potentially with multiple variables"""
+        self.current_nonterminal = "variable_declaration"
+        
+        # Match data type (FEINT, CHANT, FLOATER, STAT)
+        if self.current_token.type in [TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT]:
+            data_type = self.current_token.type
+            self.advance()
         else:
-            self.parse_arithmetic_expression()
+            self.error_handler("variable_declaration", {
+                TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT
+            })
+        
+        # Process one or more variable declarations
+        while True:
+            # Match variable identifier (starting with @)
+            self.expect(TokenType.VAR_INIT)
+            
+            # Check if this variable has an initialization
+            if self.current_token and self.current_token.type == TokenType.ASSIGN:
+                # Match assignment operator
+                self.expect(TokenType.ASSIGN)
+                
+                # Parse expression
+                self.parse_expression()
+            
+            # Check if there are more variables (separated by comma)
+            if self.current_token and self.current_token.type == TokenType.COMMA:
+                self.advance()  # Skip the comma
+            else:
+                break  # No more variables in this declaration
+        
+        # Match semicolon
+        self.expect(TokenType.SEMICOLON)
+    
+    def parse_variable_assignment(self) -> None:
+        """Parse a variable assignment"""
+        self.current_nonterminal = "variable_assignment"
+        
+        # Match variable identifier (starting with @)
+        self.expect(TokenType.VAR_INIT)
+        
+        # Variable name is now handled correctly - no additional check needed
+        
+        # Match assignment operator
+        self.expect(TokenType.ASSIGN)
+        
+        # Parse expression
+        self.parse_expression()
+        
+        # Match semicolon
+        self.expect(TokenType.SEMICOLON)
+    
+    def parse_announce_statement(self) -> None:
+        """Parse an announce (print) statement with format specifiers"""
+        self.current_nonterminal = "announce_statement"
+        
+        # Match ANNOUNCE keyword
+        self.expect(TokenType.ANNOUNCE)
+        
+        # Match opening parenthesis
+        self.expect(TokenType.LEFT_PAREN)
+        
+        # Parse expression (format string or other expression)
+        self.parse_expression()
+        
+        # Check for additional format arguments
+        while self.current_token and self.current_token.type == TokenType.COMMA:
+            # Skip comma
+            self.advance()
+            
+            # Parse format argument
+            self.parse_expression()
+        
+        # Match closing parenthesis
+        self.expect(TokenType.RIGHT_PAREN)
+        
+        # Match semicolon
+        self.expect(TokenType.SEMICOLON)
+    
+    def parse_expression(self) -> None:
+        """Parse an expression"""
+        self.current_nonterminal = "expression"
+        
+        # Parse simple expression (term)
+        self.parse_term()
+        
+        # Check for operators like +, -, &, etc.
+        while self.current_token and self.current_token.type in [
+            TokenType.ADD, TokenType.SUB, TokenType.CHANT_CONCAT
+        ]:
+            # Match operator
+            self.advance()
+            
+            # Parse next term
+            self.parse_term()
+
+    def parse_function_declaration(self) -> None:
+        """Parse a function declaration"""
+        self.current_nonterminal = "function_declaration"
+        
+        # Match DUNK keyword (void function)
+        self.expect(TokenType.DUNK)
+        
+        # Match function name (@identifier)
+        self.expect(TokenType.VAR_INIT)
+        
+        # Match left parenthesis for parameters
+        self.expect(TokenType.LEFT_PAREN)
+        
+        # Parse parameters if any
+        if self.current_token and self.current_token.type != TokenType.RIGHT_PAREN:
+            self.parse_parameter_list()
+        
+        # Match right parenthesis
+        self.expect(TokenType.RIGHT_PAREN)
+        
+        # Match opening brace
+        self.expect(TokenType.CODE_BLOCK_LEFT)
+        
+        # Parse statements inside the function body
+        self.parse_statement_list()
+        
+        # Match closing brace
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
+
+    def parse_parameter_list(self) -> None:
+        """Parse a comma-separated list of function parameters"""
+        self.current_nonterminal = "parameter_list"
+        
+        # Parse at least one parameter
+        self.expect(TokenType.VAR_INIT)
+        
+        # Parse additional parameters if any
+        while self.current_token and self.current_token.type == TokenType.COMMA:
+            self.advance()  # Skip comma
+            self.expect(TokenType.VAR_INIT)  # Expect parameter
+    
+    def parse_term(self) -> None:
+        """Parse a term in an expression"""
+        self.current_nonterminal = "term"
+        
+        # Parse factor
+        self.parse_factor()
+        
+        # Check for operators like *, /, etc.
+        while self.current_token and self.current_token.type in [
+            TokenType.MUL, TokenType.DIV, TokenType.MOD
+        ]:
+            # Match operator
+            self.advance()
+            
+            # Parse next factor
+            self.parse_factor()
+    
+    def parse_factor(self) -> None:
+        """Parse a factor in a term"""
+        self.current_nonterminal = "factor"
+        
+        if not self.current_token:
+            self.error_handler("factor", {
+                TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT,
+                TokenType.LEFT_PAREN, TokenType.VAR_INIT
+            })
+        
+        # Check what kind of factor we're dealing with
+        if self.current_token.type == TokenType.LEFT_PAREN:
+            # Parenthesized expression
+            self.advance()
+            
+            # For nested expressions in conditions, this could be a conditional expression
+            if self.current_token and self.current_token.type == TokenType.LEFT_PAREN:
+                self.parse_conditional_expression()
+            else:
+                self.parse_expression()
+                
+            self.expect(TokenType.RIGHT_PAREN)
+        elif self.current_token.type in [TokenType.FEINTLIT, TokenType.FLOATERLIT]:
+            # Numeric literal
+            self.advance()
+        elif self.current_token.type == TokenType.CHANTLIT:
+            # String literal
+            self.advance()
+        elif self.current_token.type == TokenType.VAR_INIT:
+            # Variable reference or function call
+            variable_name = self.current_token.value
+            self.advance()
+            
+            # Check if this is a function call (has parentheses after the variable)
+            if self.current_token and self.current_token.type == TokenType.LEFT_PAREN:
+                self.parse_function_call()
+        else:
+            self.error_handler("factor", {
+                TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT,
+                TokenType.LEFT_PAREN, TokenType.VAR_INIT
+            })
 
     def parse_function_call(self) -> None:
-        """<function_call> → @identifier(<arguments>)"""
+        """Parse a function call with arguments"""
         self.current_nonterminal = "function_call"
-        expected_tokens = self.get_expected_tokens("function_call")
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("function_call", expected_tokens)
-        
-        self.expect(TokenType.VAR_INIT)
+        # Opening parenthesis already matched in parse_factor
         self.expect(TokenType.LEFT_PAREN)
-        self.parse_arguments()
+        
+        # Parse arguments if any
+        if self.current_token and self.current_token.type != TokenType.RIGHT_PAREN:
+            self.parse_argument_list()
+        
+        # Match closing parenthesis
         self.expect(TokenType.RIGHT_PAREN)
+        
+        # Match semicolon if this is a standalone statement
+        if self.current_token and self.current_token.type == TokenType.SEMICOLON:
+            self.expect(TokenType.SEMICOLON)
 
-    def parse_arguments(self) -> None:
-        """<arguments> → <arg><more_args> | λ"""
-        self.current_nonterminal = "arguments"
-        expected_tokens = self.get_expected_tokens("arguments")
+    def parse_argument_list(self) -> None:
+        """Parse a comma-separated list of function arguments"""
+        self.current_nonterminal = "argument_list"
         
-        # If we have a token that could start an argument, parse it
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.parse_arg()
-            self.parse_more_args()
-        # The λ case is handled implicitly by just returning
-
-    def parse_arg(self) -> None:
-        """<arg> → <literal> | @identifier"""
-        self.current_nonterminal = "arg"
-        expected_tokens = self.get_expected_tokens("arg")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("arg", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.advance()  # Already matched VAR_INIT
-        else:
-            self.parse_literal()
-
-    def parse_more_args(self) -> None:
-        """<more_args> → , <arg><more_args> | λ"""
-        self.current_nonterminal = "more_args"
-        expected_tokens = self.get_expected_tokens("more_args")
-        
-        # If we have a comma, parse more arguments
-        if self.current_token and self.match_token_type(self.current_token, TokenType.COMMA):
-            self.advance()  # Already matched COMMA
-            self.parse_arg()
-            self.parse_more_args()
-        # The λ case is handled implicitly by just returning
-
-    def parse_inbound_statement(self) -> None:
-        """<inbound_statement> → Inbound(<chant_lit>, @identifier);"""
-        self.current_nonterminal = "inbound_statement"
-        expected_tokens = self.get_expected_tokens("inbound_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("inbound_statement", expected_tokens)
-        
-        self.expect(TokenType.INBOUND)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_chant_lit()
-        self.expect(TokenType.COMMA)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_dribble_statement(self) -> None:
-        """<dribble_statement> → Dribble (<expression>) {<loop_statements>} <add_condition>"""
-        self.current_nonterminal = "dribble_statement"
-        expected_tokens = self.get_expected_tokens("dribble_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("dribble_statement", expected_tokens)
-        
-        self.expect(TokenType.DRIBBLE)
-        self.expect(TokenType.LEFT_PAREN)
+        # Parse first argument
         self.parse_expression()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_loop_statements()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-        self.parse_add_condition()
-
-    def parse_add_condition(self) -> None:
-        """<add_condition> → Pass (<expression>) {<loop_statements>} <add_condition>
-                            | Shoot {<loop_statements>}
-                            | λ"""
-        self.current_nonterminal = "add_condition"
         
-        if not self.current_token:
-            return  # λ case
-        
-        if self.match_token_type(self.current_token, TokenType.PASS):
-            self.advance()
-            self.expect(TokenType.LEFT_PAREN)
-            self.parse_expression()
-            self.expect(TokenType.RIGHT_PAREN)
-            self.expect(TokenType.CODE_BLOCK_LEFT)
-            self.parse_loop_statements()
-            self.expect(TokenType.CODE_BLOCK_RIGHT)
-            self.parse_add_condition()
-        elif self.match_token_type(self.current_token, TokenType.SHOOT):
-            self.advance()
-            self.expect(TokenType.CODE_BLOCK_LEFT)
-            self.parse_loop_statements()
-            self.expect(TokenType.CODE_BLOCK_RIGHT)
-        # The λ case is handled implicitly by just returning
-
-    def parse_loop_statements(self) -> None:
-        """<loop_statements> → <loop_statement><loop_statements> | λ"""
-        self.current_nonterminal = "loop_statements"
-        
-        # If we've reached the end of loop block or no token, return
-        if not self.current_token or self.match_token_type(self.current_token, TokenType.CODE_BLOCK_RIGHT):
-            return  # λ case
-        
-        self.parse_loop_statement()
-        self.parse_loop_statements()  # Recursive call
-
-    def parse_loop_statement(self) -> None:
-        """<loop_statement> → <team_statements> | <resume_statement>"""
-        self.current_nonterminal = "loop_statement"
-        
-        if self.match_token_type(self.current_token, TokenType.RESUME):
-            self.parse_resume_statement()
-        else:
-            self.parse_team_statement()
-
-    def parse_resume_statement(self) -> None:
-        """<resume_statement> → Resume; | λ"""
-        self.current_nonterminal = "resume_statement"
-        
-        if self.match_token_type(self.current_token, TokenType.RESUME):
-            self.advance()
-            self.expect(TokenType.SEMICOLON) 
-            return  # λ case
-
-    def parse_switch_statement(self) -> None:
-        """<switch_statement> → Switch (@identifier) { <get_case> <get_default> }"""
-        self.current_nonterminal = "switch_statement"
-        expected_tokens = self.get_expected_tokens("switch_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("switch_statement", expected_tokens)
-        
-        self.expect(TokenType.SWITCH)
-        self.expect(TokenType.LEFT_PAREN)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_get_case()
-        self.parse_get_default()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
-    def parse_get_case(self) -> None:
-        """<get_case> → Get <get_value>: <team_statements> <timeout_statement> <get_case_end>"""
-        self.current_nonterminal = "get_case"
-        expected_tokens = self.get_expected_tokens("get_case")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("get_case", expected_tokens)
-        
-        self.expect(TokenType.GET)
-        self.parse_get_value()
-        self.expect(TokenType.COLON)
-        self.parse_team_statement()
-        self.parse_timeout_statement()
-        self.parse_get_case_end()
-
-    def parse_get_value(self) -> None:
-        """<get_value> → <feint_lit> | <chant_lit>"""
-        self.current_nonterminal = "get_value"
-        expected_tokens = self.get_expected_tokens("get_value")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("get_value", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-            self.parse_feint_lit()
-        else:
-            self.parse_chant_lit()
-
-    def parse_timeout_statement(self) -> None:
-        """<timeout_statement> → Timeout;"""
-        self.current_nonterminal = "timeout_statement"
-        
-        self.expect(TokenType.TIMEOUT)
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_get_case_end(self) -> None:
-        """<get_case_end> → λ | <get_case>"""
-        self.current_nonterminal = "get_case_end"
-        
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.GET):
-            return  # λ case
-        
-        self.parse_get_case()  # Recursive call for multiple cases
-
-    def parse_get_default(self) -> None:
-        """<get_default> → Default: <team_statements> | λ"""
-        self.current_nonterminal = "get_default"
-        expected_tokens = self.get_expected_tokens("get_default")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            return  # λ case
-        
-        self.expect(TokenType.DEFAULT)
-        self.expect(TokenType.COLON)
-        self.parse_team_statement()
-
-    def parse_forward_statement(self) -> None:
-        """<forward_statement> → Forward (@identifier = <forward_lit>; <expression>; @identifier <forward_inc_dec>) { <team_statements> }"""
-        self.current_nonterminal = "forward_statement"
-        expected_tokens = self.get_expected_tokens("forward_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("forward_statement", expected_tokens)
-        
-        self.expect(TokenType.FORWARD)
-        self.expect(TokenType.LEFT_PAREN)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.ASSIGN)
-        self.parse_forward_lit()
-        self.expect(TokenType.SEMICOLON)
-        self.parse_expression()
-        self.expect(TokenType.SEMICOLON)
-        self.expect(TokenType.VAR_INIT)
-        self.parse_forward_inc_dec()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_team_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
-    def parse_forward_lit(self) -> None:
-        """<forward_lit> → Feint literal | @identifier"""
-        self.current_nonterminal = "forward_lit"
-        expected_tokens = self.get_expected_tokens("forward_lit")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("forward_lit", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-            self.advance()
-        else:
-            self.expect(TokenType.VAR_INIT)
-
-    def parse_forward_inc_dec(self) -> None:
-        """<forward_inc_dec> → <increment> | <decrement> | <forward_assign_operator> <forward_lit>"""
-        self.current_nonterminal = "forward_inc_dec"
-        expected_tokens = self.get_expected_tokens("forward_inc_dec")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("forward_inc_dec", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.INCREMENT):
-            self.parse_increment()
-        elif self.match_token_type(self.current_token, TokenType.DECREMENT):
-            self.parse_decrement()
-        elif self.match_token_type(self.current_token, TokenType.ADD_ASSIGN) or self.match_token_type(self.current_token, TokenType.SUB_ASSIGN):
-            self.parse_forward_assign_operator()
-            self.parse_forward_lit()
-
-    def parse_increment(self) -> None:
-        """<increment> → ++"""
-        self.current_nonterminal = "increment"
-        
-        self.expect(TokenType.INCREMENT)
-
-    def parse_decrement(self) -> None:
-        """<decrement> → --"""
-        self.current_nonterminal = "decrement"
-        
-        self.expect(TokenType.DECREMENT)
-
-    def parse_forward_assign_operator(self) -> None:
-        """<forward_assign_operator> → += | -="""
-        self.current_nonterminal = "forward_assign_operator"
-        expected_tokens = self.get_expected_tokens("forward_assign_operator")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("forward_assign_operator", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.ADD_ASSIGN):
-            self.expect(TokenType.ADD_ASSIGN)
-        else:
-            self.expect(TokenType.SUB_ASSIGN)
-
-    def parse_play_statement(self) -> None:
-        """<play_statement> → Play (<expression>){<team_statements>}"""
-        self.current_nonterminal = "play_statement"
-        expected_tokens = self.get_expected_tokens("play_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("play_statement", expected_tokens)
-        
-        self.expect(TokenType.PLAY)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_expression()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_team_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
-    def parse_run_play_statement(self) -> None:
-        """<run_play_statement> → Run{<team_statements>} Play (<expression>);"""
-        self.current_nonterminal = "run_play_statement"
-        expected_tokens = self.get_expected_tokens("run_play_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("run_play_statement", expected_tokens)
-        
-        self.expect(TokenType.RUN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_team_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-        self.expect(TokenType.PLAY)
-        self.expect(TokenType.LEFT_PAREN)
-        self.parse_expression()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.SEMICOLON)
-
-    def parse_team_block(self) -> None:
-        """<team_block> → Team() { <local_decl> <team_statement> }"""
-        self.current_nonterminal = "team_block"
-        expected_tokens = self.get_expected_tokens("team_block")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("team_block", expected_tokens)
-        
-        self.expect(TokenType.TEAM)
-        self.expect(TokenType.LEFT_PAREN)
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
-        # Check if current token is in FIRST(local_decl)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("local_decl")):
-            self.parse_local_decl()
-        
-        # Check if current token is in FIRST(team_statement)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("team_statement")):
-            self.parse_team_statement()
-
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
-
-    def parse_local_decl(self) -> None:
-        """<local_decl> → <local_declaration><local_decl> | λ"""
-        self.current_nonterminal = "local_decl"
-        expected_tokens = self.get_expected_tokens("local_decl")
-        
-        # If we have a token that's in FIRST(local_declaration)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.parse_local_declaration()
-            self.parse_local_decl()  # Recursive call
-        # The λ case is handled implicitly by just returning
-
-    def parse_local_declaration(self) -> None:
-        """<local_declaration> → <variable_dec> | <array_dec>"""
-        self.current_nonterminal = "local_declaration"
-        expected_tokens = self.get_expected_tokens("local_declaration")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("local_declaration", expected_tokens)
-
-        if self.match_token_type(self.current_token, TokenType.ZONE):
-            self.parse_array_dec()
-        else:
-            self.parse_variable_dec()
-
-    def parse_typecast_value(self) -> None:
-        """<typecast_value> → <feint_lit> | <floater_lit> | <chant_lit> | <stat_value> | @identifier"""
-        self.current_nonterminal = "typecast_value"
-        expected_tokens = self.get_expected_tokens("typecast_value")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("typecast_value", expected_tokens)
-        
-        # Determine which type of typecast value we're dealing with
-        if self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.expect(TokenType.VAR_INIT)
-        elif self.match_token_type(self.current_token, TokenType.FLOATERLIT) and any(self.match_token_type(self.peek(), t) for t in [TokenType.FEINT]):
-            self.parse_feint_typecast_value()
-        elif self.match_token_type(self.current_token, TokenType.FEINTLIT) and any(self.match_token_type(self.peek(), t) for t in [TokenType.FLOATER]):
-            self.parse_floater_typecast_value()
-        elif any(self.match_token_type(self.current_token, t) for t in [TokenType.FEINTLIT, TokenType.FLOATERLIT]) and any(self.match_token_type(self.peek(), t) for t in [TokenType.CHANT]):
-            self.parse_chant_typecast_value()
-        elif any(self.match_token_type(self.current_token, t) for t in [TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT]) and any(self.match_token_type(self.peek(), t) for t in [TokenType.STAT]):
-            self.parse_stat_typecast_value()
-        else:
-            # Default case - handle based on token type
-            if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-                self.parse_feint_lit()
-            elif self.match_token_type(self.current_token, TokenType.FLOATERLIT):
-                self.parse_floater_lit()
-            elif self.match_token_type(self.current_token, TokenType.CHANTLIT):
-                self.parse_chant_lit()
-            elif self.match_token_type(self.current_token, TokenType.WIN) or self.match_token_type(self.current_token, TokenType.LOSS):
-                self.parse_stat_value()
-
-    def parse_feint_typecast_value(self) -> None:
-        """<feint_typecast_value> → <floater_lit> | <chant_lit> | <stat_value>"""
-        self.current_nonterminal = "feint_typecast_value"
-        expected_tokens = self.get_expected_tokens("feint_typecast_value")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("feint_typecast_value", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FLOATERLIT):
-            self.parse_floater_lit()
-        elif self.match_token_type(self.current_token, TokenType.CHANTLIT):
-            self.parse_chant_lit()
-        elif self.match_token_type(self.current_token, TokenType.WIN) or self.match_token_type(self.current_token, TokenType.LOSS):
-            self.parse_stat_value()
-
-    def parse_floater_typecast_value(self) -> None:
-        """<floater_typecast_value> → <feint_lit> | <chant_lit> | <stat_value>"""
-        self.current_nonterminal = "floater_typecast_value"
-        expected_tokens = self.get_expected_tokens("floater_typecast_value")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("floater_typecast_value", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-            self.parse_feint_lit()
-        elif self.match_token_type(self.current_token, TokenType.CHANTLIT):
-            self.parse_chant_lit()
-        elif self.match_token_type(self.current_token, TokenType.WIN) or self.match_token_type(self.current_token, TokenType.LOSS):
-            self.parse_stat_value()
-
-    def parse_chant_typecast_value(self) -> None:
-        """<chant_typecast_value> → <feint_lit> | <floater_lit> | <stat_value>"""
-        self.current_nonterminal = "chant_typecast_value"
-        expected_tokens = self.get_expected_tokens("chant_typecast_value")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("chant_typecast_value", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-            self.parse_feint_lit()
-        elif self.match_token_type(self.current_token, TokenType.FLOATERLIT):
-            self.parse_floater_lit()
-        elif self.match_token_type(self.current_token, TokenType.WIN) or self.match_token_type(self.current_token, TokenType.LOSS):
-            self.parse_stat_value()
-
-    def parse_stat_typecast_value(self) -> None:
-        """<stat_typecast_value> → <feint_lit> | <floater_lit> | <chant_lit>"""
-        self.current_nonterminal = "stat_typecast_value"
-        expected_tokens = self.get_expected_tokens("stat_typecast_value")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("stat_typecast_value", expected_tokens)
-        
-        if self.match_token_type(self.current_token, TokenType.FEINTLIT):
-            self.parse_feint_lit()
-        elif self.match_token_type(self.current_token, TokenType.FLOATERLIT):
-            self.parse_floater_lit()
-        elif self.match_token_type(self.current_token, TokenType.CHANTLIT):
-            self.parse_chant_lit()
+        # Parse additional arguments if any
+        while self.current_token and self.current_token.type == TokenType.COMMA:
+            self.advance()  # Skip comma
+            self.parse_expression()  # Parse next argument
 
 def parse(tokens: List[Token]) -> bool:
     """
@@ -2088,8 +627,7 @@ def parse(tokens: List[Token]) -> bool:
     """
     try:
         parser = Parser(tokens)
-        parser.parse_program()
-        # print("\033[92mSyntax Analysis Complete: No syntax errors found!\033[0m")
+        parser.parse()
         return True
     except SyntaxError as e:
         # Instead of printing to console, re-raise the error so it can be caught by the editor
