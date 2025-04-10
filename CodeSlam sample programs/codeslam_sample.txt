@@ -1,0 +1,157 @@
+# CodeSlam Sample Program
+# This program demonstrates the major features of the CodeSlam language
+
+# Variable declarations
+Feint @score = 84;
+Floater @percentageAccuracy = 76.5;
+Chant @playerName = "LeBron James";
+Stat @isAllStar = Win;
+
+# Constant declarations
+Const Feint @maxPoints = 100;
+Const Chant @teamName = "Lakers";
+
+# 1D Array declarations
+Zone Feint @points[5] = {24, 32, 18, 27, 41};
+Zone Chant @teamMembers[3] = {"Davis", "James", "Reaves"};
+
+# 2D Array declarations
+Zone Feint @seasonStats[2][3] = {
+    {21, 7, 11},
+    {28, 9, 14}
+};
+
+# Basic input and output
+Announce("Welcome to CodeSlam Basketball Analytics!");
+Announce("Enter player name:");
+Inbound("Enter name: ", @playerName);
+
+# Simple expressions
+Feint @totalScore = @points[0] + @points[1] + @points[2];
+Floater @average = @totalScore / 3.0;
+
+# Array manipulation
+@points[2] = 22;
+@seasonStats[1][0] = @seasonStats[1][0] + 5;
+
+# Conditional statements (if-else)
+Dribble (@score > 80) {
+    Announce("High Score: " & @score);
+} Pass (@score > 60) {
+    Announce("Average Score: " & @score);
+} Shoot {
+    Announce("Low Score: " & @score);
+}
+
+# Switch statement
+Switch (@totalScore) {
+    Get 60:
+        Announce("Score is exactly 60");
+        Timeout;
+    Get 70:
+        Announce("Score is exactly 70");
+        Timeout;
+    Default:
+        Announce("Score is: " & @totalScore);
+}
+
+# Loops - For loop
+Announce("Points per game:");
+Forward (@i = 0; @i < 5; @i++) {
+    Announce("Game " & (@i + 1) & ": " & @points[@i]);
+}
+
+# While loop
+Feint @counter = 0;
+Announce("While loop demonstration:");
+Play (@counter < 3) {
+    Announce("Counter: " & @counter);
+    @counter += 1;
+}
+
+# Do-while loop
+@counter = 0;
+Announce("Do-while loop demonstration:");
+Run {
+    Announce("Run counter: " & @counter);
+    @counter += 1;
+} Play (@counter < 3);
+
+# Break and continue
+Announce("Break and continue demonstration:");
+Forward (@i = 0; @i < 10; @i++) {
+    Dribble (@i == 3) {
+        Resume;  # Skip iteration where i=3
+    }
+    Dribble (@i == 7) {
+        Timeout;  # Exit loop when i=7
+    }
+    Announce("Iteration: " & @i);
+}
+
+# Function definition
+# Function with return value
+Wilt Feint @calculateTotalPoints(Floater @points1, Feint @points2) {
+    Feint @total = Feint(@points1) + @points2; #Type casting to Feint
+    Rebound(@total);
+}
+
+# Void function
+Wilt Dunk @displayPlayerInfo(Chant @name, Feint @age, Floater @height) {
+    Announce("Player: " & @name);
+    Announce("Age: " & @age);
+    Announce("Height: " & @height);
+}
+
+# Boolean function
+Wilt Stat @isEligible(Feint @age, Feint @experience) {
+    Dribble (@age >= 18 AND @experience >= 2) {
+        Rebound(Win);
+    } Shoot {
+        Rebound(Loss);
+    }
+}
+
+# String manipulation function
+Wilt Chant @formatName(Chant @firstName, Chant @lastName) {
+    Rebound(@lastName & ", " & @firstName);
+}
+
+# Main function
+Team() {
+    # Function calls
+    Feint @totalPoints = @calculateTotalPoints(42, 28);
+    Announce("Total points: " & @totalPoints);
+    
+    @displayPlayerInfo("Anthony Davis", 30, 6.10);
+    
+    Stat @eligible = @isEligible(22, 3);
+    Dribble (@eligible) {
+        Announce("Player is eligible");
+    }
+    
+    Chant @formattedName = @formatName("Stephen", "Curry");
+    Announce("Formatted name: " & @formattedName);
+    
+    # Nested control structures
+    Forward (@i = 0; @i < 3; @i+=1) {
+        Dribble (@i == 1) {
+            Forward (@j = 0; @j < 2; @j++) {
+                Announce("Nested loop: i=" & @i & ", j=" & @j);
+            }
+        } Shoot {
+            Announce("Outer loop: i=" & @i);
+        }
+    }
+    
+    # Complex expressions
+    Feint @complexCalc = ((@totalPoints * 2) / 5) + (100 - 20) % 7;
+    Announce("Complex calculation result: " & @complexCalc);
+    
+    # Type conversion
+    Floater @floatScore = @score;  # Implicit conversion
+    Chant @scoreText = @score;     # Convert to string
+    
+    # Final message
+    Announce("End of CodeSlam sample program");
+} 

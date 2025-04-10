@@ -655,7 +655,7 @@ class App(customtkinter.CTk):
                 fg_color="#2B2B2B"  # Dark background when disabled
             )
         else:
-            self.append_terminal_output("No Lexical Errors", text_color="green")
+            self.append_terminal_output("No Lexical Error/s", text_color="green")
             # Enable syntax button only when there are no lexical errors
             self.sideBtnSyntax.configure(
                 state="normal",
@@ -730,7 +730,7 @@ class App(customtkinter.CTk):
         try:
             result = parse(tokens)
             if result:
-                self.append_terminal_output("No syntax error/s", text_color="green")
+                self.append_terminal_output("No Syntax Error/s", text_color="green")
                 self.sideBtnSemantic.configure(
                     state="normal",
                     fg_color="#1f538d"

@@ -1,0 +1,321 @@
+// Sorting Algorithms in CodeSlam
+// This program demonstrates implementation of various sorting algorithms
+
+// Global constants
+Const Feint @MAX_SIZE = 100;
+Const Feint @ARRAY_SIZE = 20;
+
+// Random seed value
+Feint @randomSeed = 42;
+
+// Function to generate a pseudo-random number
+Wilt Feint @random() {
+    @randomSeed = (@randomSeed * 1103515245 + 12345) % 2147483648;
+    Rebound(@randomSeed % 100);  // Return a value between 0 and 99
+}
+
+// Function to fill array with random numbers
+Wilt Dunk @fillRandomArray(Feint @arr[], Feint @size) {
+    Forward (@i = 0; @i < @size; @i++) {
+        @arr[@i] = @random();
+    }
+}
+
+// Function to print array elements
+Wilt Dunk @printArray(Feint @arr[], Feint @size) {
+    Chant @output = "[";
+    
+    Forward (@i = 0; @i < @size; @i++) {
+        @output = @output + @arr[@i];
+        
+        // Add comma unless it's the last element
+        Dribble (@i < @size - 1) {
+            @output = @output + ", ";
+        }
+    }
+    
+    @output = @output + "]";
+    Announce @output;
+}
+
+// Function to swap two elements in array
+Wilt Dunk @swap(Feint @arr[], Feint @i, Feint @j) {
+    Feint @temp = @arr[@i];
+    @arr[@i] = @arr[@j];
+    @arr[@j] = @temp;
+}
+
+// Implementation of Bubble Sort
+Wilt Dunk @bubbleSort(Feint @arr[], Feint @size) {
+    Feint @swapped = 0;
+    
+    Forward (@i = 0; @i < @size - 1; @i++) {
+        @swapped = 0;
+        
+        Forward (@j = 0; @j < @size - @i - 1; @j++) {
+            Dribble (@arr[@j] > @arr[@j + 1]) {
+                @swap(@arr, @j, @j + 1);
+                @swapped = 1;
+            }
+        }
+        
+        // If no swapping occurred in this pass, array is sorted
+        Dribble (@swapped == 0) {
+            Timeout;
+        }
+    }
+}
+
+// Implementation of Selection Sort
+Wilt Dunk @selectionSort(Feint @arr[], Feint @size) {
+    Forward (@i = 0; @i < @size - 1; @i++) {
+        Feint @minIndex = @i;
+        
+        // Find minimum element in unsorted portion
+        Forward (@j = @i + 1; @j < @size; @j++) {
+            Dribble (@arr[@j] < @arr[@minIndex]) {
+                @minIndex = @j;
+            }
+        }
+        
+        // Swap minimum element with the first element of unsorted part
+        Dribble (@minIndex != @i) {
+            @swap(@arr, @i, @minIndex);
+        }
+    }
+}
+
+// Implementation of Insertion Sort
+Wilt Dunk @insertionSort(Feint @arr[], Feint @size) {
+    Forward (@i = 1; @i < @size; @i++) {
+        Feint @key = @arr[@i];
+        Feint @j = @i - 1;
+        
+        // Move elements greater than key to one position ahead
+        Play (@j >= 0 && @arr[@j] > @key) {
+            @arr[@j + 1] = @arr[@j];
+            @j = @j - 1;
+        }
+        
+        @arr[@j + 1] = @key;
+    }
+}
+
+// Implementation of Quicksort - Partition function
+Wilt Feint @partition(Feint @arr[], Feint @low, Feint @high) {
+    Feint @pivot = @arr[@high]; // Use last element as pivot
+    Feint @i = @low - 1;        // Index of smaller element
+    
+    Forward (@j = @low; @j < @high; @j++) {
+        // If current element is smaller than pivot
+        Dribble (@arr[@j] <= @pivot) {
+            @i = @i + 1;
+            @swap(@arr, @i, @j);
+        }
+    }
+    
+    @swap(@arr, @i + 1, @high);
+    Rebound(@i + 1);
+}
+
+// Implementation of Quicksort - Main function
+Wilt Dunk @quickSort(Feint @arr[], Feint @low, Feint @high) {
+    Dribble (@low < @high) {
+        // Find partition index
+        Feint @pi = @partition(@arr, @low, @high);
+        
+        // Recursively sort elements before and after partition
+        @quickSort(@arr, @low, @pi - 1);
+        @quickSort(@arr, @pi + 1, @high);
+    }
+}
+
+// Implementation of Merge Sort - Merge function
+Wilt Dunk @merge(Feint @arr[], Feint @left, Feint @mid, Feint @right) {
+    Feint @n1 = @mid - @left + 1;  // Size of left subarray
+    Feint @n2 = @right - @mid;      // Size of right subarray
+    
+    // Create temporary arrays
+    Feint @leftArr[50];
+    Feint @rightArr[50];
+    
+    // Copy data to temporary arrays
+    Forward (@i = 0; @i < @n1; @i++) {
+        @leftArr[@i] = @arr[@left + @i];
+    }
+    
+    Forward (@j = 0; @j < @n2; @j++) {
+        @rightArr[@j] = @arr[@mid + 1 + @j];
+    }
+    
+    // Merge the temporary arrays back
+    Feint @i = 0;      // Initial index of left subarray
+    Feint @j = 0;      // Initial index of right subarray
+    Feint @k = @left;  // Initial index of merged subarray
+    
+    Play (@i < @n1 && @j < @n2) {
+        // Pick smaller element from temporary arrays
+        Dribble (@leftArr[@i] <= @rightArr[@j]) {
+            @arr[@k] = @leftArr[@i];
+            @i += 1;
+        } Shoot {
+            @arr[@k] = @rightArr[@j];
+            @j += 1;
+        }
+        @k += 1;
+    }
+    
+    // Copy remaining elements of leftArr[]
+    Play (@i < @n1) {
+        @arr[@k] = @leftArr[@i];
+        @i += 1;
+        @k += 1;
+    }
+    
+    // Copy remaining elements of rightArr[]
+    Play (@j < @n2) {
+        @arr[@k] = @rightArr[@j];
+        @j += 1;
+        @k += 1;
+    }
+}
+
+// Implementation of Merge Sort - Main function
+Wilt Dunk @mergeSort(Feint @arr[], Feint @left, Feint @right) {
+    Dribble (@left < @right) {
+        // Same as (@left + @right)/2, but avoids overflow
+        Feint @mid = @left + (@right - @left) / 2;
+        
+        // Sort first and second halves
+        @mergeSort(@arr, @left, @mid);
+        @mergeSort(@arr, @mid + 1, @right);
+        
+        // Merge the sorted halves
+        @merge(@arr, @left, @mid, @right);
+    }
+}
+
+// Function to check if array is sorted
+Wilt Stat @isSorted(Feint @arr[], Feint @size) {
+    Forward (@i = 0; @i < @size - 1; @i++) {
+        Dribble (@arr[@i] > @arr[@i + 1]) {
+            Rebound(Loss);  // Not sorted
+        }
+    }
+    Rebound(Win);  // Sorted
+}
+
+// Function to measure and compare sorting algorithms
+Wilt Dunk @compareAlgorithms() {
+    // Create arrays for testing
+    Feint @array1[@ARRAY_SIZE];
+    Feint @array2[@ARRAY_SIZE];
+    Feint @array3[@ARRAY_SIZE];
+    Feint @array4[@ARRAY_SIZE];
+    
+    // Initialize with same random data
+    @fillRandomArray(@array1, @ARRAY_SIZE);
+    
+    // Copy to other arrays for fair comparison
+    Forward (@i = 0; @i < @ARRAY_SIZE; @i++) {
+        @array2[@i] = @array1[@i];
+        @array3[@i] = @array1[@i];
+        @array4[@i] = @array1[@i];
+    }
+    
+    // Display the original unsorted array
+    Announce "Original unsorted array:";
+    @printArray(@array1, @ARRAY_SIZE);
+    
+    // Bubble Sort
+    Announce "\nSorting using Bubble Sort:";
+    @bubbleSort(@array1, @ARRAY_SIZE);
+    @printArray(@array1, @ARRAY_SIZE);
+    
+    // Selection Sort
+    Announce "\nSorting using Selection Sort:";
+    @selectionSort(@array2, @ARRAY_SIZE);
+    @printArray(@array2, @ARRAY_SIZE);
+    
+    // Insertion Sort
+    Announce "\nSorting using Insertion Sort:";
+    @insertionSort(@array3, @ARRAY_SIZE);
+    @printArray(@array3, @ARRAY_SIZE);
+    
+    // Merge Sort
+    Announce "\nSorting using Merge Sort:";
+    @mergeSort(@array4, 0, @ARRAY_SIZE - 1);
+    @printArray(@array4, @ARRAY_SIZE);
+    
+    // Verify that all arrays are properly sorted
+    Announce "\nVerifying results:";
+    Stat @bubble = @isSorted(@array1, @ARRAY_SIZE);
+    Stat @selection = @isSorted(@array2, @ARRAY_SIZE);
+    Stat @insertion = @isSorted(@array3, @ARRAY_SIZE);
+    Stat @merge = @isSorted(@array4, @ARRAY_SIZE);
+    
+    Announce "Bubble Sort:    " + (@bubble ? "Sorted correctly" : "Failed");
+    Announce "Selection Sort: " + (@selection ? "Sorted correctly" : "Failed");
+    Announce "Insertion Sort: " + (@insertion ? "Sorted correctly" : "Failed");
+    Announce "Merge Sort:     " + (@merge ? "Sorted correctly" : "Failed");
+}
+
+// Main program
+Team {
+    Announce "Sorting Algorithms in CodeSlam";
+    Announce "===========================";
+    
+    // Compare different sorting algorithms
+    @compareAlgorithms();
+    
+    // Demonstrate Quicksort separately with different data
+    Announce "\nDemonstrating Quicksort with different data:";
+    
+    Feint @quickSortArray[@ARRAY_SIZE];
+    @randomSeed = 123;  // Different seed for new data
+    @fillRandomArray(@quickSortArray, @ARRAY_SIZE);
+    
+    Announce "Before Quicksort:";
+    @printArray(@quickSortArray, @ARRAY_SIZE);
+    
+    @quickSort(@quickSortArray, 0, @ARRAY_SIZE - 1);
+    
+    Announce "After Quicksort:";
+    @printArray(@quickSortArray, @ARRAY_SIZE);
+    
+    Stat @isSortedResult = @isSorted(@quickSortArray, @ARRAY_SIZE);
+    Announce "Quicksort result is " + (@isSortedResult ? "sorted correctly" : "incorrect");
+    
+    // Additional demonstration with smaller data for visualization
+    Announce "\nVisualizing Bubble Sort steps with a small array:";
+    Feint @smallArray[8] = {64, 34, 25, 12, 22, 11, 90, 5};
+    
+    Announce "Original array:";
+    @printArray(@smallArray, 8);
+    
+    // Perform bubble sort with visualization
+    Feint @swapped = 0;
+    
+    Forward (@i = 0; @i < 8 - 1; @i++) {
+        @swapped = 0;
+        Announce "\nPass " + (@i + 1) + ":";
+        
+        Forward (@j = 0; @j < 8 - @i - 1; @j++) {
+            Dribble (@smallArray[@j] > @smallArray[@j + 1]) {
+                Announce "  Swapping " + @smallArray[@j] + " and " + @smallArray[@j + 1];
+                @swap(@smallArray, @j, @j + 1);
+                @swapped = 1;
+            }
+            @printArray(@smallArray, 8);
+        }
+        
+        // If no swapping occurred in this pass, array is sorted
+        Dribble (@swapped == 0) {
+            Announce "Array is sorted, no more swaps needed.";
+            Timeout;
+        }
+    }
+    
+    Announce "\nFinal sorted array:";
+    @printArray(@smallArray, 8);
+} 

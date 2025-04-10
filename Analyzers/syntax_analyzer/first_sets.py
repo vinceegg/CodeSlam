@@ -347,7 +347,7 @@ from Analyzers.lexical_analyzer.tokens import TokenType
 FIRST_SETS = {
     # <program>
     'program': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
-               TokenType.CONST},
+                   TokenType.CONST, TokenType.ZONE,TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
     # <global_decl>
     'global_decl': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
                    TokenType.CONST, TokenType.ZONE},
@@ -355,50 +355,49 @@ FIRST_SETS = {
     'global_declaration': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
                           TokenType.CONST, TokenType.ZONE},
     # <variable_dec>
-    'variable_dec': {TokenType.FEINT, TokenType.CONST, TokenType.FLOATER, TokenType.CHANT, 
-                    TokenType.STAT},
+    'variable_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     # <feint_dec>
-    'feint_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'feint_dec': {TokenType.FEINT},
     # <more_feint>
-    'more_feint': {TokenType.ASSIGN},
+    'more_feint': {TokenType.ASSIGN, TokenType.SEMICOLON},
     # <feint_init>
-    'feint_init': {TokenType.ASSIGN},
+    'feint_init': {TokenType.ASSIGN, TokenType.SEMICOLON},
     # <feint_lit>
     'feint_lit': {TokenType.FEINTLIT},
     # <feint_init_end>
-    'feint_init_end': {TokenType.COMMA},
+    'feint_init_end': {TokenType.COMMA, TokenType.SEMICOLON},
     # <floater_dec>
     'floater_dec': {TokenType.FLOATER},
     # <more_floater>
-    'more_floater': {TokenType.ASSIGN},
+    'more_floater': {TokenType.ASSIGN, TokenType.SEMICOLON},
     # <floater_init>
-    'floater_init': {TokenType.ASSIGN},
+    'floater_init': {TokenType.ASSIGN, TokenType.SEMICOLON},
+    # <floater_init_end>
+    'floater_init_end': {TokenType.COMMA, TokenType.SEMICOLON},
     # <floater_lit>
     'floater_lit': {TokenType.FLOATERLIT},
-    # <floater_init_end>
-    'floater_init_end': {TokenType.COMMA},
     # <chant_dec>
     'chant_dec': {TokenType.CHANT},
     # <more_chant>
-    'more_chant': {TokenType.ASSIGN},
+    'more_chant': {TokenType.ASSIGN, TokenType.SEMICOLON},
     # <chant_init>
-    'chant_init': {TokenType.ASSIGN},
+    'chant_init': {TokenType.ASSIGN, TokenType.SEMICOLON},
+    # <chant_init_end>
+    'chant_init_end': {TokenType.COMMA, TokenType.SEMICOLON},
     # <chant_lit>
     'chant_lit': {TokenType.CHANTLIT},
-    # <chant_init_end>
-    'chant_init_end': {TokenType.COMMA},
     # <stat_dec>
     'stat_dec': {TokenType.STAT},
     # <more_stat>
-    'more_stat': {TokenType.ASSIGN},
+    'more_stat': {TokenType.ASSIGN, TokenType.SEMICOLON},
     # <stat_init>
-    'stat_init': {TokenType.ASSIGN},
+    'stat_init': {TokenType.ASSIGN, TokenType.SEMICOLON},
     # <stat_value>
     'stat_value': {TokenType.WIN, TokenType.LOSS},
     # <stat_init_end>
-    'stat_init_end': {TokenType.COMMA},
+    'stat_init_end': {TokenType.COMMA, TokenType.SEMICOLON},
     # <const_dec>
-    'const_dec': {TokenType.CONST},
+    'const_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     # <const_feint>
     'const_feint': {TokenType.FEINT},
     # <feint_const_init>
@@ -406,7 +405,7 @@ FIRST_SETS = {
     # <feint_const>
     'feint_const': {TokenType.ASSIGN},
     # <feint_const_end>
-    'feint_const_end': {TokenType.COMMA},
+    'feint_const_end': {TokenType.COMMA, TokenType.SEMICOLON},
     # <const_floater>
     'const_floater': {TokenType.FLOATER},
     # <floater_const_init>
@@ -414,7 +413,7 @@ FIRST_SETS = {
     # <floater_const>
     'floater_const': {TokenType.ASSIGN},
     # <floater_const_end>
-    'floater_const_end': {TokenType.COMMA},
+    'floater_const_end': {TokenType.COMMA, TokenType.SEMICOLON},
     # <const_chant>
     'const_chant': {TokenType.CHANT},
     # <chant_const_init>
@@ -422,7 +421,7 @@ FIRST_SETS = {
     # <chant_const>
     'chant_const': {TokenType.ASSIGN},
     # <chant_const_end>
-    'chant_const_end': {TokenType.COMMA},
+    'chant_const_end': {TokenType.COMMA, TokenType.SEMICOLON},
     # <const_stat>
     'const_stat': {TokenType.STAT},
     # <stat_const_init>
@@ -430,7 +429,7 @@ FIRST_SETS = {
     # <stat_const>
     'stat_const': {TokenType.ASSIGN},
     # <stat_const_end>
-    'stat_const_end': {TokenType.COMMA},
+    'stat_const_end': {TokenType.COMMA, TokenType.SEMICOLON},
     # <array_dec>
     'array_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT},
     # <feint_array>
@@ -501,68 +500,62 @@ FIRST_SETS = {
                  TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.TIMEOUT, 
                  TokenType.RESUME, TokenType.VAR_INIT},
     # <follow_statement>
-    'follow_statement': {TokenType.AND_OP, TokenType.OR_OP, TokenType.DECREMENT, TokenType.VAR_INIT, 
-                        TokenType.ASSIGN, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN, 
-                        TokenType.MUL_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN, 
-                        TokenType.ARRAY_INDEX_LEFT, TokenType.FEINT, TokenType.FLOATER, 
-                        TokenType.CHANT, TokenType.STAT, TokenType.ANNOUNCE, TokenType.INBOUND, 
-                        TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, 
-                        TokenType.RUN, TokenType.TIMEOUT, TokenType.RESUME},
+    'follow_statement': {TokenType.INCREMENT, TokenType.DECREMENT, TokenType.LEFT_PAREN,
+                       TokenType.ASSIGN, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN,
+                       TokenType.MUL_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN,
+                       TokenType.ARRAY_INDEX_LEFT},
     # <array_manipulation>
     'array_manipulation': {TokenType.ARRAY_INDEX_LEFT},
     # <element_index>
-    'element_index': {TokenType.FEINTLIT},
+    'element_index': {TokenType.FEINTLIT, TokenType.VAR_INIT},
     # <2d_manipulation>
     '2d_manipulation': {TokenType.ARRAY_INDEX_LEFT},
     # <array_man>
     'array_man': {TokenType.ASSIGN},
     # <array_elem>
-    'array_elem': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT},
+    'array_elem': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT, 
+                 TokenType.VAR_INIT, TokenType.LEFT_PAREN},
     # <rebound_statement>
     'rebound_statement': {TokenType.REBOUND},
     # <rebound_value>
-    'rebound_value': {TokenType.LEFT_PAREN, TokenType.VAR_INIT, TokenType.FEINTLIT, 
-                     TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER, 
-                     TokenType.CHANTLIT, TokenType.FEINT, TokenType.FLOATER, TokenType.WIN, 
-                     TokenType.LOSS, TokenType.CHANT, TokenType.STAT, TokenType.NOT_OP},
+    'rebound_value': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT,
+                    TokenType.VAR_INIT, TokenType.WIN, TokenType.LOSS, 
+                    TokenType.LEFT_PAREN, TokenType.NEGAFEINT, TokenType.NEGAFLOATER, 
+                    TokenType.NOT_OP, TokenType.LEFT_PAREN},
     # <announce_statement>
     'announce_statement': {TokenType.ANNOUNCE},
     # <outputs>
     'outputs': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
                TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, 
-               TokenType.VAR_INIT, TokenType.LEFT_PAREN, TokenType.FEINT, TokenType.FLOATER, 
-               TokenType.WIN, TokenType.LOSS, TokenType.CHANT, TokenType.STAT, TokenType.NOT_OP},
+               TokenType.VAR_INIT, TokenType.LEFT_PAREN,
+               TokenType.WIN, TokenType.LOSS, TokenType.NOT_OP},
     # <output>
-    'output': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
-              TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, 
-              TokenType.VAR_INIT, TokenType.LEFT_PAREN, TokenType.FEINT, TokenType.FLOATER, 
-              TokenType.WIN, TokenType.LOSS, TokenType.CHANT, TokenType.STAT, TokenType.NOT_OP},
-    # <array_access>
-    'array_access': {TokenType.VAR_INIT},
+    'output': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT, TokenType.NEGAFEINT, 
+              TokenType.NEGAFLOATER,TokenType.NOT_OP, TokenType.VAR_INIT, TokenType.WIN, TokenType.LOSS, TokenType.LEFT_PAREN},
     # <other_outputs>
     'other_outputs': {TokenType.CHANT_CONCAT},
     # <literal>
     'literal': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
-               TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
+              TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
     # <nega_feint_lit>
     'nega_feint_lit': {TokenType.NEGAFEINT},
     # <nega_floater_lit>
     'nega_floater_lit': {TokenType.NEGAFLOATER},
     # <expression>
-    'expression': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, TokenType.LEFT_PAREN, 
-                  TokenType.FEINT, TokenType.FLOATER, TokenType.WIN, TokenType.LOSS, 
-                  TokenType.CHANTLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER, 
-                  TokenType.CHANT, TokenType.STAT, TokenType.NOT_OP},
+    'expression': {TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT,
+                 TokenType.VAR_INIT, TokenType.NOT_OP, TokenType.NEGAFEINT, 
+                 TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS,
+                 TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     # <arithmetic_expression>
     'arithmetic_expression': {TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT, 
-                             TokenType.VAR_INIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER},
+                            TokenType.VAR_INIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
+                            TokenType.FEINT, TokenType.FLOATER},
     # <arith_term>
     'arith_term': {TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT, 
-                  TokenType.CHANTLIT, TokenType.VAR_INIT, TokenType.NEGAFEINT, 
-                  TokenType.NEGAFLOATER},
+                 TokenType.VAR_INIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER},
     # <number>
-    'number': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT, TokenType.VAR_INIT, 
-              TokenType.NEGAFEINT, TokenType.NEGAFLOATER},
+    'number': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
+             TokenType.NEGAFEINT, TokenType.NEGAFLOATER},
     # <number_type_cast>
     'number_type_cast': {TokenType.FEINT, TokenType.FLOATER},
     # <feint_type_casting>
@@ -576,26 +569,27 @@ FIRST_SETS = {
     # <more_arith_term>
     'more_arith_term': {TokenType.ADD, TokenType.SUB, TokenType.MUL, TokenType.DIV, TokenType.MOD},
     # <relational_expression>
-    'relational_expression': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT, 
-                             TokenType.VAR_INIT, TokenType.WIN, TokenType.LOSS, TokenType.FEINT, 
-                             TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'relational_expression': {TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT, 
+                            TokenType.VAR_INIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER, 
+                            TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
+                            TokenType.WIN, TokenType.LOSS, TokenType.CHANTLIT},
     # <number_rel_operand>
-    'number_rel_operand': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT, 
-                          TokenType.VAR_INIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER, 
-                          TokenType.FEINT, TokenType.FLOATER},
+    'number_rel_operand': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT,
+                         TokenType.NEGAFEINT, TokenType.NEGAFLOATER, TokenType.FEINT, 
+                         TokenType.FLOATER, TokenType.LEFT_PAREN},
     # <relational_operator>
-    'relational_operator': {TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
-                           TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'relational_operator': {TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
+                          TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     # <other_relational_operator>
     'other_relational_operator': {TokenType.EQUAL, TokenType.NOT_EQUAL},
+    # <stat_rel_operand>
+    'stat_rel_operand': {TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, TokenType.STAT},
     # <chant_rel_operand>
-    'chant_rel_operand': {TokenType.VAR_INIT, TokenType.CHANT, TokenType.CHANTLIT},
-    # <chant_rel_operand>
-    'chant_rel_operand': {TokenType.VAR_INIT, TokenType.CHANT, TokenType.CHANTLIT},
+    'chant_rel_operand': {TokenType.CHANTLIT, TokenType.VAR_INIT, TokenType.CHANT},
     # <logical_expression>
-    'logical_expression': {TokenType.NOT_OP, TokenType.LEFT_PAREN, TokenType.WIN, TokenType.LOSS, 
-                          TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
-                          TokenType.NEGAFLOATER, TokenType.NEGAFEINT},
+    'logical_expression': {TokenType.NOT_OP, TokenType.LEFT_PAREN, TokenType.FEINTLIT,
+                         TokenType.FLOATERLIT, TokenType.VAR_INIT, TokenType.NEGAFEINT,
+                         TokenType.NEGAFLOATER, TokenType.WIN, TokenType.LOSS},
     # <not_expr>
     'not_expr': {TokenType.NOT_OP},
     # <compound_log_expr>
@@ -607,27 +601,33 @@ FIRST_SETS = {
                 TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.VAR_INIT, 
                 TokenType.NEGAFLOATER, TokenType.NEGAFEINT},
     # <other_log_term>
-    'other_log_term': {TokenType.LEFT_PAREN, TokenType.WIN, TokenType.LOSS, TokenType.FEINTLIT, 
-                      TokenType.FLOATERLIT, TokenType.VAR_INIT, TokenType.NEGAFLOATER, 
-                      TokenType.NEGAFEINT},
-    # <more_log_term>
-    'more_log_term': {TokenType.AND_OP, TokenType.OR_OP},
+    'other_log_term': {TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT,
+                     TokenType.VAR_INIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
+                     TokenType.WIN, TokenType.LOSS},
     # <log_operator>
     'log_operator': {TokenType.AND_OP, TokenType.OR_OP},
+    # <more_log_term>
+    'more_log_term': {TokenType.AND_OP, TokenType.OR_OP},
     # <assignment_expression>
-    'assignment_expression': {TokenType.ASSIGN, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN, 
-                             TokenType.MUL_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN},
+    'assignment_expression': {TokenType.ASSIGN, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN,
+                           TokenType.MUL_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN},
     # <assign_operator>
-    'assign_operator': {TokenType.ASSIGN, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN, 
-                       TokenType.MUL_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN},
+    'assign_operator': {TokenType.ASSIGN, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN,
+                      TokenType.MUL_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN},
     # <assign_operand>
-    'assign_operand': {TokenType.VAR_INIT},
+    'assign_operand': {TokenType.LEFT_PAREN, TokenType.FEINTLIT, TokenType.FLOATERLIT,
+                     TokenType.VAR_INIT, TokenType.NOT_OP, TokenType.NEGAFEINT,
+                     TokenType.NEGAFLOATER, TokenType.WIN, TokenType.LOSS, TokenType.CHANTLIT},
     # <function_call>
     'function_call': {TokenType.VAR_INIT},
     # <arguments>
-    'arguments': {TokenType.VAR_INIT},
+    'arguments': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT,
+                TokenType.VAR_INIT, TokenType.WIN, TokenType.LOSS, TokenType.NEGAFEINT,
+                TokenType.NEGAFLOATER, TokenType.RIGHT_PAREN},
     # <arg>
-    'arg': {TokenType.VAR_INIT},
+    'arg': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT,
+          TokenType.VAR_INIT, TokenType.WIN, TokenType.LOSS, TokenType.NEGAFEINT,
+          TokenType.NEGAFLOATER},
     # <more_args>
     'more_args': {TokenType.COMMA},
     # <inbound_statement>
@@ -635,14 +635,19 @@ FIRST_SETS = {
     # <dribble_statement>
     'dribble_statement': {TokenType.DRIBBLE},
     # <add_condition>
-    'add_condition': {TokenType.SHOOT, TokenType.PASS},
-    # <loop_staments>
-    'loop_statements': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
-                     TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
-                     TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.TIMEOUT, 
-                     TokenType.RESUME, TokenType.VAR_INIT},
-    # <loop_stament>
-    'loop_statement': {TokenType.RESUME, TokenType.TIMEOUT},
+    'add_condition': {TokenType.PASS, TokenType.SHOOT},
+    # <loop_statements>
+    'loop_statements': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
+                      TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
+                      TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
+                      TokenType.VAR_INIT, TokenType.RESUME},
+    # <loop_statement>
+    'loop_statement': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,
+                     TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
+                     TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
+                     TokenType.VAR_INIT, TokenType.RESUME},
+    # <resume_statement>
+    'resume_statement': {TokenType.RESUME},
     # <switch_statement>
     'switch_statement': {TokenType.SWITCH},
     # <get_case>
@@ -660,26 +665,25 @@ FIRST_SETS = {
     # <forward_lit>
     'forward_lit': {TokenType.FEINTLIT, TokenType.VAR_INIT},
     # <forward_inc_dec>
-    'forward_inc_dec': {TokenType.ADD, TokenType.SUB, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN},
+    'forward_inc_dec': {TokenType.INCREMENT, TokenType.DECREMENT, TokenType.ADD_ASSIGN,
+                       TokenType.SUB_ASSIGN},
     # <increment>
     'increment': {TokenType.INCREMENT},
     # <decrement>
     'decrement': {TokenType.DECREMENT},
     # <forward_assign_operator>
     'forward_assign_operator': {TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN},
-    # <resume_statement>
-    'resume_statement': {TokenType.RESUME},
     # <play_statement>
     'play_statement': {TokenType.PLAY},
     # <run_play_statement>
     'run_play_statement': {TokenType.RUN},
     # <team_block>
     'team_block': {TokenType.TEAM},
-    # <local_dec>
-    'local_dec': {TokenType.FEINT, TokenType.CONST, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    # <local_decl>
+    'local_decl': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     # <local_declaration>
-    'local_declaration': {TokenType.FEINT, TokenType.CONST, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'local_declaration': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     # <typecast_value>
-    'typecast_value': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT, 
-                      TokenType.STAT, TokenType.VAR_INIT}
+    'typecast_value': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT,
+                     TokenType.VAR_INIT, TokenType.WIN, TokenType.LOSS},
 }

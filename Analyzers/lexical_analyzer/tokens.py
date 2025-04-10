@@ -83,7 +83,7 @@ class TokenType(Enum):
     COMMA = "COMMA"                             # Comma: Used to separate values in a list
     COLON = "COLON"                             # Colon: Used to separate key-value pairs in a dictionary
     SEMICOLON = "SEMICOLON"                     # Semicolon: Used to terminate statements
-    COMMENT = "SINGLE_COMMENT"                  # Comment: Used to add comments in the code
+    SINGLE_COMMENT = "SINGLE_COMMENT"                  # Comment: Used to add comments in the code
     MULTI_COMMENT = "MULTI_COMMENT"             # Multi-line Comment: Used to add multi-line comments in the code
     TAB = "TAB"                                 # Tab: Used to separate tokens
     NEWLINE = "NEWLINE"                         # New Line: Used to separate tokens

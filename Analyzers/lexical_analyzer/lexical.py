@@ -3155,7 +3155,7 @@ class Lexer:
     
     # # FINAL STATE
     def state293(self, input_str):
-        return True, Token(TokenType.COMMENT.value, input_str)
+        return True, Token(TokenType.SINGLE_COMMENT.value, input_str)
     
     # # MULTI LINE COMMENT
     def state294(self, input_str = ""):
