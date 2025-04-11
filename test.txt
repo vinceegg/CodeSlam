@@ -1,0 +1,13 @@
+Team() {
+    Feint @i = 1;
+    Feint @j = 1;
+    Feint @rows = 5;
+    Feint @cols = 8;
+
+    Forward (@i = 1; @i <= @rows; @i++) {
+        Forward (@j = 1; @j <= @cols; @j++) {
+            Announce("* ");
+        }
+        Announce("\n");
+    }
+} 
