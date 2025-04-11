@@ -231,7 +231,7 @@ class Parser:
                 TokenType.ANNOUNCE, TokenType.VAR_INIT, TokenType.DRIBBLE, TokenType.FORWARD,
                 TokenType.SWITCH, TokenType.TIMEOUT, TokenType.INBOUND
             })
-                    
+                
         # Check statement type based on first token
         if self.current_token.type in [TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT]:
             # Variable declaration (for any data type)

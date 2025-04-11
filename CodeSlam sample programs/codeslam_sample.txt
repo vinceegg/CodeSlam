@@ -91,13 +91,13 @@ Forward (@i = 0; @i < 10; @i++) {
 
 # Function definition
 # Function with return value
-Wilt Feint @calculateTotalPoints(Floater @points1, Feint @points2) {
+Wilt Feint @calculateTotalPoints(@points1, @points2) {
     Feint @total = Feint(@points1) + @points2; #Type casting to Feint
     Rebound(@total);
 }
 
 # Void function
-Wilt Dunk @displayPlayerInfo(Chant @name, Feint @age, Floater @height) {
+Wilt Dunk @displayPlayerInfo(@name, @age, @height) {
     Announce("Player: " & @name);
     Announce("Age: " & @age);
     Announce("Height: " & @height);
