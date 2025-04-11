@@ -2,67 +2,105 @@
 
 # Right Half Pyramid
 Team() {
-    Feint @i, @j, @rows = 5;
-    Forward (@i = 1; @i <= @rows; @i++) {
-        Forward (@j = 1; @j <= @i; @j++) {
+    Feint @i = 1;
+    Feint @j = 1;
+    Feint @rows = 5;
+    
+    Forward (@i = 1; @i <= @rows; @i = @i + 1) {
+        # Reset j for each row
+        @j = 1;
+        
+        # Print stars equal to the current row number
+        Forward (@j = 1; @j <= @i; @j = @j + 1) {
             Announce("* ");
         }
+        
+        # Move to the next line after each row
         Announce("\n");
     }
 }
 
 # Left Half Pyramid
 Team() {
-    Feint @i, @j, @rows = 5;
+    Feint @i = 1;
+    Feint @j = 1;
+    Feint @rows = 5;
 
-    Forward (@i = 1; @i <= @rows; @i++) {
-        Forward (@j = @i; @j < @rows; @j++) {
+    Forward (@i = 1; @i <= @rows; @i = @i + 1) {
+        # Print spaces first
+        @j = 1;
+        Forward (@j = 1; @j <= @rows - @i; @j = @j + 1) {
             Announce("  ");
         }
-        Forward (@j = 1; @j <= @i; @j++) {
+        
+        # Then print stars
+        @j = 1;
+        Forward (@j = 1; @j <= @i; @j = @j + 1) {
             Announce("* ");
         }
+        
+        # Move to next line
         Announce("\n");
     }  
 }
 
-# Right Triangle
+# Right Triangle (Pyramid)
 Team() {
-    Feint @i, @j, @rows = 5;
+    Feint @i = 1;
+    Feint @j = 1;
+    Feint @rows = 5;
     
-    Forward (@i = 1; @i <= @rows; @i++) {
-        Forward (@j = @i; @j < @rows; @j++) {
+    Forward (@i = 1; @i <= @rows; @i = @i + 1) {
+        # Print spaces
+        @j = 1;
+        Forward (@j = 1; @j <= @rows - @i; @j = @j + 1) {
             Announce("  ");
         }
-        Forward (@j = 1; @j <= (2 * @i - 1); @j++) {
+        
+        # Print stars (2*i-1 stars per row for a pyramid)
+        @j = 1;
+        Forward (@j = 1; @j <= (2 * @i - 1); @j = @j + 1) {
             Announce("* ");
         }
+        
+        # Move to next line
         Announce("\n");
     }  
 }
 
 # Square
-Team(){
-    Feint @i, @j, @rows = 5;
-    Forward(@i=1; @i <= @rows; @i++){
-        Forward(@j=1; @j <= @rows; @j++){
-            Dribble(@i == 1 OR @i == @rows OR @j==1 OR @j == @rows){
+Team() {
+    Feint @i = 1;
+    Feint @j = 1;
+    Feint @rows = 5;
+    
+    Forward (@i = 1; @i <= @rows; @i = @i + 1) {
+        @j = 1;
+        Forward (@j = 1; @j <= @rows; @j = @j + 1) {
+            # If current position is on the border
+            Dribble (@i == 1 OR @i == @rows OR @j == 1 OR @j == @rows) {
                 Announce("* ");
-            }Shoot{
+            } Shoot {
+                # Otherwise print space for hollow square
                 Announce("  ");
             }
         }
+        # New line after each row
         Announce("\n");
     }
 }
 
 # Rectangle
-Team(){
-    Feint @i, @j, @rows = 5, @cols = 8;
+Team() {
+    Feint @i = 1;
+    Feint @j = 1;
+    Feint @rows = 5;
+    Feint @cols = 8;
 
-    Forward(@i = 0; @i < @rows; @i++){
-        Forward(@j = 0; @j < @cols; @j++){
-           Announce("*");
+    Forward (@i = 1; @i <= @rows; @i = @i + 1) {
+        @j = 1;
+        Forward (@j = 1; @j <= @cols; @j = @j + 1) {
+            Announce("* ");
         }
         Announce("\n");
     }

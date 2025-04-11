@@ -1,0 +1,108 @@
+# Single Loop Pattern Implementations
+
+# Right Half Pyramid with single loop
+Team() {
+    Feint @i = 1;
+    Feint @rows = 5;
+    
+    # Row 1
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("* \n");
+    }
+    
+    # Row 2
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("* * \n");
+    }
+    
+    # Row 3
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("* * * \n");
+    }
+    
+    # Row 4
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("* * * * \n");
+    }
+    
+    # Row 5
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("* * * * * \n");
+    }
+}
+
+# Left Half Pyramid with single loop
+Team() {
+    Feint @i = 1;
+    Feint @rows = 5;
+    
+    # Row 1
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("        * \n");
+    }
+    
+    # Row 2
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("      * * \n");
+    }
+    
+    # Row 3
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("    * * * \n");
+    }
+    
+    # Row 4
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("  * * * * \n");
+    }
+    
+    # Row 5
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("* * * * * \n");
+    }
+}
+
+# Square with single loop
+Team() {
+    Feint @i = 1;
+    
+    # Row 1
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("* * * * * \n");
+    }
+    
+    # Row 2
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("*       * \n");
+    }
+    
+    # Row 3
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("*       * \n");
+    }
+    
+    # Row 4
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("*       * \n");
+    }
+    
+    # Row 5
+    @i = 1;
+    Forward (@i = 1; @i <= 1; @i++) {
+        Announce("* * * * * \n");
+    }
+} 

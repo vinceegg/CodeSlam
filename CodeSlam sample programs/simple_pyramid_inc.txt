@@ -1,0 +1,20 @@
+# Simple Right Half Pyramid Test with Increment Operator
+
+Team() {
+    Feint @i = 1;
+    Feint @j = 1;
+    Feint @rows = 5;
+    
+    Forward (@i = 1; @i <= @rows; @i++) {
+        # Reset j for each row
+        @j = 1;
+        
+        # Print stars equal to the current row number
+        Forward (@j = 1; @j <= @i; @j++) {
+            Announce("* ");
+        }
+        
+        # Move to the next line after each row
+        Announce("\n");
+    }
+} 
