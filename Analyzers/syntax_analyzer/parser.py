@@ -244,20 +244,13 @@ class Parser:
             self.parse_inbound_statement()
         elif self.current_token.type == TokenType.VAR_INIT:
             # Check if this is a standalone function call or variable assignment
-            var_token = self.current_token
-            self.advance()  # Move past the variable name
+            next_token = self.peek()
             
-            if self.current_token and self.current_token.type == TokenType.LEFT_PAREN:
+            if next_token and next_token.type == TokenType.LEFT_PAREN:
                 # This is a function call statement
-                self.current -= 1  # Move back to variable name for proper parsing
-                self.current_token = self.tokens[self.current]
-                self.skip_whitespace_and_comments()
                 self.parse_function_call_statement()
             else:
                 # This is a variable assignment
-                self.current -= 1  # Move back to variable name for proper parsing
-                self.current_token = self.tokens[self.current]
-                self.skip_whitespace_and_comments()
                 self.parse_variable_assignment()
         elif self.current_token.type == TokenType.DRIBBLE:
             # Conditional statement (if-else)
