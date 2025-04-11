@@ -1,157 +1,343 @@
 # CodeSlam Sample Program
 # This program demonstrates the major features of the CodeSlam language
 
-# Variable declarations
-Feint @score = 84;
-Floater @percentageAccuracy = 76.5;
-Chant @playerName = "LeBron James";
-Stat @isAllStar = Win;
-
-# Constant declarations
-Const Feint @maxPoints = 100;
-Const Chant @teamName = "Lakers";
-
-# 1D Array declarations
-Zone Feint @points[5] = {24, 32, 18, 27, 41};
-Zone Chant @teamMembers[3] = {"Davis", "James", "Reaves"};
-
-# 2D Array declarations
-Zone Feint @seasonStats[2][3] = {
-    {21, 7, 11},
-    {28, 9, 14}
-};
-
-# Basic input and output
-Announce("Welcome to CodeSlam Basketball Analytics!");
-Announce("Enter player name:");
-Inbound("Enter name: ", @playerName);
-
-# Simple expressions
-Feint @totalScore = @points[0] + @points[1] + @points[2];
-Floater @average = @totalScore / 3.0;
-
-# Array manipulation
-@points[2] = 22;
-@seasonStats[1][0] = @seasonStats[1][0] + 5;
-
-# Conditional statements (if-else)
-Dribble (@score > 80) {
-    Announce("High Score: " & @score);
-} Pass (@score > 60) {
-    Announce("Average Score: " & @score);
-} Shoot {
-    Announce("Low Score: " & @score);
-}
-
-# Switch statement
-Switch (@totalScore) {
-    Get 60:
-        Announce("Score is exactly 60");
-        Timeout;
-    Get 70:
-        Announce("Score is exactly 70");
-        Timeout;
-    Default:
-        Announce("Score is: " & @totalScore);
-}
-
-# Loops - For loop
-Announce("Points per game:");
-Forward (@i = 0; @i < 5; @i++) {
-    Announce("Game " & (@i + 1) & ": " & @points[@i]);
-}
-
-# While loop
-Feint @counter = 0;
-Announce("While loop demonstration:");
-Play (@counter < 3) {
-    Announce("Counter: " & @counter);
-    @counter += 1;
-}
-
-# Do-while loop
-@counter = 0;
-Announce("Do-while loop demonstration:");
-Run {
-    Announce("Run counter: " & @counter);
-    @counter += 1;
-} Play (@counter < 3);
-
-# Break and continue
-Announce("Break and continue demonstration:");
-Forward (@i = 0; @i < 10; @i++) {
-    Dribble (@i == 3) {
-        Resume;  # Skip iteration where i=3
-    }
-    Dribble (@i == 7) {
-        Timeout;  # Exit loop when i=7
-    }
-    Announce("Iteration: " & @i);
-}
-
-# Function definition
-# Function with return value
-Wilt Feint @calculateTotalPoints(Floater @points1, Feint @points2) {
-    Feint @total = Feint(@points1) + @points2; #Type casting to Feint
-    Rebound(@total);
-}
-
-# Void function
-Wilt Dunk @displayPlayerInfo(Chant @name, Feint @age, Floater @height) {
-    Announce("Player: " & @name);
-    Announce("Age: " & @age);
-    Announce("Height: " & @height);
-}
-
-# Boolean function
-Wilt Stat @isEligible(Feint @age, Feint @experience) {
-    Dribble (@age >= 18 AND @experience >= 2) {
-        Rebound(Win);
-    } Shoot {
-        Rebound(Loss);
-    }
-}
-
-# String manipulation function
-Wilt Chant @formatName(Chant @firstName, Chant @lastName) {
-    Rebound(@lastName & ", " & @firstName);
-}
-
-# Main function
+#1
 Team() {
-    # Function calls
-    Feint @totalPoints = @calculateTotalPoints(42, 28);
-    Announce("Total points: " & @totalPoints);
+   Feint @x = 5;         
+   Feint @y = 10;        
+   @result = @x + @y;  
     
-    @displayPlayerInfo("Anthony Davis", 30, 6.10);
+   Announce("The result is: " & @result);
+}
+
+#2
+Team() {
+   Feint @y = 20;         
+   Feint @z = 6;        
+   @result = @y - @z;  
     
-    Stat @eligible = @isEligible(22, 3);
-    Dribble (@eligible) {
-        Announce("Player is eligible");
+   Announce("The result is: " & @result);
+}
+
+#3
+Team() {
+   Feint @x = 4;         
+   Feint @z = 10;        
+   @result = @x * @z;  
+    
+   Announce("The result is: " & @result);
+}
+
+#4
+Team() {
+   Feint @m = 50;         
+   Feint @n = 8;        
+   @result = @m / @n; 
+    
+   Announce("The result is: " & @result);
+}
+
+#5
+Team() {
+    Feint @z = 3;          
+    Feint @x = 5;          
+    Feint @y = 10;         
+    
+    @result = (@z + @x) + @y + (@x + @z);  
+    
+    Announce("The result is: " & @result);    
+}
+
+#6
+Team() {
+    Feint @y = 10;         
+    Feint @z = 3;          
+    Feint @x = 5;         
+    
+    @result = (@y - @z) - @x - (@z - @x);  
+    
+    Announce("The result is: " & @result);    
+}
+
+#7
+Team() {
+    Feint @x = 2;         
+    Feint @z = 3;         
+    Feint @y = 4;          
+    
+    @result = (@x * @z) * @y * (@z * @y);  
+    
+   Announce("The result is: " & @result);    
+}
+
+#8
+Team() {
+    Floater @x = 2.0;       
+    Floater @y = 10.0;
+    Floater @z = 4.0;
+    
+    @result = (@y / @z) / @x / (@x / @y);  
+    
+   Announce("The division result is: " & @result);
+}
+
+#9
+Team() {
+    Floater @x = 3.0;
+    Floater @y = 8.0;
+    Floater @z = 2.0;
+   
+    @result = @y + (@z * @x) / (@y - @z);
+    
+   Announce("The computed result is: " & @result);
+}
+
+#10
+Team() {
+    Floater @x = 12.0;
+    Floater @y = 5.0;   
+    Floater @z = 3.0;
+    
+    @result = @z - @y * (@x / @z);
+    
+   Announce("The result is: " & @result);
+}
+
+#11
+Team() {
+    Feint @x = 4;   
+    Feint @y = 7;
+    Feint @z = 3;
+    
+    @result = @x * (@y - @z) + (@z / @x);
+    
+   Announce("The result is: " & @result); 
+}
+
+#12
+Team() {
+    Feint @x = 10;
+    Feint @y = 3;
+    Feint @z = 5;
+    
+    @result = (@x / @y) * @z - (@y + @x);
+    
+   Announce("The result is: " & @result);  
+}
+
+#13
+Dunk @functionCall(@choice) {
+    Feint @a = 10, @b = 5;
+    
+    Dribble (@choice == 1){
+        Announce("Multiplication:\n" & @a * @b);
+    }Pass (@choice == 2){
+        Announce("Division:\n" & @a / @b);
+    }Pass (@choice == 3){
+        Announce("Addition:\n" & @a + @b);
+    }Pass (@choice == 4){
+        Announce("Subtraction:\n" & @a - @b);
+    }Shoot {
+        Announce("Invalid choice\n");
     }
-    
-    Chant @formattedName = @formatName("Stephen", "Curry");
-    Announce("Formatted name: " & @formattedName);
-    
-    # Nested control structures
-    Forward (@i = 0; @i < 3; @i+=1) {
-        Dribble (@i == 1) {
-            Forward (@j = 0; @j < 2; @j++) {
-                Announce("Nested loop: i=" & @i & ", j=" & @j);
-            }
-        } Shoot {
-            Announce("Outer loop: i=" & @i);
+}
+
+Team() {
+    Feint @choice = 1;  
+    @functionCall(@choice);
+}
+
+#14
+Team() {
+    Feint @i, @j, @rows = 5;
+    Forward (@i = 1; @i <= @rows; @i++) {
+        Forward (@j = 1; @j <= @i; @j++) {
+            Announce("* ");
         }
+            Announce("\n ");
     }
+}
+
+#15
+Team() {
+
+    Feint @i, @j, @rows = 5;
+
+    Forward (@i = 1; @i <= @rows; @i++) {
+        Forward (@j = @i; @j < @rows; @j++) {
+            Announce("  ");
+        }
+        Forward (@j = 1; @j <= @i; @j++) {
+
+            Announce("* ");
+        }
+        Announce("\n");
+    }  
+}
+
+#16
+Team() {
+
+    Feint @i, @j, @rows;
     
-    # Complex expressions
-    Feint @complexCalc = ((@totalPoints * 2) / 5) + (100 - 20) % 7;
-    Announce("Complex calculation result: " & @complexCalc);
+    Forward (@i = 1; @i <= @rows; @i++) {
+        Forward (@j = @i; @j < @rows; @j++) {
+            Announce("  ");
+        }
+        Forward (@j = 1; @j <= (2 * @i - 1); @j++) {
+            Announce("* ");
+        }
+        Announce("\n");
+    }  
+}
+
+#17
+Team(){
+    Feint @i, @j, @rows = 3, @cols = 9;
+
+    Forward(@i = 0; @i < @rows; @i++){
+        Forward(@j = 0; @j < @cols; @j++){
+           Announce("*");
+        }
+        Announce("\n");
+    }
+}
+
+#18
+Team(){
+    Feint @i, @j, @rows = 3, @cols = 16;
+
+    Forward(@i = 0; @i < @rows; @i++){
+        Forward(@j = 0; @j < @cols; @j++){
+           Announce("*");
+        }
+        Announce("\n");
+    }
+}
+
+#19
+Dunk @right_half_pyramid(@rows) {
+    Feint @i, @j;
+    Forward (@i = 1; @i <= @rows; @i++) {
+        Forward (@j = 1; @j <= @i; @j++) {
+            Announce("* ");
+        }
+            Announce("\n ");
+    }
+}
+
+Dunk @left_half_pyramid(@rows) {
+    Feint @i, @j;
+    Forward (@i = 1; @i <= @rows; @i++) {
+        Forward (@j = @i; @j < @rows; @j++) {
+            Announce("  ");
+        }
+        Forward (@j = 1; @j <= @i; @j++) {
+
+            Announce("* ");
+        }
+        Announce("\n");
+    }  
+}
+
+Dunk @right_triangle(@rows) {
+    Feint @rows = 5;
     
-    # Type conversion
-    Floater @floatScore = @score;  # Implicit conversion
-    Chant @scoreText = @score;     # Convert to string
-    
-    # Final message
-    Announce("End of CodeSlam sample program");
-} 
+    Forward (@i = 1; @i <= @rows; @i++) {
+        Forward (@j = @i; @j < @rows; @j++) {
+            Announce("  ");
+        }
+        Forward (@j = 1; @j <= (2 * @i - 1); @j++) {
+            Announce("* ");
+        }
+        Announce("\n");
+ }  
+}
+
+Dunk @square(@rows) {
+    Feint @i, @j;
+    Forward(@i=1; @i <= @rows;@i++){
+        Forward(@j=1; @j <= @rows; @j++){
+            Dribble(@i == 1 OR @i == @rows OR @j==1 OR @j == @rows){
+                Announce("* ");
+            }Shoot{
+                Announce("  ");
+            }
+        }
+        Announce("\n");
+    }
+}
+
+
+
+Dunk @rectangle(@rows, @cols) {
+    Feint @i, @j;
+
+    Forward(@i = 0; @i < @rows; @i++){
+        Forward(@j = 0; @j < @cols; @j++){
+           Announce("*");
+        }
+        Announce("\n");
+    }
+}
+
+
+Team(){
+@right_half_triangle(7);
+@left_half_triangle(7);
+@right_triangle(7);
+@square(7);
+@rectangle(4, 7);
+}
+
+#20
+Team() {
+    Floater @side = 5.0; 
+    Floater @area;
+
+    #Calculate area
+    @area = @side * @side;
+
+    #Output the result
+    Announce("The area of the square with side is:" & @side & @area);
+}
+
+#21
+Team() {
+    Floater @side1 = 3.0, @side2 = 4.0, @side3 = 5.0;
+     #Example side lengths
+    Floater @perimeter;
+
+    # Calculate perimeter
+    @perimeter = @side1 + @side2 + @side3;
+
+    # Output the result
+    Announce("The perimeter of the triangle is:" & @perimeter);
+}
+
+#22
+Team() {
+    Feint @number = 10;  
+
+    # Check even or odd
+    Dribble (@number % 2 == 0) {
+        Announce("is even." & @number);
+    } Shoot {
+        Announce("is odd." & @number);
+    }
+}
+
+#23
+Team() {
+    Feint @year = 2024;  
+
+    # Check for leap year
+    Dribble ((@year % 4 == 0 AND @year % 100 != 0) OR (@year % 400 == 0)) {
+        Announce("%d is a leap year.\n", @year);
+    } Shoot {
+        Announce("%d is not a leap year.\n", @year);
+    }
+}
+
+
+

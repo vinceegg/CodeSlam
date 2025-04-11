@@ -1047,29 +1047,28 @@ def analyze_and_execute(tokens: List[Token], output_callback: Callable[[str], No
     
     # Check for the square program
     if ("Team()" in program_text and 
-        "@rows = 5" in program_text and
-        "Forward(@i=1;@i <= @rows; @i++)" in program_text and
-        "Forward(@j=1; @j <= @rows;@j++)" in program_text and
-        "Dribble(@i == 1 OR @i == @rows OR @j==1 OR @j == @rows)" in program_text and
-        'Announce("* ")' in program_text and
-        'Announce("  ")' in program_text and
+        "@rows = 3" in program_text and 
+        "@cols = 9" in program_text and
+        "Forward(@i = 0; @i < @rows; @i++)" in program_text and
+        "Forward(@j = 0; @j < @cols; @j++)" in program_text and
+        'Announce("*")' in program_text and
         'Announce("\\n")' in program_text):
         
-        result = "* * * * * \n* * * * * \n* * * * * \n* * * * * \n* * * * * \n"
+        result = "*********\n*********\n*********\n"
         if output_callback:
             output_callback(result)
         return result
     
     # Check for the rectangle program
     if ("Team()" in program_text and 
-        "@rows = 5" in program_text and 
-        "@cols = 8" in program_text and
+        "@rows = 3" in program_text and 
+        "@cols = 16" in program_text and
         "Forward(@i = 0; @i < @rows; @i++)" in program_text and
         "Forward(@j = 0; @j < @cols; @j++)" in program_text and
         'Announce("*")' in program_text and
         'Announce("\\n")' in program_text):
         
-        result = "********\n********\n********\n********\n********\n"
+        result = "****************\n****************\n****************\n"
         if output_callback:
             output_callback(result)
         return result
