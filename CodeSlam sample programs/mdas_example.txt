@@ -1,0 +1,103 @@
+# Basic MDAS Operations in CodeSlam
+
+# Addition
+Team() {
+   Feint @x = 5;         
+   Feint @y = 10;        
+   @result = @x + @y;  
+    
+   Announce("The result is: " & @result);
+}
+
+# Subtraction
+Team() {
+   Feint @y = 20;         
+   Feint @z = 6;        
+   @result = @y - @z;  
+    
+   Announce("The result is: " & @result);
+}
+
+# Multiplication
+Team() {
+   Feint @x = 4;         
+   Feint @z = 10;        
+   @result = @x * @z;  
+    
+   Announce("The result is: " & @result);
+}
+
+# Division
+Team() {
+   Feint @m = 50;         
+   Feint @n = 8;        
+   @result = @m / @n; 
+    
+   Announce("The result is: " & @result);
+}
+
+# Complex addition
+Team() {
+    Feint @z = 3;          
+    Feint @x = 5;          
+    Feint @y = 10;         
+    
+    @result = (@z + @x) + @y + (@x + @z);  
+    
+    Announce("The result is: " & @result);    
+}
+
+# Complex subtraction
+Team() {
+    Feint @y = 10;         
+    Feint @z = 3;          
+    Feint @x = 5;         
+    
+    @result = (@y - @z) - @x - (@z - @x);  
+    
+    Announce("The result is: " & @result);    
+}
+
+# Complex multiplication
+Team() {
+    Feint @x = 2;         
+    Feint @z = 3;         
+    Feint @y = 4;          
+    
+    @result = (@x * @z) * @y * (@z * @y);  
+    
+   Announce("The result is: " & @result);    
+}
+
+# Complex division
+Team() {
+    Floater @x = 2.0;       
+    Floater @y = 10.0;
+    Floater @z = 4.0;
+    
+    @result = (@y / @z) / @x / (@x / @y);  
+    
+   Announce("The division result is: " & @result);
+}
+
+# Mixed operations 1
+Team() {
+    Floater @x = 3.0;
+    Floater @y = 8.0;
+    Floater @z = 2.0;
+   
+    @result = @y + (@z * @x) / (@y - @z);
+    
+   Announce("The computed result is: " & @result);
+}
+
+# Mixed operations 2
+Team() {
+    Floater @x = 12.0;
+    Floater @y = 5.0;   
+    Floater @z = 3.0;
+    
+    @result = @z + @y * (@x / @z);
+    
+   Announce("The result is: " & @result);
+} 

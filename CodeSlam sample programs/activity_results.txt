@@ -1,0 +1,136 @@
+====== CodeSlam Activity Results ======
+
+This document shows the expected results for all CodeSlam activity examples.
+
+=== Sample 1: Basic MDAS Operations ===
+
+1. Addition:
+   - Code: Feint @x = 5; Feint @y = 10; @result = @x + @y;
+   - Result: The result is: 15
+
+2. Subtraction:
+   - Code: Feint @y = 20; Feint @z = 6; @result = @y - @z;
+   - Result: The result is: 14
+
+3. Multiplication:
+   - Code: Feint @x = 4; Feint @z = 10; @result = @x * @z;
+   - Result: The result is: 40
+
+4. Division:
+   - Code: Feint @m = 50; Feint @n = 8; @result = @m / @n;
+   - Result: The result is: 6.25
+
+=== Sample 2: Complex Operations of Same Type ===
+
+1. Complex Addition:
+   - Code: @result = (@z + @x) + @y + (@x + @z);  
+   - Result: The result is: 26
+
+2. Complex Subtraction:
+   - Code: @result = (@y - @z) - @x - (@z - @x);  
+   - Result: The result is: 4
+
+3. Complex Multiplication:
+   - Code: @result = (@x * @z) * @y * (@z * @y);  
+   - Result: The result is: 288
+
+4. Complex Division:
+   - Code: @result = (@y / @z) / @x / (@x / @y);  
+   - Result: The division result is: 6.25
+
+=== Sample 3: Mixed Operations ===
+
+1. Mixed Operations 1:
+   - Code: @result = @y + (@z * @x) / (@y - @z);
+   - Result: The computed result is: 9.0
+
+2. Mixed Operations 2:
+   - Code: @result = @z + @y * (@x / @z);
+   - Result: The result is: 23.0
+
+3. Mixed Operations 3:
+   - Code: @result = @x * (@y - @z) + (@z / @x);
+   - Result: The result is: 16.75
+
+4. Mixed Operations 4:
+   - Code: @result = (@x / @y) * @z - (@y + @x);
+   - Result: The result is: 3.6666...
+
+=== Function Call ===
+
+1. Multiplication (choice 1):
+   - Result: Multiplication: 50
+
+2. Division (choice 2):
+   - Result: Division: 2.0
+
+3. Addition (choice 3):
+   - Result: Addition: 15
+
+4. Subtraction (choice 4):
+   - Result: Subtraction: 5
+
+=== Area and Perimeter ===
+
+1. Area of a Square:
+   - Result: The area of the square with side 5.0 is: 25.0
+
+2. Perimeter of a Triangle:
+   - Result: The perimeter of the triangle is: 12.0
+
+3. Even/Odd Number:
+   - Result: The number 10 is even.
+
+4. Leap Year:
+   - Result: 2024 is a leap year.
+
+=== Shape Drawing ===
+
+The shape drawings produce visual patterns:
+
+1. Right Half Pyramid:
+   ```
+   *
+   * *
+   * * *
+   * * * *
+   * * * * *
+   ```
+
+2. Left Half Pyramid:
+   ```
+           *
+         * *
+       * * *
+     * * * *
+   * * * * *
+   ```
+
+3. Right Triangle:
+   ```
+           *
+         * * *
+       * * * * *
+     * * * * * * *
+   * * * * * * * * *
+   ```
+
+4. Square:
+   ```
+   * * * * *
+   *       *
+   *       *
+   *       *
+   * * * * *
+   ```
+
+5. Rectangle:
+   ```
+   ********
+   ********
+   ********
+   ********
+   ********
+   ```
+
+========== END OF RESULTS ========== 

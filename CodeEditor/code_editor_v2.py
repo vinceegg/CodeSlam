@@ -467,7 +467,7 @@ class App(customtkinter.CTk):
         # Command input field (entry widget)
         self.command_input = customtkinter.CTkEntry(self)
         self.command_input.grid(row=2, column=1, padx=(20, 0), pady=(10, 20), sticky="ew")
-        self.command_input.bind("<Return>", self.execute_command)  # Bind Enter key to run the command
+        # self.command_input.bind("<Return>", self.execute_command)  # Bind Enter key to run the command
 
         # set default values
         self.sideBtnLexical.configure(text="Lexical")
@@ -719,7 +719,7 @@ class App(customtkinter.CTk):
         # Import our direct semantic analyzer
         from CodeEditor.direct_semantic import analyze_code
         
-        # Display initial status messages with clean formatting
+        # # Display initial status messages with clean formatting
         # self.append_terminal_output(">> Loading CodeSlam Compiler...", text_color="blue")
         # self.append_terminal_output(">> Initializing lexical analysis...", text_color="blue")
         # self.append_terminal_output(">> Analyzing code structure...", text_color="blue")
@@ -731,20 +731,20 @@ class App(customtkinter.CTk):
         # self.append_terminal_output("CodeSlam Semantic Analysis Results")
         # self.append_terminal_output("==================================================")
         
-        # Count code elements for display
+        # # Count code elements for display
         # line_count = code.count('\n') + 1
         # comment_count = code.count('//') 
         # variable_matches = re.findall(r'@\w+', code)
         # variables = list(set(variable_matches))  # Unique variables
         # functions = re.findall(r'Play\s+(\w+)', code)
         
-        # Display code statistics
+        # # Display code statistics
         # self.append_terminal_output(f"📊 Lines of Code: {line_count}", text_color="blue")
         # self.append_terminal_output(f"💬 Comments: {comment_count}", text_color="blue")
         # self.append_terminal_output(f"🔠 Variables: {len(variables)}", text_color="blue")
         # self.append_terminal_output(f"⚙️ Functions: {len(functions)}", text_color="blue")
         
-        # Variables section
+        # # Variables section
         # self.append_terminal_output("")
         # self.append_terminal_output("🔠 Variables:", text_color="blue")
         # for var in variables:
@@ -760,17 +760,17 @@ class App(customtkinter.CTk):
                 
         #     self.append_terminal_output(f"   - {var} ({var_type})", text_color="purple")
         
-        # Functions section
+        # # Functions section
         # self.append_terminal_output("")
         # self.append_terminal_output("⚙️ Functions:", text_color="blue")
         # for func in functions:
         #     self.append_terminal_output(f"   - {func}", text_color="purple")
         
-        # Control structures
+        # # Control structures
         # self.append_terminal_output("")
         # self.append_terminal_output("🔄 Control Structures:", text_color="blue")
         
-        # Keyword usage
+        # # Keyword usage
         # self.append_terminal_output("")
         # self.append_terminal_output("🔑 Keyword Usage:", text_color="blue")
         # keywords = ["Team", "Feint", "Floater", "Chant", "Stat", "Play", "Run", "Switch", "Announce"]
@@ -797,7 +797,7 @@ class App(customtkinter.CTk):
             self.append_terminal_output("")
             self.append_terminal_output("❌ Semantic errors detected!", text_color="red")
         else:
-            # self.append_terminal_output("")
+            self.append_terminal_output("")
             # self.append_terminal_output("✅ No semantic errors detected", text_color="green")
             # self.append_terminal_output("")
             # self.append_terminal_output(">> Compilation complete.", text_color="blue")
@@ -807,120 +807,183 @@ class App(customtkinter.CTk):
 
     def execute_program(self, code):
         """Execute the CodeSLAM program and display output"""
-        # self.append_terminal_output("")
-        # self.append_terminal_output("=== Execution Results ===", text_color="green")
-        
         try:
             # Execute the program code directly
             import random
             
-            # Find chant declarations in the code
-            chant_matches = re.findall(r'Chant\s+([^\s{]+)\s*{\s*"([^"]*)"\s*}', code)
-            for chant_name, chant_text in chant_matches:
-                self.append_terminal_output(f"\"{chant_text}\"", text_color="green")
-            
-            # Find all variables
+            # Initialize the variable store
             variables = {}
-            feint_matches = re.findall(r'Feint\s+(@\w+)\s*=\s*([^;]+);', code)
-            for var_name, value in feint_matches:
-                try:
-                    # Try to evaluate the value as an expression
-                    value = value.strip()
-                    if value.isdigit():
-                        variables[var_name] = int(value)
-                    else:
-                        variables[var_name] = value
-                except:
-                    variables[var_name] = value
-                    
-            floater_matches = re.findall(r'Floater\s+(@\w+)\s*=\s*([^;]+);', code)
-            for var_name, value in floater_matches:
-                try:
-                    # Try to evaluate the value as an expression
-                    value = value.strip()
-                    if '.' in value:
-                        variables[var_name] = float(value)
-                    else:
-                        variables[var_name] = value
-                except:
-                    variables[var_name] = value
-                    
-            # Add any other variable declarations we might have missed
-            other_vars = re.findall(r'(@\w+)\s*=\s*([^;]+);', code)
-            for var_name, value in other_vars:
-                if var_name not in variables:
-                    try:
-                        # Try to evaluate the value
-                        value = value.strip()
-                        if '.' in value:
-                            variables[var_name] = float(value)
-                        elif value.isdigit():
-                            variables[var_name] = int(value)
-                        else:
-                            variables[var_name] = value
-                    except:
-                        variables[var_name] = value
             
-            # Find and process all announce statements
-            announce_matches = re.findall(r'Announce\s*\(([^)]+)\)\s*;', code)
-            for announcement in announce_matches:
-                # Process string concatenation with &
-                parts = re.split(r'\s*&\s*', announcement)
-                processed_parts = []
+            # Process line by line to execute statements in order
+            lines = code.split('\n')
+            for line in lines:
+                line = line.strip()
                 
-                for part in parts:
-                    part = part.strip()
-                    # If it's a string literal
-                    if part.startswith('"') and part.endswith('"'):
-                        processed_parts.append(part[1:-1])  # Remove quotes
-                    # If it's a variable with @ prefix
-                    elif part.startswith('@'):
-                        if part in variables:
-                            processed_parts.append(str(variables[part]))
-                        else:
-                            # Check if it's a part of the code but not captured yet
-                            var_value = self.find_variable_value(code, part)
-                            if var_value is not None:
-                                processed_parts.append(str(var_value))
+                # Skip empty lines and comments
+                if not line or line.startswith('//') or line.startswith('#'):
+                    continue
+                
+                # Feint (integer) variable declarations
+                feint_match = re.search(r'Feint\s+(@\w+)\s*=\s*([^;]+);', line)
+                if feint_match:
+                    var_name = feint_match.group(1)
+                    value_expr = feint_match.group(2).strip()
+                    # Evaluate the expression
+                    value = self.evaluate_expression(value_expr, variables)
+                    variables[var_name] = int(value) if value is not None else 0
+                    continue
+                
+                # Floater (float) variable declarations
+                floater_match = re.search(r'Floater\s+(@\w+)\s*=\s*([^;]+);', line)
+                if floater_match:
+                    var_name = floater_match.group(1)
+                    value_expr = floater_match.group(2).strip()
+                    # Evaluate the expression
+                    value = self.evaluate_expression(value_expr, variables)
+                    variables[var_name] = float(value) if value is not None else 0.0
+                    continue
+                
+                # Direct variable assignments
+                assignment_match = re.search(r'(@\w+)\s*=\s*([^;]+);', line)
+                if assignment_match:
+                    var_name = assignment_match.group(1)
+                    value_expr = assignment_match.group(2).strip()
+                    # Evaluate the expression
+                    value = self.evaluate_expression(value_expr, variables)
+                    
+                    # If the variable already exists, maintain its type
+                    if var_name in variables and isinstance(variables[var_name], int):
+                        variables[var_name] = int(value) if value is not None else 0
+                    elif var_name in variables and isinstance(variables[var_name], float):
+                        variables[var_name] = float(value) if value is not None else 0.0
+                    else:
+                        # New variable, use the natural type of the result
+                        variables[var_name] = value if value is not None else 0
+                    continue
+                
+                # Chant declarations
+                chant_match = re.search(r'Chant\s+(@\w+)\s*=\s*"([^"]*)"', line)
+                if chant_match:
+                    var_name = chant_match.group(1)
+                    text = chant_match.group(2)
+                    variables[var_name] = text
+                    continue
+                
+                # Announce statements
+                announce_match = re.search(r'Announce\s*\(([^)]+)\)\s*;', line)
+                if announce_match:
+                    announcement = announce_match.group(1)
+                    # Process string concatenation with &
+                    parts = re.split(r'\s*&\s*', announcement)
+                    processed_parts = []
+                    
+                    for part in parts:
+                        part = part.strip()
+                        # If it's a string literal
+                        if part.startswith('"') and part.endswith('"'):
+                            processed_parts.append(part[1:-1])  # Remove quotes
+                        # If it's a variable with @ prefix
+                        elif part.startswith('@'):
+                            if part in variables:
+                                processed_parts.append(str(variables[part]))
                             else:
-                                processed_parts.append(part)  # Keep as is if not found
-                    else:
-                        processed_parts.append(part)
-                
-                # Join all parts and display
-                self.append_terminal_output("".join(processed_parts), text_color="green")
-            
-            # Execute any plays
-            play_matches = re.findall(r'Play\s+([^\s{]+)\s*{([^}]*)}', code)
-            for play_name, play_content in play_matches:
-                self.append_terminal_output(f"Executing play: {play_name}")
-                
-                # Extract actions
-                actions = re.findall(r'(\w+)\s*\(([^)]*)\);', play_content)
-                for action, params in actions:
-                    params = [p.strip() for p in params.split(',') if p.strip()]
+                                # Try to evaluate the variable
+                                var_value = self.evaluate_expression(part, variables)
+                                if var_value is not None:
+                                    processed_parts.append(str(var_value))
+                                else:
+                                    processed_parts.append(part)  # Keep as is if not found
+                        else:
+                            # Try to evaluate as an expression
+                            expr_value = self.evaluate_expression(part, variables)
+                            if expr_value is not None:
+                                processed_parts.append(str(expr_value))
+                            else:
+                                processed_parts.append(part)
                     
-                    if action == "Dribble":
-                        self.append_terminal_output(f"{params[0]} dribbles the ball")
-                    elif action == "Pass":
-                        self.append_terminal_output(f"{params[0]} passes to {params[1]}")
-                    elif action == "Shoot":
-                        result = "scores" if random.random() > 0.5 else "misses"
-                        self.append_terminal_output(f"{params[0]} shoots and {result}!")
-                    elif action == "Rebound":
-                        self.append_terminal_output(f"{params[0]} gets the rebound")
-            
-            # Find teams for game results
-            team_matches = re.findall(r'Team\s+([^\s{]+)', code)
-            if len(team_matches) >= 2:
-                score1 = random.randint(60, 110)
-                score2 = random.randint(60, 110)
-                self.append_terminal_output(f"Final Score: {team_matches[0]} {score1} - {team_matches[1]} {score2}")
-                winner = team_matches[0] if score1 > score2 else team_matches[1]
-                self.append_terminal_output(f"{winner} wins!", text_color="green")
+                    # Join all parts and display
+                    self.append_terminal_output("".join(processed_parts), text_color="green")
+                    continue
             
         except Exception as e:
             self.append_terminal_output(f"Execution error: {str(e)}", text_color="red")
+    
+    def evaluate_expression(self, expr, variables):
+        """Evaluate a CodeSLAM expression with variables and operations"""
+        try:
+            # Replace variables with their values
+            processed_expr = expr
+            
+            # Sort variables by length in reverse order to avoid partial replacements
+            var_names = sorted(variables.keys(), key=len, reverse=True)
+            
+            for var_name in var_names:
+                if var_name in processed_expr:
+                    processed_expr = processed_expr.replace(var_name, str(variables[var_name]))
+            
+            # Handle numeric literals
+            if processed_expr.isdigit():
+                return int(processed_expr)
+            
+            if processed_expr.replace('.', '', 1).isdigit() and processed_expr.count('.') == 1:
+                return float(processed_expr)
+                
+            # Handle simple operations
+            # Addition
+            if '+' in processed_expr:
+                parts = processed_expr.split('+')
+                result = 0
+                for part in parts:
+                    part_value = self.evaluate_expression(part.strip(), variables)
+                    if part_value is not None:
+                        result += part_value
+                return result
+                
+            # Subtraction
+            if '-' in processed_expr and not expr.startswith('-'):  # Avoid misinterpreting negative numbers
+                parts = processed_expr.split('-')
+                result = self.evaluate_expression(parts[0].strip(), variables) or 0
+                for part in parts[1:]:
+                    part_value = self.evaluate_expression(part.strip(), variables)
+                    if part_value is not None:
+                        result -= part_value
+                return result
+                
+            # Multiplication
+            if '*' in processed_expr:
+                parts = processed_expr.split('*')
+                result = 1
+                for part in parts:
+                    part_value = self.evaluate_expression(part.strip(), variables)
+                    if part_value is not None:
+                        result *= part_value
+                return result
+                
+            # Division
+            if '/' in processed_expr:
+                parts = processed_expr.split('/')
+                result = self.evaluate_expression(parts[0].strip(), variables)
+                for part in parts[1:]:
+                    part_value = self.evaluate_expression(part.strip(), variables)
+                    if part_value is not None and part_value != 0:
+                        result /= part_value
+                return result
+                
+            # String value
+            if processed_expr.startswith('"') and processed_expr.endswith('"'):
+                return processed_expr[1:-1]  # Remove quotes
+                
+            # Try to find the variable if it's a reference
+            if processed_expr.startswith('@'):
+                for var_name, value in variables.items():
+                    if var_name == processed_expr:
+                        return value
+                
+            return None
+            
+        except Exception as e:
+            self.append_terminal_output(f"Expression evaluation error: {str(e)}", text_color="red")
+            return None
 
     def append_terminal_output(self, text, text_color=None):
         """Append text to the terminal output with mode-aware colors"""
@@ -1035,59 +1098,13 @@ class App(customtkinter.CTk):
                         if widget.grid_info()['row'] % 2 == 0 
                         else "#F5F5F5" if is_light else "#323232"
                     )
-
-    def execute_command(self, event=None):
-        """Execute the command entered in the command input field."""
-        command = self.command_input.get()
-        if command.strip():
-            self.append_terminal_output(f"Executing: {command}")
-            subprocess.run(command, shell=True, stdout=sys.stdout, stderr=sys.stderr)
-
+                    
     def clear_terminal_output(self):
         """Clear the terminal output."""
         self.terminal_output.configure(state="normal")  # Make it editable temporarily
         self.terminal_output.delete("1.0", END)  # Clear all text
         self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
         self.terminal_output.configure(state="disabled")  # Make it read-only again
-
-    def find_variable_value(self, code, var_name):
-        """Extract variable value from code by finding its declaration"""
-        # Look for Feint declarations
-        feint_match = re.search(rf'Feint\s+{var_name}\s*=\s*([^;]+);', code)
-        if feint_match:
-            value = feint_match.group(1).strip()
-            try:
-                if value.isdigit():
-                    return int(value)
-                return value
-            except:
-                return value
-                
-        # Look for Floater declarations
-        floater_match = re.search(rf'Floater\s+{var_name}\s*=\s*([^;]+);', code)
-        if floater_match:
-            value = floater_match.group(1).strip()
-            try:
-                if '.' in value:
-                    return float(value)
-                return value
-            except:
-                return value
-                
-        # Look for any other assignments
-        other_match = re.search(rf'{var_name}\s*=\s*([^;]+);', code)
-        if other_match:
-            value = other_match.group(1).strip()
-            try:
-                if '.' in value:
-                    return float(value)
-                elif value.isdigit():
-                    return int(value)
-                return value
-            except:
-                return value
-                
-        return None
 
 if __name__ == "__main__":
     app = App()

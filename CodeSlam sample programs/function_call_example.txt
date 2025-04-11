@@ -1,0 +1,42 @@
+# Function Call in CodeSlam
+
+# Function Call demonstration (1-4 for different operations)
+Dunk @functionCall(@choice) {
+    Feint @a = 10, @b = 5;
+    
+    Dribble (@choice == 1){
+        Announce("Multiplication: " & @a * @b);
+    }Pass (@choice == 2){
+        Announce("Division: " & @a / @b);
+    }Pass (@choice == 3){
+        Announce("Addition: " & @a + @b);
+    }Pass (@choice == 4){
+        Announce("Subtraction: " & @a - @b);
+    }Shoot {
+        Announce("Invalid choice");
+    }
+}
+
+# Call with choice 1 (Multiplication)
+Team() {
+    Feint @choice = 1;  
+    @functionCall(@choice);
+}
+
+# Call with choice 2 (Division)
+Team() {
+    Feint @choice = 2;  
+    @functionCall(@choice);
+}
+
+# Call with choice 3 (Addition)
+Team() {
+    Feint @choice = 3;  
+    @functionCall(@choice);
+}
+
+# Call with choice 4 (Subtraction)
+Team() {
+    Feint @choice = 4;  
+    @functionCall(@choice);
+} 
