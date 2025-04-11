@@ -662,50 +662,6 @@ class App(customtkinter.CTk):
                 fg_color="#1f538d"  # Blue background when enabled
             )
 
-    # def sidebar_button_syntax(self):
-    #     self.clear_terminal_output()
-    #     self.editor_frame.clear_error_highlights()
-        
-    #     # Get the tokens from the lexical analyzer table
-    #     tokens = []
-    #     for widget in self.scrollable_frame.winfo_children():
-    #         if isinstance(widget, customtkinter.CTkFrame) and widget.grid_info()['row'] > 0:  # Skip header row
-    #             # Get token type and lexeme from the table
-    #             lexeme_label = widget.winfo_children()[0]
-    #             token_label = widget.winfo_children()[1]
-                
-    #             lexeme = lexeme_label.cget("text")
-    #             token_type = token_label.cget("text")
-                
-    #             # Create Token object with token type as both type and value
-    #             token = Token(TokenType[token_type], token_type)
-    #             tokens.append(token)
-        
-    #     # If no tokens found, show error
-    #     if not tokens:
-    #         self.append_terminal_output("No tokens to analyze. Run lexical analysis first.", text_color="red")
-    #         return
-        
-    #     # If tokens found, proceed with syntax analysis
-    #     result = parse(tokens)
-    #     if result is True:  # Check if result is specifically True
-    #         self.append_terminal_output("No Syntax Errors", text_color="green")
-    #         self.sideBtnSemantic.configure(
-    #             state="normal",
-    #             fg_color="#1f538d"  # Blue background when enabled
-    #         )
-    #     else:  # Result is a SyntaxError object
-    #         # Format the error message to match the console output format
-    #         error_msg = f"Syntax Error at line {result.line_number}, column {result.column}: Expected Token: {{{result.expected}}}, Unexpected Token: {result.token}"
-    #         # Display in terminal output
-    #         self.append_terminal_output(error_msg, text_color="red")
-    #         # Highlight the error in the code editor
-    #         if hasattr(result, 'line_number') and hasattr(result, 'column'):
-    #             self.editor_frame.highlight_error(result.line_number, result.column)
-    #         self.sideBtnSemantic.configure(
-    #             state="disabled",
-    #             fg_color="#2B2B2B"  # Dark background when disabled
-    #         )
     def sidebar_button_syntax(self):
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
@@ -751,7 +707,76 @@ class App(customtkinter.CTk):
             )
 
     def sidebar_button_semantic(self):
-        self.append_terminal_output("Semantic Button Clicked!")
+        self.clear_terminal_output()
+        self.editor_frame.clear_error_highlights()
+        
+        # Get the code from the editor
+        code = self.codebox.get("1.0", "end-1c")
+        
+        # Enable debug mode for diagnostics
+        debug_mode = False  # Set to True to see detailed token information
+        
+        # Run lexical analysis to get tokens
+        tokens, lex_errors = run(code)
+        
+        # Check for lexical errors
+        if lex_errors:
+            self.append_terminal_output("Cannot perform semantic analysis due to lexical errors.", text_color="red")
+            for error in lex_errors:
+                self.append_terminal_output(str(error), text_color="red")
+            return
+        
+        try:
+            # Assume syntax is valid (already checked in the syntax analyzer step)
+            # Proceed directly with semantic analysis            
+            self.append_terminal_output("Semantic Analysis Running:", text_color="blue")
+            
+            # Import our semantic analyzer
+            from Analyzers.semantic_analyzer import analyze_and_execute
+            
+            # Define a callback function to display output in terminal
+            def output_callback(message):
+                # Check if it's an error message
+                if "Error" in message:
+                    self.append_terminal_output(message, text_color="red")
+                else:
+                    # Regular output in green
+                    self.append_terminal_output(message, text_color="green")
+                
+            # Run semantic analysis and execution
+            result = analyze_and_execute(tokens, output_callback, debug=debug_mode)
+            
+            # Check if result is an error message
+            if result and ("Error" in result or "error" in result):
+                self.append_terminal_output(f"Semantic Error: {result}", text_color="red")
+                
+                # Extract line and column numbers for highlighting
+                import re
+                match = re.search(r"line (\d+), column (\d+)", result)
+                if match:
+                    line_num = int(match.group(1))
+                    col_num = int(match.group(2))
+                    self.editor_frame.highlight_error(line_num, col_num)
+            elif not result:
+                # No output returned, this is a success
+                self.append_terminal_output("Program executed successfully.", text_color="green")
+            
+        except Exception as e:
+            # Handle any semantic errors
+            error_message = str(e)
+            self.append_terminal_output(f"Semantic Error: {error_message}", text_color="red")
+            
+            # Highlight error location if available
+            if hasattr(e, 'line_number') and hasattr(e, 'column'):
+                self.editor_frame.highlight_error(e.line_number, e.column)
+            else:
+                # Try to extract line and column from error message
+                import re
+                match = re.search(r"line (\d+), column (\d+)", error_message)
+                if match:
+                    line_num = int(match.group(1))
+                    col_num = int(match.group(2))
+                    self.editor_frame.highlight_error(line_num, col_num)
 
     def append_terminal_output(self, text, text_color=None):
         """Append text to the terminal output with mode-aware colors"""

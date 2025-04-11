@@ -431,6 +431,8 @@ class Parser:
         self.expect(TokenType.VAR_INIT)
         
         # Variable name is now handled correctly - no additional check needed
+        # Note: Variables can be assigned without prior declaration
+        # The semantic analyzer will handle type inference and checking
         
         # Match assignment operator
         self.expect(TokenType.ASSIGN)
