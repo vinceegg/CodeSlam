@@ -14,7 +14,7 @@ FIRST_SETS = {
     },
     "statement": {
         TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT,
-        TokenType.ANNOUNCE, TokenType.VAR_INIT, TokenType.PASS
+        TokenType.ANNOUNCE, TokenType.VAR_INIT, TokenType.PASS, TokenType.FORWARD, TokenType.SWITCH, TokenType.TIMEOUT, TokenType.INBOUND
     },
     "variable_declaration": {
         TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT, TokenType.COMMA
@@ -67,5 +67,32 @@ FIRST_SETS = {
     "argument_list": {
         TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT,
         TokenType.LEFT_PAREN, TokenType.VAR_INIT
+    },
+    "for_loop_statement": {
+        TokenType.FORWARD
+    },
+    "for_loop_initialization": {
+        TokenType.FEINT, TokenType.CHANT, TokenType.FLOATER, TokenType.STAT, TokenType.VAR_INIT
+    },
+    "for_loop_update": {
+        TokenType.VAR_INIT
+    },
+    "variable_assignment_without_semicolon": {
+        TokenType.VAR_INIT
+    },
+    "inbound_statement": {
+        TokenType.INBOUND
+    },
+    "switch_statement": {
+        TokenType.SWITCH
+    },
+    "case_statement": {
+        TokenType.GET
+    },
+    "default_statement": {
+        TokenType.DEFAULT
+    },
+    "timeout_statement": {
+        TokenType.TIMEOUT
     }
 }

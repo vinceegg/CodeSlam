@@ -24,6 +24,7 @@ PREDICT_SETS = {
     ("statement_list", TokenType.CODE_BLOCK_RIGHT): 2,  # Empty production
     
     # Statement productions
+    ("statement", TokenType.FORWARD): 8,  # For loop statement
     ("statement", TokenType.FEINT): 1,  # Variable declaration
     ("statement", TokenType.CHANT): 2,  # Variable declaration
     ("statement", TokenType.FLOATER): 3,  # Variable declaration
@@ -31,6 +32,9 @@ PREDICT_SETS = {
     ("statement", TokenType.ANNOUNCE): 5,  # Announce statement
     ("statement", TokenType.VAR_INIT): 6,  # Variable assignment
     ("statement", TokenType.DRIBBLE): 7,  # Conditional statement
+    ("statement", TokenType.INBOUND): 9,   # Inbound statement
+    ("statement", TokenType.SWITCH): 10,   # Switch statement
+    ("statement", TokenType.TIMEOUT): 11,  # Timeout statement
     
     # Variable declaration
     ("variable_declaration", TokenType.FEINT): 1,
@@ -97,4 +101,29 @@ PREDICT_SETS = {
     ("argument_list", TokenType.CHANTLIT): 1,
     ("argument_list", TokenType.LEFT_PAREN): 1,
     ("argument_list", TokenType.VAR_INIT): 1,
+
+    # For loop statement productions
+    ("for_loop_statement", TokenType.FORWARD): 1,
+    
+    # For loop initialization productions
+    ("for_loop_initialization", TokenType.FEINT): 1,
+    ("for_loop_initialization", TokenType.CHANT): 1,
+    ("for_loop_initialization", TokenType.FLOATER): 1,
+    ("for_loop_initialization", TokenType.STAT): 1,
+    ("for_loop_initialization", TokenType.VAR_INIT): 2,
+    
+    # For loop update productions
+    ("for_loop_update", TokenType.VAR_INIT): 1,
+    
+    # Variable assignment without semicolon productions
+    ("variable_assignment_without_semicolon", TokenType.VAR_INIT): 1,
+
+    # Input/output statement productions
+    ("inbound_statement", TokenType.INBOUND): 1,
+
+    # Switch statement productions
+    ("switch_statement", TokenType.SWITCH): 1,
+    ("case_statement", TokenType.GET): 1,
+    ("default_statement", TokenType.DEFAULT): 1,
+    ("timeout_statement", TokenType.TIMEOUT): 1,
 }
