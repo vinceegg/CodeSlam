@@ -15,7 +15,7 @@ class TokenType(Enum):
     # Control Statements
     DRIBBLE = "DRIBBLE"   # Equivalent to if
     SHOOT = "SHOOT"       # Equivalent to else
-    PASS = "PASS"         # Equivalent to elif
+    PASS = "PASS"         # Equivalent to else if
     DEFAULT = "DEFAULT"   # Equivalent to default
     SWITCH = "SWITCH"     # Equivalent to switch
     GET = "GET"           # Equivalent to case
@@ -36,15 +36,15 @@ class TokenType(Enum):
 
     # Reserved Symbols
     # Assignment Operators
-    ASSIGN = "ASSIGN"          # Assignment: Assigns a value to a variable
-    ADD_ASSIGN = "ADD_ASSIGN"  # Add and Assign: Adds and assigns the result to a variable
-    SUB_ASSIGN = "SUB_ASSIGN"  # Subtract and Assign: Subtracts and assigns the result to a variable
-    MUL_ASSIGN = "MUL_ASSIGN"  # Multiply and Assign: Multiplies and assigns the result to a variable
-    DIV_ASSIGN = "DIV_ASSIGN"  # Divide and Assign: Divides and assigns the result to a variable
-    MOD_ASSIGN = "MOD_ASSIGN"  # Modulus and Assign: Finds modulus and assigns the result to a variable
+    ASSIGN = "ASSIGN"          # Assignment: Assigns a value to a variable =
+    ADD_ASSIGN = "ADD_ASSIGN"  # Add and Assign: Adds and assigns the result to a variable +=
+    SUB_ASSIGN = "SUB_ASSIGN"  # Subtract and Assign: Subtracts and assigns the result to a variable -=
+    MUL_ASSIGN = "MUL_ASSIGN"  # Multiply and Assign: Multiplies and assigns the result to a variable *=
+    DIV_ASSIGN = "DIV_ASSIGN"  # Divide and Assign: Divides and assigns the result to a variable /=
+    MOD_ASSIGN = "MOD_ASSIGN"  # Modulus and Assign: Finds modulus and assigns the result to a variable %=
 
     # Arithmetic Operators
-    ADD = "ADD"                     # Addition: Adds two values together
+    ADD = "ADD"                     # Addition: Adds two values together 
     SUB = "SUB"                     # Subtraction: Finds the difference between two values
     NEG = "NEG"                     # Negative: Negative Symbol
     MUL = "MUL"                     # Multiplication: Multiplies two values
@@ -54,7 +54,7 @@ class TokenType(Enum):
     FLOATERLIT = "FLOATERLIT"       # Float Literal: Represents a floating-point value
     NEGAFEINT = "NEGAFEINT"         # Negative: Negates the numerical values, making positive negative and vice versa
     NEGAFLOATER = "NEGAFLOATER"     # Negative: Negates the numerical values, making positive negative and vice versa
-    CHANTLIT = "CHANTLIT"          # String Literal: Represents a string value
+    CHANTLIT = "CHANTLIT"           # String Literal: Represents a string value
 
     # Relational Operators
     EQUAL = "EQUAL"                    # Equal to: Checks if two values are equal
@@ -83,7 +83,7 @@ class TokenType(Enum):
     COMMA = "COMMA"                             # Comma: Used to separate values in a list
     COLON = "COLON"                             # Colon: Used to separate key-value pairs in a dictionary
     SEMICOLON = "SEMICOLON"                     # Semicolon: Used to terminate statements
-    SINGLE_COMMENT = "SINGLE_COMMENT"                  # Comment: Used to add comments in the code
+    SINGLE_COMMENT = "SINGLE_COMMENT"           # Comment: Used to add comments in the code
     MULTI_COMMENT = "MULTI_COMMENT"             # Multi-line Comment: Used to add multi-line comments in the code
     TAB = "TAB"                                 # Tab: Used to separate tokens
     NEWLINE = "NEWLINE"                         # New Line: Used to separate tokens
