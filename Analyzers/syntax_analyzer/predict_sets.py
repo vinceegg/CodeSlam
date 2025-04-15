@@ -45,7 +45,8 @@ PREDICT_SETS = {
     ('more_feint', TokenType.ASSIGN): 13,
     
     # <feint_init> productions
-    ('feint_init', TokenType.SEMICOLON, TokenType.COMMA): 14,
+    ('feint_init', TokenType.SEMICOLON): 14,
+    ('feint_init', TokenType.COMMA): 14,
     ('feint_init', TokenType.ASSIGN): 15,
     
     # <feint_lit> productions
@@ -63,7 +64,8 @@ PREDICT_SETS = {
     ('more_floater', TokenType.ASSIGN): 21,
     
     # <floater_init> productions
-    ('floater_init', TokenType.SEMICOLON, TokenType.COMMA): 22,
+    ('floater_init', TokenType.SEMICOLON): 22,
+    ('floater_init', TokenType.COMMA): 22,
     ('floater_init', TokenType.ASSIGN): 23,
     
     # <floater_lit> productions
@@ -81,7 +83,8 @@ PREDICT_SETS = {
     ('more_chant', TokenType.ASSIGN): 29,
     
     # <chant_init> productions
-    ('chant_init', TokenType.SEMICOLON, TokenType.COMMA): 30,
+    ('chant_init', TokenType.SEMICOLON): 30,
+    ('chant_init', TokenType.COMMA): 30,
     ('chant_init', TokenType.ASSIGN): 31,
     
     # <chant_lit> productions
@@ -99,7 +102,8 @@ PREDICT_SETS = {
     ('more_stat', TokenType.COMMA): 37,
     
     # <stat_init> productions
-    ('stat_init', TokenType.SEMICOLON, TokenType.COMMA): 38,
+    ('stat_init', TokenType.SEMICOLON): 38,
+    ('stat_init', TokenType.COMMA): 38,
     ('stat_init', TokenType.ASSIGN): 39,
     
     # <stat_value> productions
@@ -195,7 +199,8 @@ PREDICT_SETS = {
     ('2D_feint_row', TokenType.COMMA): 79,
     
     # <more_feint_lit> productions
-    ('more_feint_lit', TokenType.CODE_BLOCK_RIGHT, TokenType.RIGHT_PAREN): 80,
+    ('more_feint_lit', TokenType.CODE_BLOCK_RIGHT): 80,
+    ('more_feint_lit', TokenType.RIGHT_PAREN): 80,
     ('more_feint_lit', TokenType.COMMA): 81,
     
     # <floater_array> productions
@@ -214,7 +219,8 @@ PREDICT_SETS = {
     ('2D_floater_row', TokenType.COMMA): 88,
     
     # <more_floater_lit> productions
-    ('more_floater_lit', TokenType.CODE_BLOCK_RIGHT, TokenType.RIGHT_PAREN): 89,
+    ('more_floater_lit', TokenType.CODE_BLOCK_RIGHT): 89,
+    ('more_floater_lit', TokenType.RIGHT_PAREN): 89,
     ('more_floater_lit', TokenType.COMMA): 90,
     
     # <chant_array> productions
@@ -233,7 +239,8 @@ PREDICT_SETS = {
     ('2D_chant_row', TokenType.COMMA): 97,
     
     # <more_chant_lit> productions
-    ('more_chant_lit', TokenType.CODE_BLOCK_RIGHT, TokenType.RIGHT_PAREN): 98,
+    ('more_chant_lit', TokenType.CODE_BLOCK_RIGHT): 98,
+    ('more_chant_lit', TokenType.RIGHT_PAREN): 98,
     ('more_chant_lit', TokenType.COMMA): 99,
     
     # <function_def> productions
@@ -348,7 +355,8 @@ PREDICT_SETS = {
 
     # <2d_manipulation> productions
     ('2d_manipulation', TokenType.ARRAY_INDEX_LEFT): 141,
-    ('2d_manipulation', TokenType.ASSIGN, TokenType.SEMICOLON): 142,
+    ('2d_manipulation', TokenType.ASSIGN): 142,
+    ('2d_manipulation', TokenType.SEMICOLON): 142,
     
     # <array_man> productions
     ('array_man', TokenType.ASSIGN): 143,
@@ -388,7 +396,8 @@ PREDICT_SETS = {
     ('outputs', TokenType.VAR_INIT): 152,
 
     # <otpts> productions
-    ('otpts', TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT): 153,
+    ('otpts', TokenType.RIGHT_PAREN): 153,
+    ('otpts', TokenType.CHANT_CONCAT): 153,
     ('otpts', TokenType.ARRAY_INDEX_LEFT): 154,
 
     ('outputs', TokenType.FEINTLIT): 155,
