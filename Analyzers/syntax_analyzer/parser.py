@@ -426,22 +426,21 @@ class Parser:
     def parse_const_dec(self) -> None:
         """<const_dec> → <const_feint> | <const_floater> | <const_chant> | <const_stat>"""
         self.current_nonterminal = "const_dec"
-        expected_tokens = self.get_expected_tokens("const_dec")
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("const_dec", expected_tokens)    
-        
+        # Expect CONST token
         self.expect(TokenType.CONST)
-        if self.match_token_type(self.current_token, TokenType.FEINT):
+          
+        # Check which type of constant declaration follows
+        if self.current_token and self.current_token.type == TokenType.FEINT:
             self.parse_const_feint()
-        elif self.match_token_type(self.current_token, TokenType.FLOATER):
+        elif self.current_token and self.current_token.type == TokenType.FLOATER:
             self.parse_const_floater()
-        elif self.match_token_type(self.current_token, TokenType.CHANT):
+        elif self.current_token and self.current_token.type == TokenType.CHANT:
             self.parse_const_chant()
-        elif self.match_token_type(self.current_token, TokenType.STAT):
+        elif self.current_token and self.current_token.type == TokenType.STAT:
             self.parse_const_stat()
         else:
-            self.error_handler("const_dec")
+            self.error_handler("const_dec", [TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT])
             
     def parse_const_feint(self) -> None:
         """<const_feint> → Feint @identifier <feint_const_init>;"""
