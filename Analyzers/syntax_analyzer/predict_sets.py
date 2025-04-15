@@ -619,7 +619,7 @@ PREDICT_SETS = {
     ('chant_type_casting', TokenType.CHANT): 201,
     
     # <stat_type_casting> productions
-    ('stat_type_casting', TokenType.SEMICOLON): 202,
+    ('stat_type_casting', TokenType.STAT): 202,
     
     # <assign_operand> productions
     ('assign_operand', TokenType.FEINTLIT): 203,

@@ -276,15 +276,18 @@ FIRST_SETS = {
     'outputs': {TokenType.VAR_INIT, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
               TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
     
-    # <olpts>
-    'olpts': {TokenType.ARRAY_INDEX_LEFT},
-    
     # <other_outputs>
     'other_outputs': {TokenType.CHANT_CONCAT},
     
     # <literal>
     'literal': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
                TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
+
+    # <nega_feint_lit>
+    'nega_feint_lit': {TokenType.NEGAFEINT},
+
+    # <nega_floater_lit>
+    'nega_floater_lit': {TokenType.NEGAFLOATER}, 
     
     # <expression>
     'expression': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
@@ -347,6 +350,9 @@ FIRST_SETS = {
     
     # <chant_type_casting>
     'chant_type_casting': {TokenType.CHANT},
+
+    # <stat_type_casting>
+        'stat_type_casting': {TokenType.STAT},
     
     # <assign_operand>
     'assign_operand': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
@@ -438,8 +444,8 @@ FIRST_SETS = {
     # <team_block>
     'team_block': {TokenType.TEAM},
     
-    # <local_dec>
-    'local_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ZONE},
+    # <local_decl>
+    'local_decl': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ZONE},
     
     # <local_declaration>
     'local_declaration': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ZONE},
