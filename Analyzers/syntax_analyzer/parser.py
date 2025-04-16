@@ -216,6 +216,7 @@ class Parser:
         if self.current_token and self.match_token_type(self.current_token, TokenType.CONST):
             self.parse_const_dec()
         elif self.current_token and self.match_token_type(self.current_token, TokenType.ZONE):
+            self.expect(TokenType.ZONE)  # Consume ZONE token
             self.parse_array_dec()
         else:
             self.parse_variable_dec()
@@ -620,7 +621,7 @@ class Parser:
             self.error_handler("array_dec", expected_tokens)
         
         # Expect ZONE token first for all array declarations
-        self.expect(TokenType.ZONE)
+        # self.expect(TokenType.ZONE)
         
         if self.match_token_type(self.current_token, TokenType.FEINT):
             self.parse_feint_array()
@@ -1942,6 +1943,7 @@ class Parser:
             self.error_handler("local_declaration", expected_tokens)
         
         if self.current_token and self.match_token_type(self.current_token, TokenType.ZONE):
+            self.expect(TokenType.ZONE)  # Consume ZONE token
             self.parse_array_dec()
         else:
             self.parse_variable_dec()
