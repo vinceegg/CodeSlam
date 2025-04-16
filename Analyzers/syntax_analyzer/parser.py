@@ -1196,16 +1196,16 @@ class Parser:
         self.parse_expression()
 
     def parse_other_outputs(self) -> None:
-        """<other_outputs> → λ | & <outputs>"""
+        """<other_outputs> → λ | & <otpt>"""
         self.current_nonterminal = "other_outputs"
         
         # If not a concatenation operator, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.CHANT_CONCAT):
             return  # λ case
         
-        # Otherwise, parse & <outputs>
+        # Otherwise, parse & <otpts>
         self.expect(TokenType.CHANT_CONCAT)
-        self.parse_outputs()
+        self.parse_otpt()
 
     def parse_literal(self) -> None:
         """<literal> → <feint_lit> | <floater_lit> | <nega_feint_lit> | <nega_floater_lit> | <chant_lit> | <stat_value>"""
@@ -1381,7 +1381,7 @@ class Parser:
         self.parse_more_factor()  # Recursive call
 
     def parse_factor(self) -> None:
-        """<factor> → <literal> | @identifier | (<expression>) | NOT <factor> | <number_type_cast>"""
+        """<factor> → <literal> | @identifier <function_call> | (<expression>) | NOT <factor> | <number_type_cast>"""
         self.current_nonterminal = "factor"
         expected_tokens = self.get_expected_tokens("factor")
         
@@ -1391,6 +1391,7 @@ class Parser:
         # Handle different factor options
         if self.match_token_type(self.current_token, TokenType.VAR_INIT):
             self.expect(TokenType.VAR_INIT)
+            self.parse_function_call()
         elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
             self.expect(TokenType.LEFT_PAREN)
             self.parse_expression()
@@ -1479,30 +1480,23 @@ class Parser:
         self.expect(TokenType.RIGHT_PAREN)
 
     def parse_assign_operand(self) -> None:
-        """<assign_operand> → <expression> | <function_call>"""
+        """<assign_operand> → <expression>"""
         self.current_nonterminal = "assign_operand"
         expected_tokens = self.get_expected_tokens("assign_operand")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("assign_operand", expected_tokens)
         
-        # Check if the next token might indicate a function call (VAR_INIT followed by LEFT_PAREN)
-        peek_token = self.peek()
-        if (self.current_token and self.match_token_type(self.current_token, TokenType.VAR_INIT) and 
-            peek_token and self.match_token_type(peek_token, TokenType.LEFT_PAREN)):
-            self.parse_function_call()
-        else:
-            self.parse_expression()
+        self.parse_expression()
 
     def parse_function_call(self) -> None:
-        """<function_call> → @identifier(<arguments>)"""
+        """<function_call> → (<arguments>) | λ"""
         self.current_nonterminal = "function_call"
         expected_tokens = self.get_expected_tokens("function_call")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("function_call", expected_tokens)
-        
-        self.expect(TokenType.VAR_INIT)
+            return  # λ case
+
         self.expect(TokenType.LEFT_PAREN)
         self.parse_arguments()
         self.expect(TokenType.RIGHT_PAREN)
