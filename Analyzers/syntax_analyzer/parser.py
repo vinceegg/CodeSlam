@@ -1458,7 +1458,6 @@ class Parser:
         if self.match_token_type(self.current_token, TokenType.VAR_INIT):
             self.expect(TokenType.VAR_INIT)
             self.parse_function_call()
-            self.expect(TokenType.SEMICOLON)
         elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
             self.expect(TokenType.LEFT_PAREN)
             self.parse_expression()
@@ -1567,6 +1566,7 @@ class Parser:
         self.expect(TokenType.LEFT_PAREN)
         self.parse_arguments()
         self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.SEMICOLON)
 
     def parse_arguments(self) -> None:
         """<arguments> → <arg> <more_args> | λ"""
