@@ -209,19 +209,16 @@ FIRST_SETS = {
     'param_end': {TokenType.COMMA, },
     
     # <function_statement>
-    'function_statement': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ANNOUNCE,
-                          TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY,
-                          TokenType.RUN, TokenType.VAR_INIT, },
+    'function_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, 
+                           TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT},
     
     # <team_statement>
-    'team_statement': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ANNOUNCE,
-                      TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY,
-                      TokenType.RUN, TokenType.VAR_INIT},
+    'team_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, 
+                           TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT},
     
     # <statement>
-    'statement': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ANNOUNCE,
-                 TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY,
-                 TokenType.RUN, TokenType.VAR_INIT},
+    'statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, 
+                           TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT},
     
     # <announce_statement>
     'announce_statement': {TokenType.ANNOUNCE},
@@ -245,14 +242,12 @@ FIRST_SETS = {
     'run_play_statement': {TokenType.RUN},
     
     # <follow_statement>
-    'follow_statement': {TokenType.INCREMENT, TokenType.DECREMENT, TokenType.LEFT_PAREN, TokenType.ASSIGN, 
+    'follow_statement': {TokenType.INCREMENT, TokenType.DECREMENT, TokenType.ASSIGN, 
                         TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN, TokenType.MUL_ASSIGN, 
-                        TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN, TokenType.ARRAY_INDEX_LEFT},
+                        TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN, TokenType.ARRAY_INDEX_LEFT, TokenType.VAR_INIT},
 
     # <element_index>
-    'element_index': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
-                     TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                     TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+    'element_index': {TokenType.FEINTLIT, TokenType.VAR_INIT},
     
     # <2d_manipulation>
     '2d_manipulation': {TokenType.ARRAY_INDEX_LEFT},
@@ -270,11 +265,13 @@ FIRST_SETS = {
     
     # <otpt>
     'otpt': {TokenType.VAR_INIT, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
-            TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
+            TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.LEFT_PAREN, 
+            TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
     
     # <outputs>
     'outputs': {TokenType.VAR_INIT, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
-              TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS},
+            TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.LEFT_PAREN, 
+            TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
     
     # <other_outputs>
     'other_outputs': {TokenType.CHANT_CONCAT},
@@ -360,7 +357,7 @@ FIRST_SETS = {
                       TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
     
     # <function_call>
-    'function_call': {TokenType.VAR_INIT},
+    'function_call': {TokenType.LEFT_PAREN},
     
     # <arguments>
     'arguments': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
@@ -385,16 +382,14 @@ FIRST_SETS = {
     'add_condition': {TokenType.PASS, TokenType.SHOOT},
     
     # <loop_statements>
-    'loop_statements': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
-                       TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
+    'loop_statements': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                        TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                       TokenType.RESUME},
+                       TokenType.RESUME, TokenType.TIMEOUT},
     
     # <loop_statement>
-    'loop_statement': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
-                      TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
-                      TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                      TokenType.RESUME},
+    'loop_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
+                       TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
+                       TokenType.RESUME, TokenType.TIMEOUT},
     
     # <switch_statement>
     'switch_statement': {TokenType.SWITCH},
