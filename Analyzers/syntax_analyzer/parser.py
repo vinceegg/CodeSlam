@@ -1135,9 +1135,14 @@ class Parser:
             self.parse_run_play_statement()
         elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
             # For @identifier <follow_statement>;
-            self.expect(TokenType.VAR_INIT)
-            self.parse_follow_statement()
-            self.expect(TokenType.SEMICOLON)
+            self.expect(TokenType.VAR_INIT)          
+            # Check if the next token is LEFT_PAREN for function call
+            if self.current_token and self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
+                self.parse_function_call()
+                self.expect(TokenType.SEMICOLON)  # Move semicolon expectation here
+            else:
+                self.parse_follow_statement()
+                self.expect(TokenType.SEMICOLON)
         else:
             self.error_handler("statement", expected_tokens)
         
@@ -1566,7 +1571,7 @@ class Parser:
         self.expect(TokenType.LEFT_PAREN)
         self.parse_arguments()
         self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.SEMICOLON)
+        # self.expect(TokenType.SEMICOLON)
 
     def parse_arguments(self) -> None:
         """<arguments> → <arg> <more_args> | λ"""
