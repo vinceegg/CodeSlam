@@ -205,28 +205,29 @@ class Parser:
         # The λ case is handled implicitly by just returning
 
     def parse_global_declaration(self) -> None:
-        """<global_declaration> → <variable_dec> | <const_dec> | <array_dec>"""
+        """<global_declaration> → <variable_dec> | Const <const_dec> | Zone <array_dec>"""
         self.current_nonterminal = "global_declaration"
         expected_tokens = self.get_expected_tokens("global_declaration")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("global_declaration", expected_tokens)
-
-        if self.match_token_type(self.current_token, TokenType.CONST):
+        
+        # Check which type of declaration follows
+        if self.current_token and self.match_token_type(self.current_token, TokenType.CONST):
             self.parse_const_dec()
-        elif self.match_token_type(self.current_token, TokenType.ZONE):
+        elif self.current_token and self.match_token_type(self.current_token, TokenType.ZONE):
             self.parse_array_dec()
         else:
             self.parse_variable_dec()
 
     def parse_variable_dec(self) -> None:
-        """Parse variable declarations"""
+        """<variable_dec> → <feint_dec> | <floater_dec> | <chant_dec> | <stat_dec>"""
         self.current_nonterminal = "variable_dec"
         expected_tokens = self.get_expected_tokens("variable_dec")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("variable_dec", expected_tokens)
-
+        
         if self.match_token_type(self.current_token, TokenType.FEINT):
             self.parse_feint_dec()
         elif self.match_token_type(self.current_token, TokenType.FLOATER):
@@ -235,6 +236,8 @@ class Parser:
             self.parse_chant_dec()
         elif self.match_token_type(self.current_token, TokenType.STAT):
             self.parse_stat_dec()
+        else:
+            self.error_handler("variable_dec")
 
     def parse_feint_dec(self) -> None:
         """<feint_dec> → Feint @identifier <more_feint>;"""
@@ -243,22 +246,21 @@ class Parser:
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("feint_dec", expected_tokens)
-
+        
         self.expect(TokenType.FEINT)
         self.expect(TokenType.VAR_INIT)
         self.parse_more_feint()
-        self.expect(TokenType.SEMICOLON)
-
+        self.expect(TokenType.SEMICOLON)   
+        
     def parse_more_feint(self) -> None:
-        """<more_feint> → λ | <feint_init><feint_init_end>"""
+        """<more_feint> → λ | <feint_init> <feint_init_end>"""
         self.current_nonterminal = "more_feint"
         expected_tokens = self.get_expected_tokens("more_feint")
         
-        # Only proceed if we see an ASSIGN token, otherwise return (λ case)
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
+        # If we don't have tokens in FIRST(feint_init), return (λ case)
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
-
-        # If we get here, we have an ASSIGN token
+        
         self.parse_feint_init()
         self.parse_feint_init_end()
 
@@ -267,11 +269,10 @@ class Parser:
         self.current_nonterminal = "feint_init"
         expected_tokens = self.get_expected_tokens("feint_init")
         
-        # Only proceed if we see an ASSIGN token, otherwise return (λ case)
+        # If we don't have an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
             return  # λ case
-
-        # If we get here, we have an ASSIGN token
+        
         self.expect(TokenType.ASSIGN)
         self.parse_feint_lit()
         self.parse_feint_init_end()
@@ -281,42 +282,55 @@ class Parser:
         self.current_nonterminal = "feint_lit"
         expected_tokens = self.get_expected_tokens("feint_lit")
         
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.FEINTLIT):
             self.error_handler("feint_lit", expected_tokens)
-
+        
         self.expect(TokenType.FEINTLIT)
 
     def parse_feint_init_end(self) -> None:
-        """<feint_init_end> → λ | ", @identifier <more_feint>" """
+        """<feint_init_end> → λ | , @identifier <more_feint>"""
         self.current_nonterminal = "feint_init_end"
         expected_tokens = self.get_expected_tokens("feint_init_end")
         
-        # Only proceed if we see a COMMA token, otherwise return (λ case)
+        # If we don't have a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
-
-        # If we get here, we have a COMMA token
+        
         self.expect(TokenType.COMMA)
         self.expect(TokenType.VAR_INIT)
         self.parse_more_feint()
 
     def parse_floater_dec(self) -> None:
         """<floater_dec> → Floater @identifier <more_floater>;"""
+        self.current_nonterminal = "floater_dec"
+        expected_tokens = self.get_expected_tokens("floater_dec")
+        
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            self.error_handler("floater_dec", expected_tokens)
+        
         self.expect(TokenType.FLOATER)
         self.expect(TokenType.VAR_INIT)
         self.parse_more_floater()
         self.expect(TokenType.SEMICOLON)
 
     def parse_more_floater(self) -> None:
-        """<more_floater> → λ | <floater_init><floater_init_end>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
+        """<more_floater> → λ | <floater_init> <floater_init_end>"""
+        self.current_nonterminal = "more_floater"
+        expected_tokens = self.get_expected_tokens("more_floater")
+        
+        # If we don't have tokens in FIRST(floater_init), return (λ case)
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
         
         self.parse_floater_init()
         self.parse_floater_init_end()
 
     def parse_floater_init(self) -> None:
-        """<floater_init> → λ |  = <floater_lit> <floater_init_end>"""
+        """<floater_init> → λ | = <floater_lit> <floater_init_end>"""
+        self.current_nonterminal = "floater_init"
+        expected_tokens = self.get_expected_tokens("floater_init")
+        
+        # If we don't have an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
             return  # λ case
         
@@ -326,10 +340,20 @@ class Parser:
 
     def parse_floater_lit(self) -> None:
         """<floater_lit> → Floater Literal"""
+        self.current_nonterminal = "floater_lit"
+        expected_tokens = self.get_expected_tokens("floater_lit")
+        
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.FLOATERLIT):
+            self.error_handler("floater_lit", expected_tokens)
+        
         self.expect(TokenType.FLOATERLIT)
 
     def parse_floater_init_end(self) -> None:
-        """<floater_init_end> → λ | ", @identifier <more_floater>" """
+        """<floater_init_end> → λ | , @identifier <more_floater>"""
+        self.current_nonterminal = "floater_init_end"
+        expected_tokens = self.get_expected_tokens("floater_init_end")
+        
+        # If we don't have a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
         
@@ -339,65 +363,103 @@ class Parser:
 
     def parse_chant_dec(self) -> None:
         """<chant_dec> → Chant @identifier <more_chant>;"""
+        self.current_nonterminal = "chant_dec"
+        expected_tokens = self.get_expected_tokens("chant_dec")
+        
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            self.error_handler("chant_dec", expected_tokens)
+        
         self.expect(TokenType.CHANT)
         self.expect(TokenType.VAR_INIT)
         self.parse_more_chant()
         self.expect(TokenType.SEMICOLON)
 
     def parse_more_chant(self) -> None:
-        """<more_chant> → λ | <chant_init><chant_init_end>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
+        """<more_chant> → λ | <chant_init> <chant_init_end>"""
+        self.current_nonterminal = "more_chant"
+        expected_tokens = self.get_expected_tokens("more_chant")
+        
+        # If we don't have tokens in FIRST(chant_init), return (λ case)
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
         
         self.parse_chant_init()
         self.parse_chant_init_end()
 
     def parse_chant_init(self) -> None:
-        """<chant_init> → λ | = "<chant_lit>" """
+        """<chant_init> → λ | = <chant_lit> <chant_init_end>"""
+        self.current_nonterminal = "chant_init"
+        expected_tokens = self.get_expected_tokens("chant_init")
+        
+        # If we don't have an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
         self.parse_chant_lit()
         self.parse_chant_init_end()
-        
 
     def parse_chant_lit(self) -> None:
         """<chant_lit> → Chant Literal"""
+        self.current_nonterminal = "chant_lit"
+        expected_tokens = self.get_expected_tokens("chant_lit")
+        
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.CHANTLIT):
+            self.error_handler("chant_lit", expected_tokens)
+        
         self.expect(TokenType.CHANTLIT)
 
     def parse_chant_init_end(self) -> None:
-        """<chant_init_end> → λ | ", @identifier <more_chant>" """
+        """<chant_init_end> → λ | , @identifier <more_chant>"""
+        self.current_nonterminal = "chant_init_end"
+        expected_tokens = self.get_expected_tokens("chant_init_end")
+        
+        # If we don't have a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
         
         self.expect(TokenType.COMMA)
         self.expect(TokenType.VAR_INIT)
         self.parse_more_chant()
-    
+
     def parse_stat_dec(self) -> None:
         """<stat_dec> → Stat @identifier <more_stat>;"""
+        self.current_nonterminal = "stat_dec"
+        expected_tokens = self.get_expected_tokens("stat_dec")
+        
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            self.error_handler("stat_dec", expected_tokens)
+        
         self.expect(TokenType.STAT)
         self.expect(TokenType.VAR_INIT)
         self.parse_more_stat()
         self.expect(TokenType.SEMICOLON)
-        
+
     def parse_more_stat(self) -> None:
-        """<more_stat> → λ | <stat_init><stat_init_end>"""
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
+        """<more_stat> → λ | <stat_init> <stat_init_end>"""
+        self.current_nonterminal = "more_stat"
+        expected_tokens = self.get_expected_tokens("more_stat")
+        
+        # If we don't have tokens in FIRST(stat_init), return (λ case)
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
         
         self.parse_stat_init()
         self.parse_stat_init_end()
-        
+
     def parse_stat_init(self) -> None:
-        """<stat_init> → λ | = <stat_value>"""
+        """<stat_init> → λ | = <stat_value> <stat_init_end>"""
+        self.current_nonterminal = "stat_init"
+        expected_tokens = self.get_expected_tokens("stat_init")
+        
+        # If we don't have an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
             return  # λ case
         
         self.expect(TokenType.ASSIGN)
         self.parse_stat_value()
-        
+        self.parse_stat_init_end()
+
     def parse_stat_value(self) -> None:
         """<stat_value> → Win | Loss"""
         self.current_nonterminal = "stat_value"
@@ -406,23 +468,26 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("stat_value", expected_tokens)
         
-        # Match either Win or Loss
         if self.match_token_type(self.current_token, TokenType.WIN):
             self.expect(TokenType.WIN)
         elif self.match_token_type(self.current_token, TokenType.LOSS):
             self.expect(TokenType.LOSS)
         else:
-            self.error_handler("stat_value", {TokenType.WIN, TokenType.LOSS})
-        
+            self.error_handler("stat_value")
+
     def parse_stat_init_end(self) -> None:
-        """<stat_init_end> → λ | ", @identifier <more_stat_init>" """
+        """<stat_init_end> → λ | , @identifier <more_stat>"""
+        self.current_nonterminal = "stat_init_end"
+        expected_tokens = self.get_expected_tokens("stat_init_end")
+        
+        # If we don't have a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
         
         self.expect(TokenType.COMMA)
         self.expect(TokenType.VAR_INIT)
         self.parse_more_stat()
-        
+
     def parse_const_dec(self) -> None:
         """<const_dec> → <const_feint> | <const_floater> | <const_chant> | <const_stat>"""
         self.current_nonterminal = "const_dec"
@@ -1381,7 +1446,7 @@ class Parser:
         self.parse_more_factor()  # Recursive call
 
     def parse_factor(self) -> None:
-        """<factor> → <literal> | @identifier <function_call> | (<expression>) | NOT <factor> | <number_type_cast>"""
+        """<factor> → <literal> | @identifier <function_call>; | (<expression>) | NOT <factor> | <number_type_cast>"""
         self.current_nonterminal = "factor"
         expected_tokens = self.get_expected_tokens("factor")
         
@@ -1392,6 +1457,7 @@ class Parser:
         if self.match_token_type(self.current_token, TokenType.VAR_INIT):
             self.expect(TokenType.VAR_INIT)
             self.parse_function_call()
+            self.expect(TokenType.SEMICOLON)
         elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
             self.expect(TokenType.LEFT_PAREN)
             self.parse_expression()
