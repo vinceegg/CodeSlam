@@ -65,7 +65,7 @@ FIRST_SETS = {
     'stat_dec': {TokenType.STAT},
     
     # <more_stat>
-    'more_stat': {TokenType.COMMA, TokenType.COMMA},
+    'more_stat': {TokenType.ASSIGN, TokenType.COMMA},
     
     # <stat_init>
     'stat_init': {TokenType.ASSIGN, },
