@@ -174,6 +174,52 @@ class Parser:
             print(f"Syntax Error: {str(e)}")
             raise
 
+    """OLD"""
+    # def parse_program(self) -> None:
+    #     """<program> → <global_decl> <function_def> <team_block>"""
+    #     self.current_nonterminal = "program"
+    #     expected_tokens = self.get_expected_tokens("program")
+        
+    #     if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+    #         self.error_handler("program", expected_tokens)
+
+    #     # Check if current token is in FIRST(global_decl)
+    #     if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("global_decl")):
+    #         self.parse_global_decl()
+        
+    #     # Check if current token is in FIRST(function_def)
+    #     if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("function_def")):
+    #         self.parse_function_def()
+            
+    #     # Team block is required
+    #     self.parse_team_block()
+
+    """NEW"""
+    # def parse_program(self) -> None:
+    #     """<program> → <global_decl> <function_def> <team_block>"""
+    #     self.current_nonterminal = "program"
+    #     expected_tokens = self.get_expected_tokens("program")
+        
+    #     if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+    #         self.error_handler("program", expected_tokens)
+
+    #     # First parse global declarations (which can be empty if λ)
+    #     self.parse_global_decl()
+        
+    #     # After global declarations, parse function definitions (which can be empty if λ)
+    #     self.parse_function_def()
+        
+    #     # Finally, parse the team block (required)
+    #     if not self.current_token or not self.match_token_type(self.current_token, TokenType.TEAM):
+    #         self.error_handler("program", {TokenType.TEAM})
+        
+    #     self.parse_team_block()
+        
+    #     # Ensure no tokens remain after the program
+    #     if self.current_token:
+    #         self.error_handler("program", set(), "Unexpected token after program end")
+
+    """UPDATED"""
     def parse_program(self) -> None:
         """<program> → <global_decl> <function_def> <team_block>"""
         self.current_nonterminal = "program"
@@ -182,16 +228,52 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("program", expected_tokens)
 
-        # Check if current token is in FIRST(global_decl)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("global_decl")):
+        # Track if we've seen each section to enforce order
+        seen_global_decl = False
+        seen_function_def = False
+        seen_team_block = False
+        
+        # Check for global declarations (can be empty, indicated by λ)
+        if self.current_token and any(self.match_token_type(self.current_token, t) 
+                                    for t in self.get_expected_tokens("global_decl")):
+            seen_global_decl = True
             self.parse_global_decl()
         
-        # Check if current token is in FIRST(function_def)
-        if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("function_def")):
+        # After global declarations, check for function definitions (can be empty, indicated by λ)
+        if self.current_token and any(self.match_token_type(self.current_token, t) 
+                                    for t in self.get_expected_tokens("function_def")):
+            seen_function_def = True
             self.parse_function_def()
-            
-        # Team block is required
+        
+        # Finally, the team block is required
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.TEAM):
+            error_msg = "Program structure error: Missing required Team block at the end"
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected="Team block",
+                token=self.current_token.value if self.current_token else "EOF",
+                nonterminal="program"
+            )
+        
+        seen_team_block = True
         self.parse_team_block()
+        
+        # Ensure no tokens remain after the program
+        if self.current_token:
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += f"Unexpected token '{self.current_token.value}' after program end.\n"
+            error_msg += "All code must be within the global declarations, function definitions, or Team block."
+            
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected="Incorrect Structure of the Program",
+                token=self.current_token.value,
+                nonterminal="program"
+            )
 
     def parse_global_decl(self) -> None:
         """<global_decl> → <global_declaration><global_decl> | λ"""
