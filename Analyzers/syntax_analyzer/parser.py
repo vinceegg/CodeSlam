@@ -293,6 +293,9 @@ class Parser:
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("global_declaration", expected_tokens)
+
+        # ADDED
+        start_line = self.line_number
         
         # Check which type of declaration follows
         if self.current_token and self.match_token_type(self.current_token, TokenType.CONST):
@@ -302,6 +305,19 @@ class Parser:
             self.parse_array_dec()
         else:
             self.parse_variable_dec()
+
+        # ADDED
+        if self.current_token and self.line_number == start_line:
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += "Multiple declarations on the same line are not allowed."
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected="Each declaration must be on a separate line",
+                token=self.current_token.value,
+                nonterminal="global_declaration"
+            )
 
     def parse_variable_dec(self) -> None:
         """<variable_dec> → <feint_dec> | <floater_dec> | <chant_dec> | <stat_dec>"""
