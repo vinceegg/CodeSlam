@@ -10,8 +10,6 @@ from Analyzers.lexical_analyzer.lexical import *  # Import all function from lex
 from Analyzers.syntax_analyzer import parse  # Import the parser
 from tkinter import END
 
-from Analyzers.semantic_analyzer.editor_integration import SemanticIntegration
-
 from customtkinter import CTkImage
 from PIL import Image
 from Analyzers.syntax_analyzer.errors import SyntaxError
@@ -709,541 +707,32 @@ class App(customtkinter.CTk):
             )
 
     def sidebar_button_semantic(self):
-        """Handle semantic analysis button click"""
+        """Placeholder function for semantic analysis"""
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
         
-        # Get the code from the editor
-        code = self.codebox.get("1.0", "end-1c")
-        
-        # Import our direct semantic analyzer
-        from CodeEditor.direct_semantic import analyze_code
-        
-        # # Display initial status messages with clean formatting
-        # self.append_terminal_output(">> Loading CodeSlam Compiler...", text_color="blue")
-        # self.append_terminal_output(">> Initializing lexical analysis...", text_color="blue")
-        # self.append_terminal_output(">> Analyzing code structure...", text_color="blue")
-        # self.append_terminal_output(">> Running semantic checks...", text_color="blue")
-        # self.append_terminal_output("")  # Empty line
-        # self.append_terminal_output("=== CodeSlam Analysis Results ===", text_color="green")
-        # self.append_terminal_output("Starting CodeSlam code analysis...")
-        # self.append_terminal_output("==================================================")
-        # self.append_terminal_output("CodeSlam Semantic Analysis Results")
-        # self.append_terminal_output("==================================================")
-        
-        # # Count code elements for display
-        # line_count = code.count('\n') + 1
-        # comment_count = code.count('//') 
-        # variable_matches = re.findall(r'@\w+', code)
-        # variables = list(set(variable_matches))  # Unique variables
-        # functions = re.findall(r'Play\s+(\w+)', code)
-        
-        # # Display code statistics
-        # self.append_terminal_output(f"📊 Lines of Code: {line_count}", text_color="blue")
-        # self.append_terminal_output(f"💬 Comments: {comment_count}", text_color="blue")
-        # self.append_terminal_output(f"🔠 Variables: {len(variables)}", text_color="blue")
-        # self.append_terminal_output(f"⚙️ Functions: {len(functions)}", text_color="blue")
-        
-        # # Variables section
-        # self.append_terminal_output("")
-        # self.append_terminal_output("🔠 Variables:", text_color="blue")
-        # for var in variables:
-        #     # Find the variable type if available
-        #     var_type = "Unknown"
-        #     feint_match = re.search(rf'Feint\s+{var}', code)
-        #     floater_match = re.search(rf'Floater\s+{var}', code)
-            
-        #     if feint_match:
-        #         var_type = "Feint"
-        #     elif floater_match:
-        #         var_type = "Floater"
+        # Get the tokens from the lexical analyzer table
+        tokens = []
+        for widget in self.scrollable_frame.winfo_children():
+            if isinstance(widget, customtkinter.CTkFrame) and widget.grid_info()['row'] > 0:
+                lexeme_label = widget.winfo_children()[0]
+                token_label = widget.winfo_children()[1]
                 
-        #     self.append_terminal_output(f"   - {var} ({var_type})", text_color="purple")
+                lexeme = lexeme_label.cget("text")
+                token_type = token_label.cget("text")
+                
+                token = Token(TokenType[token_type], token_type)
+                tokens.append(token)
         
-        # # Functions section
-        # self.append_terminal_output("")
-        # self.append_terminal_output("⚙️ Functions:", text_color="blue")
-        # for func in functions:
-        #     self.append_terminal_output(f"   - {func}", text_color="purple")
-        
-        # # Control structures
-        # self.append_terminal_output("")
-        # self.append_terminal_output("🔄 Control Structures:", text_color="blue")
-        
-        # # Keyword usage
-        # self.append_terminal_output("")
-        # self.append_terminal_output("🔑 Keyword Usage:", text_color="blue")
-        # keywords = ["Team", "Feint", "Floater", "Chant", "Stat", "Play", "Run", "Switch", "Announce"]
-        # for keyword in keywords:
-        #     count = len(re.findall(rf'\b{keyword}\b', code))
-        #     if count > 0:
-        #         self.append_terminal_output(f"   - {keyword}: {count} occurrences", text_color="purple")
-        
-        # Custom output function for the analyzer
-        def color_output(message):
-            if "Error" in message or "❌" in message:
-                self.append_terminal_output(message, text_color="red")
-            else:
-                # Most analyzer output is filtered since we're showing our own summary
-                pass
-        
-        # Run the real semantic analyzer but capture the result
-        result = analyze_code(code, color_output)
-        
-        # If result contains error location, highlight it and report
-        if isinstance(result, tuple) and len(result) == 2:
-            line_num, col_num = result
-            self.editor_frame.highlight_error(line_num, col_num)
-            self.append_terminal_output("")
-            self.append_terminal_output("❌ Semantic errors detected!", text_color="red")
-        else:
-            self.append_terminal_output("")
-            # self.append_terminal_output("✅ No semantic errors detected", text_color="green")
-            # self.append_terminal_output("")
-            # self.append_terminal_output(">> Compilation complete.", text_color="blue")
-            # self.append_terminal_output("✅ Semantic analysis completed. Program ready to execute!", text_color="green")
-            # Execute the program immediately
-            self.execute_program(code)
-
-    def execute_program(self, code, parent_variables=None):
-        """Execute the CodeSLAM program and display output"""
-        try:
-            # Initialize or inherit the variable store
-            variables = parent_variables if parent_variables is not None else {}
+        if not tokens:
+            self.append_terminal_output("No tokens to analyze. Run lexical analysis first.")
+            return
             
-            # Process line by line to execute statements in order
-            lines = code.split('\n')
-            i = 0
-            while i < len(lines):
-                line = lines[i].strip()
-                i += 1
-                
-                # Skip empty lines and comments
-                if not line or line.startswith('//') or line.startswith('#'):
-                    continue
-                
-                # Feint (integer) variable declarations
-                feint_match = re.search(r'Feint\s+(@\w+)\s*=\s*([^;]+);', line)
-                if feint_match:
-                    var_name = feint_match.group(1)
-                    value_expr = feint_match.group(2).strip()
-                    value = self.evaluate_expression(value_expr, variables)
-                    variables[var_name] = int(value) if value is not None else 0
-                    continue
-                    
-                # Floater (float) variable declarations
-                floater_match = re.search(r'Floater\s+(@\w+)\s*=\s*([^;]+);', line)
-                if floater_match:
-                    var_name = floater_match.group(1)
-                    value_expr = floater_match.group(2).strip()
-                    value = self.evaluate_expression(value_expr, variables)
-                    variables[var_name] = float(value) if value is not None else 0.0
-                    continue
-                
-                # Forward (for) loop statement
-                forward_match = re.search(r'Forward\s*\(\s*(@\w+)\s*=\s*([^;]+);\s*([^;]+);\s*([^)]+)\)\s*{', line)
-                if forward_match:
-                    var_name = forward_match.group(1)
-                    init_expr = forward_match.group(2).strip()
-                    condition_expr = forward_match.group(3).strip()
-                    update_expr = forward_match.group(4).strip()
-                    
-                    # Initialize loop variable
-                    init_value = self.evaluate_expression(init_expr, variables)
-                    variables[var_name] = init_value
-                    
-                    # Find the end of the Forward block
-                    loop_block = []
-                    brace_count = 1
-                    loop_end = i
-                    
-                    while loop_end < len(lines) and brace_count > 0:
-                        curr_line = lines[loop_end].strip()
-                        if '{' in curr_line:
-                            brace_count += curr_line.count('{')
-                        if '}' in curr_line:
-                            brace_count -= curr_line.count('}')
-                        if brace_count > 0:
-                            loop_block.append(lines[loop_end])
-                        loop_end += 1
-                    
-                    # Execute the loop
-                    loop_code = '\n'.join(loop_block)
-                    
-                    # Parse the condition expression
-                    while self.evaluate_condition(condition_expr, variables):
-                        # Execute the loop body
-                        loop_vars = variables.copy()
-                        self.execute_program(loop_code, loop_vars)
-                        
-                        # Update the parent scope with any changes
-                        variables.update(loop_vars)
-                        
-                        # Update the loop variable
-                        if "++" in update_expr:
-                            var_to_update = update_expr.replace("++", "").strip()
-                            variables[var_to_update] = variables[var_to_update] + 1
-                        elif "--" in update_expr:
-                            var_to_update = update_expr.replace("--", "").strip()
-                            variables[var_to_update] = variables[var_to_update] - 1
-                        elif "+=" in update_expr:
-                            parts = update_expr.split("+=")
-                            var_to_update = parts[0].strip()
-                            increment = self.evaluate_expression(parts[1].strip(), variables)
-                            variables[var_to_update] = variables[var_to_update] + increment
-                        elif "-=" in update_expr:
-                            parts = update_expr.split("-=")
-                            var_to_update = parts[0].strip()
-                            decrement = self.evaluate_expression(parts[1].strip(), variables)
-                            variables[var_to_update] = variables[var_to_update] - decrement
-                        else:
-                            # Handle general assignment like @i = @i + 1
-                            assign_parts = update_expr.split("=")
-                            if len(assign_parts) == 2:
-                                var_to_update = assign_parts[0].strip()
-                                new_value = self.evaluate_expression(assign_parts[1].strip(), variables)
-                                variables[var_to_update] = new_value
-                    
-                    # Skip to the end of the loop
-                    i = loop_end
-                    continue
-                
-                # Dribble (if) statement
-                dribble_match = re.search(r'Dribble\s*\((.*?)\)\s*{', line)
-                if dribble_match:
-                    # Extract the condition and evaluate it
-                    condition = dribble_match.group(1).strip()
-                    condition_result = self.evaluate_condition(condition, variables)
-                    
-                    # Find the end of the Dribble block
-                    dribble_block = []
-                    brace_count = 1
-                    dribble_end = i
-                    
-                    while dribble_end < len(lines) and brace_count > 0:
-                        curr_line = lines[dribble_end].strip()
-                        if curr_line.endswith('{'):
-                            brace_count += curr_line.count('{')
-                        elif curr_line == '}' or curr_line.startswith('} '):
-                            brace_count -= curr_line.count('}')
-                        if brace_count > 0:
-                            dribble_block.append(lines[dribble_end])
-                        dribble_end += 1
-                    
-                    # Find any Pass/Shoot blocks
-                    pass_blocks = []  # List of (condition, block) tuples
-                    shoot_block = None
-                    curr_pos = dribble_end
-                    
-                    while curr_pos < len(lines):
-                        curr_line = lines[curr_pos].strip()
-                        
-                        # Check for Pass (else if)
-                        pass_match = re.search(r'Pass\s*\((.*?)\)\s*{', curr_line)
-                        if pass_match:
-                            pass_condition = pass_match.group(1).strip()
-                            pass_lines = []
-                            curr_pos += 1
-                            brace_count = 1
-                            
-                            while curr_pos < len(lines) and brace_count > 0:
-                                curr_line = lines[curr_pos].strip()
-                                if curr_line.endswith('{'):
-                                    brace_count += curr_line.count('{')
-                                elif curr_line == '}' or curr_line.startswith('} '):
-                                    brace_count -= curr_line.count('}')
-                                if brace_count > 0:
-                                    pass_lines.append(lines[curr_pos])
-                                curr_pos += 1
-                            
-                            pass_blocks.append((pass_condition, pass_lines))
-                            continue
-                        
-                        # Check for Shoot (else)
-                        shoot_match = re.search(r'Shoot\s*{', curr_line)
-                        if shoot_match:
-                            shoot_lines = []
-                            curr_pos += 1
-                            brace_count = 1
-                            
-                            while curr_pos < len(lines) and brace_count > 0:
-                                curr_line = lines[curr_pos].strip()
-                                if curr_line.endswith('{'):
-                                    brace_count += curr_line.count('{')
-                                elif curr_line == '}' or curr_line.startswith('} '):
-                                    brace_count -= curr_line.count('}')
-                                if brace_count > 0:
-                                    shoot_lines.append(lines[curr_pos])
-                                curr_pos += 1
-                            
-                            shoot_block = shoot_lines
-                            break
-                        
-                        curr_pos += 1
-                    
-                    # Execute the appropriate block based on conditions
-                    block_vars = variables.copy()
-                    
-                    # Only execute one block
-                    if condition_result:
-                        # Execute Dribble block
-                        self.execute_program('\n'.join(dribble_block), block_vars)
-                    else:
-                        # Try Pass blocks first
-                        executed = False
-                        for pass_condition, pass_lines in pass_blocks:
-                            if self.evaluate_condition(pass_condition, block_vars):
-                                self.execute_program('\n'.join(pass_lines), block_vars)
-                                executed = True
-                                break
-                        
-                        # If no Pass block executed and there's a Shoot block, execute it
-                        if not executed and shoot_block:
-                            self.execute_program('\n'.join(shoot_block), block_vars)
-                    
-                    # Update parent scope with any changes
-                    variables.update(block_vars)
-                    
-                    # Skip to the end of the entire conditional structure
-                    i = curr_pos if curr_pos > dribble_end else dribble_end
-                    continue
-                
-                # Handle Announce statements
-                announce_match = re.search(r'Announce\s*\(([^)]+)\)\s*;', line)
-                if announce_match:
-                    announcement = announce_match.group(1)
-                    parts = re.split(r'\s*&\s*', announcement)
-                    processed_parts = []
-                    
-                    for part in parts:
-                        part = part.strip()
-                        if part.startswith('"') and part.endswith('"'):
-                            processed_parts.append(part[1:-1])
-                        elif part.startswith('@'):
-                            if part in variables:
-                                processed_parts.append(str(variables[part]))
-                            else:
-                                var_value = self.evaluate_expression(part, variables)
-                                processed_parts.append(str(var_value) if var_value is not None else part)
-                        else:
-                            expr_value = self.evaluate_expression(part, variables)
-                            processed_parts.append(str(expr_value) if expr_value is not None else part)
-                    
-                    # Check if this is a literal newline announcement - only add newline for these
-                    output_text = "".join(processed_parts)
-                    is_newline = output_text == r'\n' or output_text == '\n'
-                    
-                    # For newlines, output an actual newline without additional line break
-                    if is_newline:
-                        self.append_terminal_output("\n", text_color="green", add_newline=False)
-                    else:
-                        # For regular content, don't add extra newlines
-                        self.append_terminal_output(output_text, text_color="green", add_newline=False)
-                    
-                    continue
-                
-                # Handle variable assignments
-                assignment_match = re.search(r'(@\w+)\s*=\s*([^;]+);', line)
-                if assignment_match:
-                    var_name = assignment_match.group(1)
-                    value_expr = assignment_match.group(2).strip()
-                    value = self.evaluate_expression(value_expr, variables)
-                    variables[var_name] = value
-                    continue
-            
-            return variables
-            
-        except Exception as e:
-            self.append_terminal_output(f"Execution error: {str(e)}", text_color="red")
-            return variables
-    
-    def evaluate_expression(self, expr, variables):
-        """Evaluate a CodeSLAM expression with variables and operations"""
-        try:
-            # Handle direct variable references
-            if isinstance(expr, str) and expr.strip().startswith('@') and expr.strip() in variables:
-                return variables[expr.strip()]
-
-            # Replace variables with their values
-            processed_expr = expr.strip()
-            
-            # Sort variables by length in reverse order to avoid partial replacements
-            var_names = sorted(variables.keys(), key=len, reverse=True)
-            
-            # Replace all variable references with their values
-            for var_name in var_names:
-                if var_name in processed_expr:
-                    processed_expr = processed_expr.replace(var_name, str(variables[var_name]))
-            
-            # Handle parentheses recursively
-            while '(' in processed_expr:
-                # Find innermost parentheses
-                start = processed_expr.rindex('(')
-                end = processed_expr.find(')', start)
-                if end == -1:
-                    raise ValueError("Mismatched parentheses")
-                
-                # Evaluate the expression inside parentheses
-                inner_result = self.evaluate_expression(processed_expr[start + 1:end], variables)
-                
-                # Replace the parenthetical expression with its result
-                processed_expr = processed_expr[:start] + str(inner_result) + processed_expr[end + 1:]
-            
-            # Handle numeric literals
-            if processed_expr.isdigit():
-                return int(processed_expr)
-            
-            if processed_expr.replace('.', '', 1).isdigit() and processed_expr.count('.') == 1:
-                return float(processed_expr)
-                
-            # Split the expression into tokens, preserving operators
-            tokens = []
-            current_num = ''
-            i = 0
-            while i < len(processed_expr):
-                char = processed_expr[i]
-                if char.isdigit() or char == '.':
-                    current_num += char
-                elif char in '+-*/%':
-                    if current_num:
-                        tokens.append(float(current_num))
-                        current_num = ''
-                    tokens.append(char)
-                elif not char.isspace():
-                    if current_num:
-                        tokens.append(float(current_num))
-                        current_num = ''
-                i += 1
-            
-            if current_num:
-                tokens.append(float(current_num))
-
-            # Handle empty expression
-            if not tokens:
-                return None
-
-            # Single number
-            if len(tokens) == 1:
-                return int(tokens[0]) if tokens[0].is_integer() else tokens[0]
-
-            # Handle multiplication, division, and modulo first
-            i = 0
-            while i < len(tokens):
-                if isinstance(tokens[i], str) and tokens[i] in '*/%':
-                    left = float(tokens[i-1])
-                    right = float(tokens[i+1])
-                    if tokens[i] == '*':
-                        result = left * right
-                    elif tokens[i] == '/':
-                        if right == 0:
-                            raise ValueError("Division by zero")
-                        result = left / right
-                    elif tokens[i] == '%':
-                        if right == 0:
-                            raise ValueError("Modulo by zero")
-                        # Ensure operands are integers for modulo
-                        left_int = int(left)
-                        right_int = int(right)
-                        result = left_int % right_int
-                    tokens[i-1:i+2] = [result]
-                    i -= 1
-                i += 1
-
-            # Handle addition and subtraction
-            result = float(tokens[0])
-            i = 1
-            while i < len(tokens):
-                if tokens[i] == '+':
-                    result += float(tokens[i+1])
-                elif tokens[i] == '-':
-                    result -= float(tokens[i+1])
-                i += 2
-
-            # Convert to int if the result is a whole number
-            if isinstance(result, float) and result.is_integer():
-                return int(result)
-            return result
-            
-        except Exception as e:
-            self.append_terminal_output(f"Expression evaluation error: {str(e)}", text_color="red")
-            return None
-
-    def evaluate_condition(self, condition, variables):
-        """Evaluate a conditional expression"""
-        try:
-            # Handle logical operators
-            if ' OR ' in condition:
-                parts = condition.split(' OR ')
-                return any(self.evaluate_condition(part.strip(), variables) for part in parts)
-            elif ' AND ' in condition:
-                parts = condition.split(' AND ')
-                return all(self.evaluate_condition(part.strip(), variables) for part in parts)
-                
-            # Handle comparison operators
-            if '<=' in condition:
-                left, right = condition.split('<=')
-                left_val = self.evaluate_expression(left.strip(), variables)
-                right_val = self.evaluate_expression(right.strip(), variables)
-                return left_val <= right_val if left_val is not None and right_val is not None else False
-            elif '>=' in condition:
-                left, right = condition.split('>=')
-                left_val = self.evaluate_expression(left.strip(), variables)
-                right_val = self.evaluate_expression(right.strip(), variables)
-                return left_val >= right_val if left_val is not None and right_val is not None else False
-            elif '<' in condition:
-                left, right = condition.split('<')
-                left_val = self.evaluate_expression(left.strip(), variables)
-                right_val = self.evaluate_expression(right.strip(), variables)
-                return left_val < right_val if left_val is not None and right_val is not None else False
-            elif '>' in condition:
-                left, right = condition.split('>')
-                left_val = self.evaluate_expression(left.strip(), variables)
-                right_val = self.evaluate_expression(right.strip(), variables)
-                return left_val > right_val if left_val is not None and right_val is not None else False
-            elif '==' in condition:
-                left, right = condition.split('==')
-                left_val = self.evaluate_expression(left.strip(), variables)
-                right_val = self.evaluate_expression(right.strip(), variables)
-                return left_val == right_val if left_val is not None and right_val is not None else False
-            elif '!=' in condition:
-                left, right = condition.split('!=')
-                left_val = self.evaluate_expression(left.strip(), variables)
-                right_val = self.evaluate_expression(right.strip(), variables)
-                return left_val != right_val if left_val is not None and right_val is not None else False
-            
-            # If no comparison operator, evaluate as boolean
-            value = self.evaluate_expression(condition, variables)
-            return bool(value) if value is not None else False
-            
-        except Exception as e:
-            self.append_terminal_output(f"Condition evaluation error: {str(e)}", text_color="red")
-            return False
-
-    def append_terminal_output(self, text, text_color=None, add_newline=True):
-        """Append text to the terminal output with mode-aware colors"""
-        self.terminal_output.configure(state="normal")
-        
-        # Process escape sequences 
-        processed_text = text
-        if r'\n' in processed_text:
-            processed_text = processed_text.replace(r'\n', '\n')
-        if r'\t' in processed_text:
-            processed_text = processed_text.replace(r'\t', '\t')
-        
-        if text_color:
-            # Adjust colors for light mode
-            if customtkinter.get_appearance_mode() == "Light":
-                if text_color == "red":
-                    text_color = "#CC0000"  # Darker red for light mode
-                elif text_color == "green":
-                    text_color = "#006400"  # Darker green for light mode
-                    
-            self.terminal_output.insert(END, processed_text + ("\n" if add_newline else ""), text_color)
-            self.terminal_output.tag_config(text_color, foreground=text_color)
-        else:
-            self.terminal_output.insert(END, processed_text + ("\n" if add_newline else ""))
-
-        self.terminal_output.see(END)  # Auto-scroll to the end
+        # Placeholder for semantic analysis
+        self.append_terminal_output("Semantic analysis not implemented yet.")
+        self.append_terminal_output("Tokens available for analysis:")
+        for token in tokens:
+            self.append_terminal_output(f"- {token.type}: {token.value}")
 
     # ADDED
     def enable_terminal_input(self):
@@ -1343,6 +832,21 @@ class App(customtkinter.CTk):
         self.terminal_output.delete("1.0", END)  # Clear all text
         self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
         self.terminal_output.configure(state="disabled")  # Make it read-only again
+
+    def append_terminal_output(self, text, text_color="white"):
+        """Append text to the terminal output with specified color"""
+        self.terminal_output.configure(state="normal")  # Make it editable temporarily
+        
+        # Determine color based on message type
+        if "Error" in text or "error" in text.lower():
+            text_color = "red"
+        elif "No" in text and ("Error" in text or "error" in text.lower()):
+            text_color = "green"
+            
+        # Add the text with newline and color
+        self.terminal_output.insert(END, text + "\n", text_color)
+        self.terminal_output.configure(state="disabled")  # Make it read-only again
+        self.terminal_output.see(END)  # Auto-scroll to the end
 
 if __name__ == "__main__":
     app = App()
