@@ -361,14 +361,18 @@ class Parser:
         self.parse_feint_init_end()
 
     def parse_feint_lit(self) -> None:
-        """<feint_lit> → Feint Literal"""
+        """<feint_lit> → Feint Literal | <nega_feint_lit>"""
         self.current_nonterminal = "feint_lit"
         expected_tokens = self.get_expected_tokens("feint_lit")
         
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.FEINTLIT):
+        if self.current_token and self.match_token_type(self.current_token, TokenType.NEGAFEINT):
+            # Handle negation case
+            self.parse_nega_feint_lit()
+        elif not self.current_token or not self.match_token_type(self.current_token, TokenType.FEINTLIT):
             self.error_handler("feint_lit", expected_tokens)
-        
-        self.expect(TokenType.FEINTLIT)
+        else:
+            # Regular feint literal case
+            self.expect(TokenType.FEINTLIT)
 
     def parse_feint_init_end(self) -> None:
         """<feint_init_end> → λ | , @identifier <more_feint>"""
@@ -422,14 +426,19 @@ class Parser:
         self.parse_floater_init_end()
 
     def parse_floater_lit(self) -> None:
-        """<floater_lit> → Floater Literal"""
+        """<floater_lit> → Floater Literal | <nega_floater_lit>"""
         self.current_nonterminal = "floater_lit"
         expected_tokens = self.get_expected_tokens("floater_lit")
         
-        if not self.current_token or not self.match_token_type(self.current_token, TokenType.FLOATERLIT):
+
+        if self.current_token and self.match_token_type(self.current_token, TokenType.NEGAFLOATER):
+            # Handle negation case
+            self.parse_nega_floater_lit()
+        elif not self.current_token or not self.match_token_type(self.current_token, TokenType.FLOATERLIT):
             self.error_handler("floater_lit", expected_tokens)
-        
-        self.expect(TokenType.FLOATERLIT)
+        else:
+            # Regular feint literal case
+            self.expect(TokenType.FLOATERLIT)
 
     def parse_floater_init_end(self) -> None:
         """<floater_init_end> → λ | , @identifier <more_floater>"""
