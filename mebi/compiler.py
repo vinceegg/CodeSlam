@@ -5,9 +5,9 @@ from rply import ParserGenerator
 
 def main():
     code = '''
-    TEAM() {
-        FEINT @score = 10;
-        ANNOUNCE("Welcome to the court!");
+    Team() {
+        Feint @score = 10;
+        Announce("Welcome to the court!");
     }
     '''
 
