@@ -6,9 +6,13 @@ from rply import ParserGenerator
 def main():
     code = '''
 Team() {
-    Stat @passed;
-    @passed = Loss;
-    Announce("Passed? " & @passed);
+    Feint @i = 0;
+
+    Dribble (@i < 3) {
+        Announce("Loop count: " & @i);
+        @i = 1 + @i;
+        Resume;
+    }
 }
     '''
 
