@@ -7,8 +7,9 @@ def main():
     code = '''
 Team() {
     Floater @score;
+    Feint @scores = 3;
     Inbound("Enter score:", @score);
-    Announce("You entered: " & @score);
+    Announce("You entered: " & @score & @scores);
 }
     '''
 

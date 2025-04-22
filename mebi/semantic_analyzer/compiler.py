@@ -122,6 +122,7 @@ class Compiler:
         elif node.name == "statement":
             return self.eval(node.children[0])
 
+        # Double check formatting of the print statement: spaces
         elif node.name == "announce_statement":
             outputs = self.eval(node.children[0])
             print(*outputs)
