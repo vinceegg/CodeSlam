@@ -76,8 +76,8 @@ def more_feint_full(p):
 def feint_init_empty(p):
     return ASTNode("feint_init", children=[])
 
-# Rule 15: feint_init → ASSIGN FEINTLIT
-@pg.production("feint_init : ASSIGN FEINTLIT")
+# Rule 15: feint_init → ASSIGN feint_lit
+@pg.production("feint_init : ASSIGN feint_lit")
 def feint_init_assign(p):
     return ASTNode("feint_init", value=p[1].value)
 
@@ -116,8 +116,8 @@ def more_floater_full(p):
 def floater_init_empty(p):
     return ASTNode("floater_init", children=[])
 
-# Rule 23: floater_init → ASSIGN FLOATERLIT
-@pg.production("floater_init : ASSIGN FLOATERLIT")
+# Rule 23: floater_init → ASSIGN floater_lit
+@pg.production("floater_init : ASSIGN floater_lit")
 def floater_init_assign(p):
     return ASTNode("floater_init", value=p[1].value)
 
@@ -157,7 +157,7 @@ def chant_init_empty(p):
     return ASTNode("chant_init", children=[])
 
 # Rule 31: chant_init → ASSIGN CHANTLIT
-@pg.production("chant_init : ASSIGN CHANTLIT")
+@pg.production("chant_init : ASSIGN chant_lit")
 def chant_init_assign(p):
     return ASTNode("chant_init", value=p[1].value)
 
@@ -239,8 +239,8 @@ def const_feint(p):
 def feint_const_init(p):
     return ASTNode("feint_const_init", children=[p[0], p[1]])
 
-# Rule 50: feint_const → ASSIGN FEINTLIT
-@pg.production("feint_const : ASSIGN FEINTLIT")
+# Rule 50: feint_const → ASSIGN feint_lit
+@pg.production("feint_const : ASSIGN feint_lit")
 def feint_const(p):
     return ASTNode("feint_const", value=p[1].value)
 
@@ -264,8 +264,8 @@ def const_floater(p):
 def floater_const_init(p):
     return ASTNode("floater_const_init", children=[p[0], p[1]])
 
-# Rule 55: floater_const → = FLOATERLIT
-@pg.production("floater_const : ASSIGN FLOATERLIT")
+# Rule 55: floater_const → = floater_lit
+@pg.production("floater_const : ASSIGN floater_lit")
 def floater_const(p):
     return ASTNode("floater_const", value=p[1].value)
 
@@ -289,8 +289,8 @@ def const_chant(p):
 def chant_const_init(p):
     return ASTNode("chant_const_init", children=[p[0], p[1]])
 
-# Rule 60: chant_const → = CHANTLIT
-@pg.production("chant_const : ASSIGN CHANTLIT")
+# Rule 60: chant_const → = chant_lit
+@pg.production("chant_const : ASSIGN chant_lit")
 def chant_const(p):
     return ASTNode("chant_const", value=p[1].value)
 
@@ -345,8 +345,8 @@ def array_dec_floater(p):
 def array_dec_chant(p):
     return ASTNode("array_dec", children=[p[0]])
 
-# Rule 71: feint_array → FEINT VAR_INIT [ FEINTLIT ] 2D_array feint_array_init ;
-@pg.production("feint_array : FEINT VAR_INIT ARRAY_INDEX_LEFT FEINTLIT ARRAY_INDEX_RIGHT 2D_array feint_array_init SEMICOLON")
+# Rule 71: feint_array → FEINT VAR_INIT [ feint_lit ] 2D_array feint_array_init ;
+@pg.production("feint_array : FEINT VAR_INIT ARRAY_INDEX_LEFT feint_lit ARRAY_INDEX_RIGHT 2D_array feint_array_init SEMICOLON")
 def feint_array(p):
     return ASTNode("feint_array", children=[p[1], p[3], p[5], p[6]])
 
@@ -355,8 +355,8 @@ def feint_array(p):
 def two_d_array_empty(p):
     return ASTNode("2D_array", children=[])
 
-# Rule 73: 2D_array → [ FEINTLIT ]
-@pg.production("2D_array : ARRAY_INDEX_LEFT FEINTLIT ARRAY_INDEX_RIGHT")
+# Rule 73: 2D_array → [ feint_lit ]
+@pg.production("2D_array : ARRAY_INDEX_LEFT feint_lit ARRAY_INDEX_RIGHT")
 def two_d_array(p):
     return ASTNode("2D_array", children=[p[1]])
 
@@ -370,13 +370,13 @@ def feint_array_init_empty(p):
 def feint_array_init(p):
     return ASTNode("feint_array_init", children=[p[2]])
 
-# Rule 76: feint_row → FEINTLIT more_feint_lit
-@pg.production("feint_row : FEINTLIT more_feint_lit")
+# Rule 76: feint_row → feint_lit more_feint_lit
+@pg.production("feint_row : feint_lit more_feint_lit")
 def feint_row_inline(p):
     return ASTNode("feint_row", children=[p[0]] + p[1].children)
 
-# Rule 77: feint_row → { FEINTLIT more_feint_lit } 2D_feint_row
-@pg.production("feint_row : CODE_BLOCK_LEFT FEINTLIT more_feint_lit CODE_BLOCK_RIGHT 2D_feint_row")
+# Rule 77: feint_row → { feint_lit more_feint_lit } 2D_feint_row
+@pg.production("feint_row : CODE_BLOCK_LEFT feint_lit more_feint_lit CODE_BLOCK_RIGHT 2D_feint_row")
 def feint_row_nested(p):
     return ASTNode("feint_row", children=[p[1]] + p[2].children + p[4].children)
 
@@ -385,8 +385,8 @@ def feint_row_nested(p):
 def two_d_feint_row_empty(p):
     return ASTNode("2D_feint_row", children=[])
 
-# Rule 79: 2D_feint_row → , { FEINTLIT more_feint_lit } 2D_feint_row
-@pg.production("2D_feint_row : COMMA CODE_BLOCK_LEFT FEINTLIT more_feint_lit CODE_BLOCK_RIGHT 2D_feint_row")
+# Rule 79: 2D_feint_row → , { feint_lit more_feint_lit } 2D_feint_row
+@pg.production("2D_feint_row : COMMA CODE_BLOCK_LEFT feint_lit more_feint_lit CODE_BLOCK_RIGHT 2D_feint_row")
 def two_d_feint_row_recursive(p):
     return ASTNode("2D_feint_row", children=[p[2]] + p[3].children + p[5].children)
 
@@ -395,13 +395,13 @@ def two_d_feint_row_recursive(p):
 def more_feint_lit_empty(p):
     return ASTNode("more_feint_lit", children=[])
 
-# Rule 81: more_feint_lit → , FEINTLIT more_feint_lit
-@pg.production("more_feint_lit : COMMA FEINTLIT more_feint_lit")
+# Rule 81: more_feint_lit → , feint_lit more_feint_lit
+@pg.production("more_feint_lit : COMMA feint_lit more_feint_lit")
 def more_feint_lit_recursive(p):
     return ASTNode("more_feint_lit", children=[p[1]] + p[2].children)
 
-# Rule 82: floater_array → FLOATER VAR_INIT [ FEINTLIT ] 2D_array floater_array_init ;
-@pg.production("floater_array : FLOATER VAR_INIT ARRAY_INDEX_LEFT FEINTLIT ARRAY_INDEX_RIGHT 2D_array floater_array_init SEMICOLON")
+# Rule 82: floater_array → FLOATER VAR_INIT [ feint_lit ] 2D_array floater_array_init ;
+@pg.production("floater_array : FLOATER VAR_INIT ARRAY_INDEX_LEFT feint_lit ARRAY_INDEX_RIGHT 2D_array floater_array_init SEMICOLON")
 def floater_array(p):
     return ASTNode("floater_array", children=[p[1], p[3], p[5], p[6]])
 
@@ -415,13 +415,13 @@ def floater_array_init_empty(p):
 def floater_array_init(p):
     return ASTNode("floater_array_init", children=[p[2]])
 
-# Rule 85: floater_row → FLOATERLIT more_floater_lit
-@pg.production("floater_row : FLOATERLIT more_floater_lit")
+# Rule 85: floater_row → floater_lit more_floater_lit
+@pg.production("floater_row : floater_lit more_floater_lit")
 def floater_row_inline(p):
     return ASTNode("floater_row", children=[p[0]] + p[1].children)
 
-# Rule 86: floater_row → { FLOATERLIT more_floater_lit } 2D_floater_row
-@pg.production("floater_row : CODE_BLOCK_LEFT FLOATERLIT more_floater_lit CODE_BLOCK_RIGHT 2D_floater_row")
+# Rule 86: floater_row → { floater_lit more_floater_lit } 2D_floater_row
+@pg.production("floater_row : CODE_BLOCK_LEFT floater_lit more_floater_lit CODE_BLOCK_RIGHT 2D_floater_row")
 def floater_row_nested(p):
     return ASTNode("floater_row", children=[p[1]] + p[2].children + p[4].children)
 
@@ -430,8 +430,8 @@ def floater_row_nested(p):
 def two_d_floater_row_empty(p):
     return ASTNode("2D_floater_row", children=[])
 
-# Rule 88: 2D_floater_row → , { FLOATERLIT more_floater_lit } 2D_floater_row
-@pg.production("2D_floater_row : COMMA CODE_BLOCK_LEFT FLOATERLIT more_floater_lit CODE_BLOCK_RIGHT 2D_floater_row")
+# Rule 88: 2D_floater_row → , { floater_lit more_floater_lit } 2D_floater_row
+@pg.production("2D_floater_row : COMMA CODE_BLOCK_LEFT floater_lit more_floater_lit CODE_BLOCK_RIGHT 2D_floater_row")
 def two_d_floater_row_recursive(p):
     return ASTNode("2D_floater_row", children=[p[2]] + p[3].children + p[5].children)
 
@@ -440,13 +440,13 @@ def two_d_floater_row_recursive(p):
 def more_floater_lit_empty(p):
     return ASTNode("more_floater_lit", children=[])
 
-# Rule 90: more_floater_lit → , FLOATERLIT more_floater_lit
-@pg.production("more_floater_lit : COMMA FLOATERLIT more_floater_lit")
+# Rule 90: more_floater_lit → , floater_lit more_floater_lit
+@pg.production("more_floater_lit : COMMA floater_lit more_floater_lit")
 def more_floater_lit_recursive(p):
     return ASTNode("more_floater_lit", children=[p[1]] + p[2].children)
 
-# Rule 91: chant_array → CHANT VAR_INIT [ FEINTLIT ] 2D_array chant_array_init ;
-@pg.production("chant_array : CHANT VAR_INIT ARRAY_INDEX_LEFT FEINTLIT ARRAY_INDEX_RIGHT 2D_array chant_array_init SEMICOLON")
+# Rule 91: chant_array → CHANT VAR_INIT [ feint_lit ] 2D_array chant_array_init ;
+@pg.production("chant_array : CHANT VAR_INIT ARRAY_INDEX_LEFT feint_lit ARRAY_INDEX_RIGHT 2D_array chant_array_init SEMICOLON")
 def chant_array(p):
     return ASTNode("chant_array", children=[p[1], p[3], p[5], p[6]])
 
@@ -460,13 +460,13 @@ def chant_array_init_empty(p):
 def chant_array_init(p):
     return ASTNode("chant_array_init", children=[p[2]])
 
-# Rule 94: chant_row → CHANTLIT more_chant_lit
-@pg.production("chant_row : CHANTLIT more_chant_lit")
+# Rule 94: chant_row → chant_lit more_chant_lit
+@pg.production("chant_row : chant_lit more_chant_lit")
 def chant_row_inline(p):
     return ASTNode("chant_row", children=[p[0]] + p[1].children)
 
-# Rule 95: chant_row → { CHANTLIT more_chant_lit } 2D_chant_row
-@pg.production("chant_row : CODE_BLOCK_LEFT CHANTLIT more_chant_lit CODE_BLOCK_RIGHT 2D_chant_row")
+# Rule 95: chant_row → { chant_lit more_chant_lit } 2D_chant_row
+@pg.production("chant_row : CODE_BLOCK_LEFT chant_lit more_chant_lit CODE_BLOCK_RIGHT 2D_chant_row")
 def chant_row_nested(p):
     return ASTNode("chant_row", children=[p[1]] + p[2].children + p[4].children)
 
@@ -475,8 +475,8 @@ def chant_row_nested(p):
 def two_d_chant_row_empty(p):
     return ASTNode("2D_chant_row", children=[])
 
-# Rule 97: 2D_chant_row → , { CHANTLIT more_chant_lit } 2D_chant_row
-@pg.production("2D_chant_row : COMMA CODE_BLOCK_LEFT CHANTLIT more_chant_lit CODE_BLOCK_RIGHT 2D_chant_row")
+# Rule 97: 2D_chant_row → , { chant_lit more_chant_lit } 2D_chant_row
+@pg.production("2D_chant_row : COMMA CODE_BLOCK_LEFT chant_lit more_chant_lit CODE_BLOCK_RIGHT 2D_chant_row")
 def two_d_chant_row_recursive(p):
     return ASTNode("2D_chant_row", children=[p[2]] + p[3].children + p[5].children)
 
@@ -485,8 +485,8 @@ def two_d_chant_row_recursive(p):
 def more_chant_lit_empty(p):
     return ASTNode("more_chant_lit", children=[])
 
-# Rule 99: more_chant_lit → , CHANTLIT more_chant_lit
-@pg.production("more_chant_lit : COMMA CHANTLIT more_chant_lit")
+# Rule 99: more_chant_lit → , chant_lit more_chant_lit
+@pg.production("more_chant_lit : COMMA chant_lit more_chant_lit")
 def more_chant_lit_recursive(p):
     return ASTNode("more_chant_lit", children=[p[1]] + p[2].children)
 
@@ -675,8 +675,8 @@ def follow_statement_array(p):
 def array_manipulation(p):
     return ASTNode("array_manipulation", children=[p[1], p[3], p[4]])
 
-# Rule 136: element_index → FEINTLIT
-@pg.production("element_index : FEINTLIT")
+# Rule 136: element_index → feint_lit
+@pg.production("element_index : feint_lit")
 def element_index(p):
     return ASTNode("element_index", value=p[0].value)
 
@@ -700,18 +700,18 @@ def array_man(p):
 def array_man_empty(p):
     return ASTNode("array_man", children=[])
 
-# Rule 141: array_elem → FEINTLIT
-@pg.production("array_elem : FEINTLIT")
+# Rule 141: array_elem → feint_lit
+@pg.production("array_elem : feint_lit")
 def array_elem_feint(p):
     return ASTNode("array_elem", value=p[0].value)
 
-# Rule 142: array_elem → FLOATERLIT
-@pg.production("array_elem : FLOATERLIT")
+# Rule 142: array_elem → floater_lit
+@pg.production("array_elem : floater_lit")
 def array_elem_floater(p):
     return ASTNode("array_elem", value=p[0].value)
 
-# Rule 143: array_elem → CHANTLIT
-@pg.production("array_elem : CHANTLIT")
+# Rule 143: array_elem → chant_lit
+@pg.production("array_elem : chant_lit")
 def array_elem_chant(p):
     return ASTNode("array_elem", value=p[0].value)
 
@@ -791,7 +791,7 @@ def literal_feint(p):
     return ASTNode("literal", value=p[0].value)
 
 # Rule 159: literal → floater_lit
-@pg.production("literal : FLOATERLIT")
+@pg.production("literal : floater_lit")
 def literal_floater(p):
     return ASTNode("literal", value=p[0].value)
 
@@ -806,7 +806,7 @@ def literal_nega_floater(p):
     return ASTNode("literal", value=p[0].value)
 
 # Rule 162: literal → chant_lit
-@pg.production("literal : CHANTLIT")
+@pg.production("literal : chant_lit")
 def literal_chant(p):
     return ASTNode("literal", value=p[0].value)
 
@@ -896,7 +896,7 @@ def number_feint(p):
     return ASTNode("number", value=p[0].value)
 
 # Rule 174: number → floater_lit
-@pg.production("number : FLOATERLIT")
+@pg.production("number : floater_lit")
 def number_floater(p):
     return ASTNode("number", value=p[0].value)
 
@@ -1046,8 +1046,8 @@ def chant_rel_operand_var(p):
 def chant_rel_operand_cast(p):
     return ASTNode("chant_rel_operand", children=[p[0]])
 
-# Rule 209: chant_rel_operand → CHANTLIT
-@pg.production("chant_rel_operand : CHANTLIT")
+# Rule 209: chant_rel_operand → chant_lit
+@pg.production("chant_rel_operand : chant_lit")
 def chant_rel_operand_lit(p):
     return ASTNode("chant_rel_operand", value=p[0].value)
 
@@ -1177,8 +1177,8 @@ def more_args_recursive(p):
 def more_args_empty(p):
     return ASTNode("more_args", children=[])
 
-# Rule 240: inbound_statement → INBOUND ( CHANTLIT , VAR_INIT ) ;
-@pg.production("inbound_statement : INBOUND LEFT_PAREN CHANTLIT COMMA VAR_INIT RIGHT_PAREN SEMICOLON")
+# Rule 240: inbound_statement → INBOUND ( chant_lit , VAR_INIT ) ;
+@pg.production("inbound_statement : INBOUND LEFT_PAREN chant_lit COMMA VAR_INIT RIGHT_PAREN SEMICOLON")
 def inbound_statement(p):
     return ASTNode("inbound_statement", children=[p[2], p[4]])
 
@@ -1232,13 +1232,13 @@ def switch_statement(p):
 def get_case(p):
     return ASTNode("get_case", children=[p[1], p[3], p[4], p[5]])
 
-# Rule 251: get_value → FEINTLIT
-@pg.production("get_value : FEINTLIT")
+# Rule 251: get_value → feint_lit
+@pg.production("get_value : feint_lit")
 def get_value_feint(p):
     return ASTNode("get_value", value=p[0].value)
 
-# Rule 252: get_value → CHANTLIT
-@pg.production("get_value : CHANTLIT")
+# Rule 252: get_value → chant_lit
+@pg.production("get_value : chant_lit")
 def get_value_chant(p):
     return ASTNode("get_value", value=p[0].value)
 
@@ -1272,8 +1272,8 @@ def get_default_empty(p):
 def forward_statement(p):
     return ASTNode("forward_statement", children=[p[2], p[4], p[6], p[8], p[9], p[12]])
 
-# Rule 259: forward_lit → FEINTLIT
-@pg.production("forward_lit : FEINTLIT")
+# Rule 259: forward_lit → feint_lit
+@pg.production("forward_lit : feint_lit")
 def forward_lit_feint(p):
     return ASTNode("forward_lit", value=p[0].value)
 
