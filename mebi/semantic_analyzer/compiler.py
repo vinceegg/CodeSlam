@@ -23,21 +23,6 @@ class Compiler:
             for child in node.children:
                 self.eval(child)
 
-        elif node.name == "function_def":
-            for child in node.children:
-                self.eval(child)
-                
-        elif node.name == "team_block":
-            for child in node.children:
-                self.eval(child)
-
-        elif node.name == "local_decl":
-            for child in node.children:
-                self.eval(child)
-
-        elif node.name == "local_declaration":
-            return self.eval(node.children[0])
-
         elif node.name == "variable_dec":
             return self.eval(node.children[0])
 
@@ -110,6 +95,21 @@ class Compiler:
         elif node.name == "more_stat":
             if node.children:
                 return self.eval(node.children[0])
+        
+        elif node.name == "function_def":
+            for child in node.children:
+                self.eval(child)
+                
+        elif node.name == "team_block":
+            for child in node.children:
+                self.eval(child)
+
+        elif node.name == "local_decl":
+            for child in node.children:
+                self.eval(child)
+
+        elif node.name == "local_declaration":
+            return self.eval(node.children[0])
         
         elif node.name == "team_statement":
             for stmt in node.children:
