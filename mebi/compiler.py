@@ -6,9 +6,8 @@ from rply import ParserGenerator
 def main():
     code = '''
 Team() {
-    Floater @height = 5.9;
-    Feint @score = 0;
-    Announce("Height is:" & @height & @score);
+    Chant @player = "Lebron James";
+    Announce("MVP: " & @player);
 }
     '''
 

@@ -192,12 +192,12 @@ def stat_init_assign(p):
 # Rule 40: stat_value → WIN
 @pg.production("stat_value : WIN")
 def stat_value_win(p):
-    return ASTNode("stat_value", value="WIN")
+    return ASTNode("stat_value", value="Win")
 
 # Rule 41: stat_value → LOSS
 @pg.production("stat_value : LOSS")
 def stat_value_loss(p):
-    return ASTNode("stat_value", value="LOSS")
+    return ASTNode("stat_value", value="Loss")
 
 # Rule 42: stat_init_end → λ
 @pg.production("stat_init_end : ")

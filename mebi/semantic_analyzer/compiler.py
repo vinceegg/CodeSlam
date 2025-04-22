@@ -79,7 +79,23 @@ class Compiler:
         #TODO
         elif node.name == "floater_init_end":
             pass  # Later support @x = 1.5, @y = 2.6;
-
+        
+        elif node.name == "chant_dec":
+            var_token = node.children[0]  # VAR_INIT
+            var_name = var_token.value
+            more_chant_node = node.children[1]
+            init_value = self.eval(more_chant_node)
+            self.env.set_var(var_name, init_value)
+            print(f"[SET] {var_name} = {init_value}")
+        
+        elif node.name == "more_chant":
+            if node.children:
+                return self.eval(node.children[0])
+        
+        elif node.name == "chant_init":
+            if node.value is not None:
+                return str(node.value).strip('"')
+            
         elif node.name == "team_statement":
             for stmt in node.children:
                 self.eval(stmt)
