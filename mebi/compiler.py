@@ -1,6 +1,6 @@
 from lexical_analyzer.lexer import build_lexer
 from syntax_analyzer.parser import pg
-from semantic_analyzer.interpreter import Interpreter
+from semantic_analyzer.compiler import Compiler
 from rply import ParserGenerator
 
 def main():
@@ -21,6 +21,10 @@ def main():
         ast = parser.parse(tokens)
         print("\nPARSE SUCCESSFUL!")
         print("AST Output:\n", ast)
+        # --- Evaluate ---
+        print("\nEVALUATION RESULT:")
+        compiler = Compiler()
+        compiler.eval(ast)
     except Exception as e:
         print("\nPARSE ERROR!")
         print(e)
