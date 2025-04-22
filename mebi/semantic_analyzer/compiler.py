@@ -4,11 +4,16 @@ class Environment:
     def __init__(self):
         self.variables = {}
 
-    def set_var(self, name, value):
-        self.variables[name] = value
+    def set_var(self, name, value, type_name=None):
+        self.variables[name] = {"value": value, "type": type_name}
 
     def get_var(self, name):
-        return self.variables.get(name, f"[ERROR: {name} not found]")
+        var = self.variables.get(name)
+        return var["value"] if var else f"[ERROR: {name} not found]"
+
+    def get_type(self, name):
+        var = self.variables.get(name)
+        return var["type"] if var else None
 
 
 class Compiler:
@@ -29,10 +34,9 @@ class Compiler:
         elif node.name == "feint_dec":
             var_token = node.children[0]
             var_name = var_token.value
-            more_feint_node = node.children[1]
-            init_value = self.eval(more_feint_node) 
-            self.env.set_var(var_name, init_value)
-            print(f"[SET] {var_name} = {init_value}")
+            init_value = self.eval(node.children[1])
+            self.env.set_var(var_name, init_value, type_name="Feint")
+            print(f"[SET] {var_name} = {init_value} (Feint)")
 
         elif node.name == "more_feint":
             if node.children:
@@ -49,9 +53,9 @@ class Compiler:
             var_token = node.children[0]
             var_name = var_token.value
             more_floater_node = node.children[1]
-            init_value = self.eval(more_floater_node)
-            self.env.set_var(var_name, init_value)
-            print(f"[SET] {var_name} = {init_value}")
+            init_value = self.eval(node.children[1])
+            self.env.set_var(var_name, init_value, type_name="Floater")
+            print(f"[SET] {var_name} = {init_value} (Floater)")
             
         elif node.name == "more_floater":
             if node.children:
@@ -69,9 +73,9 @@ class Compiler:
             var_token = node.children[0]
             var_name = var_token.value
             more_chant_node = node.children[1]
-            init_value = self.eval(more_chant_node)
-            self.env.set_var(var_name, init_value)
-            print(f"[SET] {var_name} = {init_value}")
+            init_value = self.eval(node.children[1])
+            self.env.set_var(var_name, init_value, type_name="Chant")
+            print(f"[SET] {var_name} = {init_value} (Chant)")
         
         elif node.name == "more_chant":
             if node.children:
@@ -85,9 +89,9 @@ class Compiler:
             var_token = node.children[0]
             var_name = var_token.value
             more_stat_node = node.children[1]
-            init_value = self.eval(more_stat_node)
-            self.env.set_var(var_name, init_value)
-            print(f"[SET] {var_name} = {init_value}")
+            init_value = self.eval(node.children[1])
+            self.env.set_var(var_name, init_value, type_name="Stat")
+            print(f"[SET] {var_name} = {init_value} (Stat)")
         
         elif node.name == "stat_init":
             return node.value
@@ -141,23 +145,38 @@ class Compiler:
                 return "[EMPTY OUTPUT]"
 
         elif node.name == "inbound_statement":
-            prompt = node.children[0].value.strip('"')  # clean up quotes
+            prompt = node.children[0].value.strip('"')
             var_token = node.children[1]
             var_name = var_token.value
 
-            user_input = input(f"{prompt} ")  # standard input
+            expected_type = self.env.get_type(var_name)
+            if not expected_type:
+                raise ValueError(f"[ERROR] Variable {var_name} not declared before Inbound().")
 
-            # Infer and store type (basic handling for now)
-            if user_input.isdigit():
-                value = int(user_input)
-            else:
-                try:
+            user_input = input(f"{prompt} ")
+
+            # Type-check based on expected type
+            try:
+                if expected_type == "Feint":
+                    value = int(user_input)
+                elif expected_type == "Floater":
                     value = float(user_input)
-                except ValueError:
-                    value = user_input  # fallback to string
+                elif expected_type == "Stat":
+                    if user_input == "Win":
+                        value = "Win"
+                    elif user_input == "Loss":
+                        value = "Loss"
+                    else:
+                        raise ValueError("Expected 'Win' or 'Loss'")
+                elif expected_type == "Chant":
+                    value = user_input
+                else:
+                    raise ValueError(f"[ERROR] Unsupported type '{expected_type}'")
+            except ValueError as ve:
+                raise ValueError(f"[TYPE ERROR] {var_name} expects {expected_type} input: {ve}") # Double check error messages
 
-            self.env.set_var(var_name, value)
-            print(f"[INBOUND] {var_name} = {value}")
+            self.env.set_var(var_name, value, expected_type)
+            print(f"[INBOUND] {var_name} = {value} ({expected_type})")
 
         elif node.name == "literal":
             # Detect and clean up CHANTLIT values

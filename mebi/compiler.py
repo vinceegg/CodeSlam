@@ -6,7 +6,7 @@ from rply import ParserGenerator
 def main():
     code = '''
 Team() {
-    Feint @score;
+    Floater @score;
     Inbound("Enter score:", @score);
     Announce("You entered: " & @score);
 }
