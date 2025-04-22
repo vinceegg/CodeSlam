@@ -142,6 +142,9 @@ class Compiler:
                 return "[EMPTY OUTPUT]"
 
         elif node.name == "literal":
+            # Detect and clean up CHANTLIT values
+            if isinstance(node.value, str) and node.value.startswith('"') and node.value.endswith('"'):
+                return node.value.strip('"')
             return node.value
 
         else:
