@@ -6,10 +6,13 @@ from rply import ParserGenerator
 def main():
     code = '''
 Team() {
-    Floater @score;
-    Feint @scores = 3;
-    Inbound("Enter score:", @score);
-    Announce("You entered: " & @score & @scores);
+    Feint @x = 4;
+    Feint @y = 2;
+    Feint @z = 3;
+    Feint @result;
+
+    Inbound("enter", @result);
+    Announce("Final value: " & (@x + @y * 2 - (8 / 4) + 10 % 3) * @result);
 }
     '''
 

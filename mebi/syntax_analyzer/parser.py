@@ -2,7 +2,9 @@ from rply import ParserGenerator
 from lexical_analyzer.tokens import TokenType
 from syntax_analyzer.ast_nodes import ASTNode
 
-pg = ParserGenerator([token.name for token in TokenType], precedence=[])
+pg = ParserGenerator([token.name for token in TokenType], 
+                     precedence=[('left', ['ADD', 'SUB']), ('left', ['MUL', 'DIV', "MOD"])
+    ])
 
 # Rule 1: program → global_decl function_def team_block
 @pg.production("program : global_decl function_def team_block")
@@ -823,25 +825,55 @@ def expression_rel(p):
 def expression_logical(p):
     return ASTNode("expression", children=[p[0]])
 
-# Rule 169: arithmetic_expression → arith_term more_arith_term
-@pg.production("arithmetic_expression : arith_term more_arith_term")
-def arithmetic_expression(p):
-    return ASTNode("arithmetic_expression", children=[p[0]] + p[1].children)
+# Base case: a single number or grouped expression
+@pg.production("arithmetic_expression : number")
+def arithmetic_number(p):
+    return p[0]
 
-# Rule 170: arithmetic_expression → ( arith_term more_arith_term )
-@pg.production("arithmetic_expression : LEFT_PAREN arith_term more_arith_term RIGHT_PAREN")
-def arithmetic_expression_grouped(p):
-    return ASTNode("arithmetic_expression", children=[p[1]] + p[2].children)
+@pg.production("arithmetic_expression : LEFT_PAREN arithmetic_expression RIGHT_PAREN")
+def arithmetic_grouped(p):
+    return p[1]
 
-# Rule 171: arith_term → number
-@pg.production("arith_term : number")
-def arith_term(p):
-    return ASTNode("arith_term", children=[p[0]])
+# Binary infix expressions (with precedence)
+@pg.production("arithmetic_expression : arithmetic_expression ADD arithmetic_expression")
+def arithmetic_add(p):
+    return ASTNode("ADD", children=[p[0], p[2]])
 
-# Rule 172: arith_term → ( number more_arith_term )
-@pg.production("arith_term : LEFT_PAREN number more_arith_term RIGHT_PAREN")
-def arith_term_grouped(p):
-    return ASTNode("arith_term", children=[p[1]] + p[2].children)
+@pg.production("arithmetic_expression : arithmetic_expression SUB arithmetic_expression")
+def arithmetic_sub(p):
+    return ASTNode("SUB", children=[p[0], p[2]])
+
+@pg.production("arithmetic_expression : arithmetic_expression MUL arithmetic_expression")
+def arithmetic_mul(p):
+    return ASTNode("MUL", children=[p[0], p[2]])
+
+@pg.production("arithmetic_expression : arithmetic_expression DIV arithmetic_expression")
+def arithmetic_div(p):
+    return ASTNode("DIV", children=[p[0], p[2]])
+
+@pg.production("arithmetic_expression : arithmetic_expression MOD arithmetic_expression")
+def arithmetic_mod(p):
+    return ASTNode("MOD", children=[p[0], p[2]])
+
+# # Rule 169: arithmetic_expression → arith_term more_arith_term
+# @pg.production("arithmetic_expression : arith_term more_arith_term")
+# def arithmetic_expression(p):
+#     return ASTNode("arithmetic_expression", children=[p[0]] + p[1].children)
+
+# # Rule 170: arithmetic_expression → ( arith_term more_arith_term )
+# @pg.production("arithmetic_expression : LEFT_PAREN arith_term more_arith_term RIGHT_PAREN")
+# def arithmetic_expression_grouped(p):
+#     return ASTNode("arithmetic_expression", children=[p[1]] + p[2].children)
+
+# # Rule 171: arith_term → number
+# @pg.production("arith_term : number")
+# def arith_term(p):
+#     return ASTNode("arith_term", children=[p[0]])
+
+# # Rule 172: arith_term → ( number more_arith_term )
+# @pg.production("arith_term : LEFT_PAREN number more_arith_term RIGHT_PAREN")
+# def arith_term_grouped(p):
+#     return ASTNode("arith_term", children=[p[1]] + p[2].children)
 
 # Rule 173: number → feint_lit
 @pg.production("number : feint_lit")
@@ -898,35 +930,35 @@ def chant_type_casting(p):
 def stat_type_casting(p):
     return ASTNode("stat_type_casting", children=[p[2]])
 
-# Rule 184: more_arith_term → λ
-@pg.production("more_arith_term : ")
-def more_arith_term_empty(p):
-    return ASTNode("more_arith_term", children=[])
+# # Rule 184: more_arith_term → λ
+# @pg.production("more_arith_term : ")
+# def more_arith_term_empty(p):
+#     return ASTNode("more_arith_term", children=[])
 
-# Rule 185: more_arith_term → + arith_term more_arith_term
-@pg.production("more_arith_term : ADD arith_term more_arith_term")
-def more_arith_term_add(p):
-    return ASTNode("more_arith_term", children=[p[1]] + p[2].children)
+# # Rule 185: more_arith_term → + arith_term more_arith_term
+# @pg.production("more_arith_term : ADD arith_term more_arith_term")
+# def more_arith_term_add(p):
+#     return ASTNode("more_arith_term", children=[ASTNode("ADD"), p[1]] + p[2].children)
 
-# Rule 186: more_arith_term → - arith_term more_arith_term
-@pg.production("more_arith_term : SUB arith_term more_arith_term")
-def more_arith_term_sub(p):
-    return ASTNode("more_arith_term", children=[p[1]] + p[2].children)
+# # Rule 186: more_arith_term → - arith_term more_arith_term
+# @pg.production("more_arith_term : SUB arith_term more_arith_term")
+# def more_arith_term_sub(p):
+#     return ASTNode("more_arith_term", children=[ASTNode("SUB"), p[1]] + p[2].children)
 
-# Rule 187: more_arith_term → * arith_term more_arith_term
-@pg.production("more_arith_term : MUL arith_term more_arith_term")
-def more_arith_term_mul(p):
-    return ASTNode("more_arith_term", children=[p[1]] + p[2].children)
+# # Rule 187: more_arith_term → * arith_term more_arith_term
+# @pg.production("more_arith_term : MUL arith_term more_arith_term")
+# def more_arith_term_mul(p):
+#     return ASTNode("more_arith_term", children=[ASTNode("MUL"), p[1]] + p[2].children)
 
-# Rule 188: more_arith_term → / arith_term more_arith_term
-@pg.production("more_arith_term : DIV arith_term more_arith_term")
-def more_arith_term_div(p):
-    return ASTNode("more_arith_term", children=[p[1]] + p[2].children)
+# # Rule 188: more_arith_term → / arith_term more_arith_term
+# @pg.production("more_arith_term : DIV arith_term more_arith_term")
+# def more_arith_term_div(p):
+#     return ASTNode("more_arith_term", children=[ASTNode("MUL"), p[1]] + p[2].children)
 
-# Rule 189: more_arith_term → % arith_term more_arith_term
-@pg.production("more_arith_term : MOD arith_term more_arith_term")
-def more_arith_term_mod(p):
-    return ASTNode("more_arith_term", children=[p[1]] + p[2].children)
+# # Rule 189: more_arith_term → % arith_term more_arith_term
+# @pg.production("more_arith_term : MOD arith_term more_arith_term")
+# def more_arith_term_mod(p):
+#     return ASTNode("more_arith_term", children=[ASTNode("MOD"), p[1]] + p[2].children)
 
 # Rule 190: relational_expression → number_rel_operand relational_operator number_rel_operand
 @pg.production("relational_expression : number_rel_operand relational_operator number_rel_operand")

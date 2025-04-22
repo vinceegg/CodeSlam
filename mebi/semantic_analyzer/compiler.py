@@ -145,6 +145,32 @@ class Compiler:
             else:
                 return "[EMPTY OUTPUT]"
 
+        elif node.name == "expression":
+            return self.eval(node.children[0])
+
+        elif node.name == "arithmetic_expression":
+            return self.eval(node.children[0])
+
+        elif node.name == "ADD":
+            return self.eval(node.children[0]) + self.eval(node.children[1])
+        elif node.name == "SUB":
+            return self.eval(node.children[0]) - self.eval(node.children[1])
+        elif node.name == "MUL":
+            return self.eval(node.children[0]) * self.eval(node.children[1])
+        elif node.name == "DIV":
+            return self.eval(node.children[0]) / self.eval(node.children[1])
+        elif node.name == "MOD":
+            return self.eval(node.children[0]) % self.eval(node.children[1])  
+                
+        elif node.name == "number":
+            val = node.value
+            if isinstance(val, str) and val.startswith('@'):
+                return self.env.get_var(val) 
+            elif '.' in str(val):
+                return float(val)
+            else:
+                return int(val)
+
         elif node.name == "inbound_statement":
             prompt = node.children[0].value.strip('"')
             var_token = node.children[1]
