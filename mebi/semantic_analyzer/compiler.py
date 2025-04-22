@@ -1,4 +1,5 @@
 from syntax_analyzer.ast_nodes import ASTNode
+from rply.token import BaseBox
 
 class Environment:
     def __init__(self):
@@ -21,11 +22,15 @@ class Compiler:
         self.env = Environment()
 
     def eval(self, node):
+        print(f"[DEBUG] Visiting: {node.name if hasattr(node, 'name') else node}")
+        # If node is a Token (like Token('VAR_INIT', '@passed')), extract its value
+        if hasattr(node, "gettokentype") and node.gettokentype() == "VAR_INIT":
+            return self.env.get_var(node.value)
         
         if node.name == "program":
             for child in node.children:
                 self.eval(child)
-                
+        
         elif node.name == "number_rel_operand":
             return self.eval(node.children[0])
         
@@ -83,7 +88,7 @@ class Compiler:
         
         #TODO
         elif node.name == "floater_init_end":
-            pass  # Later support @x = 1.5, @y = 2.6;
+            pass
         
         elif node.name == "chant_dec":
             var_token = node.children[0]
@@ -162,34 +167,39 @@ class Compiler:
                 return "[EMPTY OUTPUT]"
             
         elif node.name == "statement":
-            # If the structure is [VAR_INIT, follow_statement], manually set parent link
-            node.children[1]._parent = node
-            return self.eval(node.children[1])
-        
+            return self.eval(node.children[0])
+                
         elif node.name == "assignment_expression":
-            assign_op = node.children[0].value
-            rhs = self.eval(node.children[1])
+            var_token = node.children[0]  # VAR_INIT
+            assign_op = node.children[1].value  # assign_operator
+            rhs = self.eval(node.children[2])  # assign_operand
 
-            self._pending_assignment_value = rhs
+            var_name = var_token.value
+            var_type = self.env.get_type(var_name)
+            self.env.set_var(var_name, rhs, var_type)
+            print(f"[SET] {var_name} = {rhs} ({var_type})")
             return rhs
 
         elif node.name == "follow_statement":
-            var_token = node._parent.children[0]  # this is the VAR_INIT
+            print("[DEBUG] Entered follow_statement")
+            var_token = node._parent.children[0]  # VAR_INIT token
             var_name = var_token.value
-            value = self.eval(node.children[0])  # assignment_expression or others
-
-            # Get the declared type (if needed)
+            value = self.eval(node.children[0])  # assignment_expression
             var_type = self.env.get_type(var_name)
             self.env.set_var(var_name, value, var_type)
             print(f"[SET] {var_name} = {value} ({var_type})")
             return value
         
         elif node.name == "assign_operand":
-            return self.eval(node.children[0])
-                
-            
+            print(f"[DEBUG] Evaluating assign_operand: {node.children[0].name}")
+            val = self.eval(node.children[0])
+            print(f"[DEBUG] assign_operand evaluated to: {val}")
+            return val
+
         elif node.name == "expression":
-            return self.eval(node.children[0])
+            val = self.eval(node.children[0])
+            print(f"[DEBUG] expression evaluated to: {val}")
+            return val
 
         elif node.name == "arithmetic_expression":
             return self.eval(node.children[0])
@@ -206,10 +216,10 @@ class Compiler:
             return self.eval(node.children[0]) % self.eval(node.children[1])  
 
         elif node.name == "relational_expression":
-            left = self.eval(node.children[0])  # number_rel_operand
+            left = self.eval(node.children[0]) 
             op = node.children[1].value
-            right = self.eval(node.children[2])  # number_rel_operand
-
+            right = self.eval(node.children[2])
+            print(f"[RELATIONAL] Evaluating: {left} {op} {right}")
             if op == "<":
                 return "Win" if left < right else "Loss"
             elif op == ">":
@@ -225,17 +235,16 @@ class Compiler:
 
             
         elif node.name == "stat_rel_operand" or node.name == "chant_rel_operand":
-            # Assume it's either a literal or identifier
             if node.value:
                 return self.env.get_var(node.value) if node.value.startswith('@') else node.value
             else:
                 return self.eval(node.children[0])
 
         elif node.name == "other_relational_operator":
-            return node.value  # '==' or '!='
-
+            return node.value
 
         elif node.name == "relational_operator":
+            print(f"[DEBUG] Reached relational_operator with value: {node.value}")
             return node.value  # already returning e.g. '<', '=='
         
         elif node.name == "inbound_statement":

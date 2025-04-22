@@ -635,6 +635,11 @@ def statement_play(p):
 def statement_run(p):
     return ASTNode("statement", children=[p[0]])
 
+# ADDED
+@pg.production("statement : assignment_expression")
+def statement_follow(p):
+    return ASTNode("statement", children=[p[0]])
+
 # Rule 129: statement → VAR_INIT follow_statement ;
 @pg.production("statement : VAR_INIT follow_statement ")
 def statement_follow(p):
@@ -661,9 +666,9 @@ def follow_statement_decrement(p):
 #     return ASTNode("follow_statement", children=[p[0]] + p[1].children)
 
 # Rule 133: follow_statement → assignment_expression team_statement
-@pg.production("follow_statement : assignment_expression")
-def follow_statement_assignment(p):
-    return ASTNode("follow_statement", children=[p[0]])
+# @pg.production("follow_statement : assignment_expression")
+# def follow_statement_assignment(p):
+#     return ASTNode("follow_statement", children=[p[0]])
 
 # Rule 134: follow_statement → array_manipulation
 @pg.production("follow_statement : array_manipulation")
@@ -1113,9 +1118,9 @@ def log_operator(p):
     return ASTNode("log_operator", value=p[0].value)
 
 # Rule 223: assignment_expression → assign_operator assign_operand ;
-@pg.production("assignment_expression : assign_operator assign_operand SEMICOLON")
+@pg.production("assignment_expression : VAR_INIT assign_operator assign_operand SEMICOLON")
 def assignment_expression(p):
-    return ASTNode("assignment_expression", children=[p[0], p[1]])
+    return ASTNode("assignment_expression", children=[p[0], p[1], p[2]])
 
 # Rule 224–229: assign_operator → = | += | -= | *= | /= | %=
 @pg.production("assign_operator : ASSIGN")
