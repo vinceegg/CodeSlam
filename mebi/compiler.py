@@ -6,8 +6,8 @@ from rply import ParserGenerator
 def main():
     code = '''
 Team() {
-    Chant @player = "Lebron James";
-    Announce("MVP: " & @player);
+    Stat @status = Win;
+    Announce("Game Result:" & @status);
 }
     '''
 

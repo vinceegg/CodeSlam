@@ -95,7 +95,22 @@ class Compiler:
         elif node.name == "chant_init":
             if node.value is not None:
                 return str(node.value).strip('"')
-            
+
+        elif node.name == "stat_dec":
+            var_token = node.children[0]  # VAR_INIT
+            var_name = var_token.value
+            more_stat_node = node.children[1]
+            init_value = self.eval(more_stat_node)
+            self.env.set_var(var_name, init_value)
+            print(f"[SET] {var_name} = {init_value}")
+        
+        elif node.name == "stat_init":
+            return node.value
+        
+        elif node.name == "more_stat":
+            if node.children:
+                return self.eval(node.children[0])
+        
         elif node.name == "team_statement":
             for stmt in node.children:
                 self.eval(stmt)
