@@ -321,18 +321,28 @@ class Compiler:
                     self.eval(node.children[2])  # pass/shoot (add_condition)
 
         elif node.name == "add_condition":
-            # Pass or Shoot follow-ups
-            keyword_node = node.children[0]
-            if keyword_node.name == "Pass":
-                condition_result = self.eval(node.children[1])  # expression
-                print(f"[DEBUG] Pass condition evaluated to: {condition_result}")
-                if condition_result == "Win" or condition_result == True:
-                    self.eval(node.children[2])  # loop_statements
+            i = 0
+            while i < len(node.children):
+                keyword_node = node.children[i]
+                if keyword_node.name == "Pass":
+                    condition = self.eval(node.children[i + 1])
+                    print(f"[DEBUG] Pass condition evaluated to: {condition}")
+                    if condition == "Win":
+                        self.eval(node.children[i + 2])
+                        break
+                    i += 3
+                elif keyword_node.name == "Shoot":
+                    print(f"[DEBUG] Executing Shoot fallback block.")
+                    self.eval(node.children[i + 1])
+                    break
                 else:
-                    if len(node.children) > 3:
-                        self.eval(node.children[3])  # next Pass or Shoot
-            elif keyword_node.name == "Shoot":
-                self.eval(node.children[1])  # loop_statements
+                    print(f"[WARN] Unknown keyword in add_condition: {keyword_node.name}")
+                    break
+        elif node.name == "Shoot":
+            return node 
+
+        elif node.name == "Pass":
+            return node 
         
         elif node.name == "loop_statements":
             for child in node.children:

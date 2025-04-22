@@ -6,15 +6,22 @@ from rply import ParserGenerator
 def main():
     code = '''
 Team() {
-    Feint @i = 0;
+    Stat @status = Loss;
 
-    Dribble (@i < 3) {
-        Announce("Loop count: " & @i);
-        @i = 1 + @i;
+    Dribble(@status) {
+        Announce("Dribble block executed");
+        Resume;
+    }
+    Pass(@status) {
+        Announce("Pass block executed");
+        Resume;
+    }
+    Shoot {
+        Announce("Shoot fallback executed");
         Resume;
     }
 }
-    '''
+ '''
 
     # Build lexer and tokenize input
     lexer = build_lexer()

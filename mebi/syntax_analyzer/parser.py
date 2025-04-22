@@ -845,6 +845,11 @@ def expression_rel(p):
 def expression_logical(p):
     return ASTNode("expression", children=[p[0]])
 
+# ADDED
+@pg.production("expression : stat_value")
+def expression_logical(p):
+    return ASTNode("expression", children=[p[0]])
+
 # Base case: a single number or grouped expression
 @pg.production("arithmetic_expression : number")
 def arithmetic_number(p):
@@ -1200,12 +1205,12 @@ def dribble_statement(p):
 # Rule 242: add_condition → PASS ( expression ) { loop_statements } add_condition
 @pg.production("add_condition : PASS LEFT_PAREN expression RIGHT_PAREN CODE_BLOCK_LEFT loop_statements CODE_BLOCK_RIGHT add_condition")
 def add_condition_pass(p):
-    return ASTNode("add_condition", children=[p[2], p[5]] + p[7].children)
+    return ASTNode("add_condition", children=[ASTNode("Pass"), p[2], p[5]] + p[7].children)
 
 # Rule 243: add_condition → SHOOT { loop_statements }
 @pg.production("add_condition : SHOOT CODE_BLOCK_LEFT loop_statements CODE_BLOCK_RIGHT")
 def add_condition_shoot(p):
-    return ASTNode("add_condition", children=[p[2]])
+    return ASTNode("add_condition", children=[ASTNode("Shoot"), p[2]])
 
 # Rule 244: add_condition → λ
 @pg.production("add_condition : ")
@@ -1396,37 +1401,37 @@ def typecast_value_var(p):
 
 #ADDED
 
-# Rule 122: statement → announce_statement
+# Rule : statement → announce_statement
 @pg.production("loop_statement : announce_statement")
 def loop_statement_announce(p):
     return ASTNode("loop_statement", children=[p[0]])
 
-# Rule 123: statement → inbound_statement
+# Rule : statement → inbound_statement
 @pg.production("loop_statement : inbound_statement")
 def loop_statement_inbound(p):
     return ASTNode("loop_statement", children=[p[0]])
 
-# Rule 124: statement → dribble_statement
+# Rule : statement → dribble_statement
 @pg.production("loop_statement : dribble_statement")
 def loop_statement_dribble(p):
     return ASTNode("loop_statement", children=[p[0]])
 
-# Rule 125: loop_statement → switch_statement
+# Rule : loop_statement → switch_statement
 @pg.production("loop_statement : switch_statement")
 def loop_statement_switch(p):
     return ASTNode("loop_statement", children=[p[0]])
 
-# Rule 126: loop_statement → forward_statement
+# Rule : loop_statement → forward_statement
 @pg.production("loop_statement : forward_statement")
 def loop_statement_forward(p):
     return ASTNode("loop_statement", children=[p[0]])
 
-# Rule 127: loop_statement → play_statement
+# Rule : loop_statement → play_statement
 @pg.production("loop_statement : play_statement")
 def loop_statement_play(p):
     return ASTNode("loop_statement", children=[p[0]])
 
-# Rule 128: loop_statement → run_play_statement
+# Rule : loop_statement → run_play_statement
 @pg.production("loop_statement : run_play_statement")
 def loop_statement_run(p):
     return ASTNode("loop_statement", children=[p[0]])
@@ -1436,7 +1441,7 @@ def loop_statement_run(p):
 def loop_statement_follow(p):
     return ASTNode("loop_statement", children=[p[0]])
 
-# Rule 129: loop_statement → VAR_INIT follow_statement ;
+# Rule : loop_statement → VAR_INIT follow_statement ;
 @pg.production("loop_statement : VAR_INIT follow_statement ")
 def loop_statement_follow(p):
     return ASTNode("loop_statement", children=[p[0], p[1]])
