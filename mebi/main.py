@@ -6,9 +6,10 @@ from rply import ParserGenerator
 def main():
     code = '''
 Team() {
-    Stat @passed;
-    @passed = Win > Loss;
-    Announce("Passed? " & @passed);
+    Stat @x = Win;
+    Stat @y;
+    @y = NOT Win AND Win;
+    Announce("Final Result: " & @y);
 }
     '''
 

@@ -102,6 +102,8 @@ class Compiler:
         elif node.name == "more_stat":
             if node.children:
                 return self.eval(node.children[0])
+        elif node.name == "stat_value":
+            return node.value
         
         elif node.name == "function_def":
             for child in node.children:
@@ -235,6 +237,45 @@ class Compiler:
             print(f"[DEBUG] Reached relational_operator with value: {node.value}")
             return node.value
         
+        elif node.name == "logical_expression":
+            return self.eval(node.children[0])
+
+        elif node.name == "not_expr":
+            operand = self.eval(node.children[0])
+            return "Win" if operand == "Loss" else "Loss"
+
+        elif node.name == "compound_log_expr":
+            result = self.eval(node.children[0])
+            op = node.children[1].value
+            right = self.eval(node.children[2])
+
+            if op == "AND":
+                result = "Win" if result == "Win" and right == "Win" else "Loss"
+            elif op == "OR":
+                result = "Win" if result == "Win" or right == "Win" else "Loss"
+
+            # Handle any additional AND/OR via more_log_term
+            i = 3
+            while i < len(node.children):
+                op = node.children[i].value
+                right = self.eval(node.children[i + 1])
+                if op == "AND":
+                    result = "Win" if result == "Win" and right == "Win" else "Loss"
+                elif op == "OR":
+                    result = "Win" if result == "Win" or right == "Win" else "Loss"
+                i += 2
+
+            return result
+
+        elif node.name == "log_term":
+            return self.eval(node.children[0])
+
+        elif node.name == "other_log_term":
+            return self.eval(node.children[0])
+
+        elif node.name == "log_operator":
+            return node.value
+
         elif node.name == "inbound_statement":
             prompt = node.children[0].value.strip('"')
             var_token = node.children[1]
