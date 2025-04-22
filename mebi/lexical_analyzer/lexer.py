@@ -1,11 +1,11 @@
 from rply import LexerGenerator
-from enum import Enum
-from tokens import TokenType  # Assuming you placed TokenType and Token in tokens.py
+from tokens import TokenType
+
 
 def build_lexer():
     lg = LexerGenerator()
 
-    # Keywords and reserved words
+    # --- Reserved Keywords ---
     keywords = {
         "FEINT": TokenType.FEINT,
         "CHANT": TokenType.CHANT,
@@ -34,64 +34,80 @@ def build_lexer():
         "ZONE": TokenType.ZONE
     }
 
-    for keyword, token_type in keywords.items():
-        lg.add(token_type.name, rf'\b{keyword}\b')
+    for word, token in keywords.items():
+        lg.add(token.name, rf"\b{word}\b")
 
-    # Identifiers (must start with "@")
-    lg.add(TokenType.VAR_INIT.name, r'@[a-zA-Z_][a-zA-Z0-9_]*')
+    # --- Identifiers ---
+    lg.add(TokenType.VAR_INIT.name, r"@[a-zA-Z_][a-zA-Z0-9_]*")
 
-    # Literals
-    lg.add(TokenType.FEINTLIT.name, r'\b\d+\b')
-    lg.add(TokenType.FLOATERLIT.name, r'\b\d+\.\d+\b')
-    lg.add(TokenType.CHANTLIT.name, r'"[^"\n]*"')
-    
-    # Operators
-    lg.add(TokenType.ASSIGN.name, r'=')
-    lg.add(TokenType.ADD.name, r'\+')
-    lg.add(TokenType.SUB.name, r'-')
-    lg.add(TokenType.MUL.name, r'\*')
-    lg.add(TokenType.DIV.name, r'/')
-    lg.add(TokenType.MOD.name, r'%')
+    # --- Literals ---
+    lg.add(TokenType.NEGAFLOATER.name, r"-\d+\.\d+")
+    lg.add(TokenType.FLOATERLIT.name, r"\d+\.\d+")
+    lg.add(TokenType.NEGAFEINT.name, r"-\d+")
+    lg.add(TokenType.FEINTLIT.name, r"\d+")
+    lg.add(TokenType.CHANTLIT.name, r'"([^"\\]|\\.)*"')
 
-    # Compound assignment
-    lg.add(TokenType.ADD_ASSIGN.name, r'\+=')
-    lg.add(TokenType.SUB_ASSIGN.name, r'-=')
-    lg.add(TokenType.MUL_ASSIGN.name, r'\*=')
-    lg.add(TokenType.DIV_ASSIGN.name, r'/=')
-    lg.add(TokenType.MOD_ASSIGN.name, r'%=')
+    # --- Arithmetic Operators ---
+    lg.add(TokenType.ADD.name, r"\+")
+    lg.add(TokenType.SUB.name, r"-")
+    lg.add(TokenType.MUL.name, r"\*")
+    lg.add(TokenType.DIV.name, r"/")
+    lg.add(TokenType.MOD.name, r"%")
 
-    # Relational
-    lg.add(TokenType.EQUAL.name, r'==')
-    lg.add(TokenType.NOT_EQUAL.name, r'!=')
-    lg.add(TokenType.LESS_THAN.name, r'<')
-    lg.add(TokenType.GREATER_THAN.name, r'>')
-    lg.add(TokenType.LESS_EQUAL.name, r'<=')
-    lg.add(TokenType.GREATER_EQUAL.name, r'>=')
+    # --- Assignment Operators ---
+    lg.add(TokenType.ADD_ASSIGN.name, r"\+=")
+    lg.add(TokenType.SUB_ASSIGN.name, r"-=")
+    lg.add(TokenType.MUL_ASSIGN.name, r"\*=")
+    lg.add(TokenType.DIV_ASSIGN.name, r"/=")
+    lg.add(TokenType.MOD_ASSIGN.name, r"%=")
+    lg.add(TokenType.ASSIGN.name, r"=")
 
-    # Logical
-    lg.add(TokenType.AND_OP.name, r'AND')
-    lg.add(TokenType.OR_OP.name, r'OR')
-    lg.add(TokenType.NOT_OP.name, r'NOT')
+    # --- Relational Operators ---
+    lg.add(TokenType.EQUAL.name, r"==")
+    lg.add(TokenType.NOT_EQUAL.name, r"!=")
+    lg.add(TokenType.LESS_EQUAL.name, r"<=")
+    lg.add(TokenType.GREATER_EQUAL.name, r">=")
+    lg.add(TokenType.LESS_THAN.name, r"<")
+    lg.add(TokenType.GREATER_THAN.name, r">")
 
-    # Punctuation
-    lg.add(TokenType.LEFT_PAREN.name, r'\(')
-    lg.add(TokenType.RIGHT_PAREN.name, r'\)')
-    lg.add(TokenType.CODE_BLOCK_LEFT.name, r'\{')
-    lg.add(TokenType.CODE_BLOCK_RIGHT.name, r'\}')
-    lg.add(TokenType.ARRAY_INDEX_LEFT.name, r'\[')
-    lg.add(TokenType.ARRAY_INDEX_RIGHT.name, r'\]')
-    lg.add(TokenType.COMMA.name, r',')
-    lg.add(TokenType.COLON.name, r':')
-    lg.add(TokenType.SEMICOLON.name, r';')
+    # --- Logical Operators ---
+    lg.add(TokenType.AND_OP.name, r"\bAND\b")
+    lg.add(TokenType.OR_OP.name, r"\bOR\b")
+    lg.add(TokenType.NOT_OP.name, r"\bNOT\b")
 
-    # Comments
-    lg.add(TokenType.SINGLE_COMMENT.name, r'//.*')
-    lg.add(TokenType.MULTI_COMMENT.name, r'/\*[\s\S]*?\*/')
+    # --- Structural Symbols ---
+    lg.add(TokenType.LEFT_PAREN.name, r"\(")
+    lg.add(TokenType.RIGHT_PAREN.name, r"\)")
+    lg.add(TokenType.CODE_BLOCK_LEFT.name, r"\{")
+    lg.add(TokenType.CODE_BLOCK_RIGHT.name, r"\}")
+    lg.add(TokenType.ARRAY_INDEX_LEFT.name, r"\[")
+    lg.add(TokenType.ARRAY_INDEX_RIGHT.name, r"\]")
 
-    # Ignored (whitespace, tabs, etc.)
-    lg.ignore(r'\s+')
+    # --- Other Symbols ---
+    lg.add(TokenType.COMMA.name, r",")
+    lg.add(TokenType.COLON.name, r":")
+    lg.add(TokenType.SEMICOLON.name, r";")
+    lg.add(TokenType.QUOTE.name, r'"')
+    lg.add(TokenType.UNDERSCORE.name, r"_")
+    lg.add(TokenType.BACKSLASH.name, r"\\")
+    lg.add(TokenType.INCREMENT.name, r"\+\+")
+    lg.add(TokenType.DECREMENT.name, r"--")
+
+    # --- Commenting ---
+    lg.add(TokenType.SINGLE_COMMENT.name, r"//[^\n]*")
+    lg.add(TokenType.MULTI_COMMENT.name, r"/\*[\s\S]*?\*/")
+
+    # --- Escape Sequences ---
+    lg.add(TokenType.BACKSLASH_AND.name, r"\\&")
+    lg.add(TokenType.BACKSLASH_AT.name, r"\\@")
+    lg.add(TokenType.ESCAPE_SEQUENCE.name, r"\\[ntr\"\\]")
+
+    # --- Whitespace and Control Characters (ignored) ---
+    lg.ignore(r"[ \t\r\f\v]+")
+    lg.ignore(r"\n")  # Optional: Handle newline tracking separately if needed
 
     return lg.build()
+
 
 if __name__ == "__main__":
     lexer = build_lexer()
