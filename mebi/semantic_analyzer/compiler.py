@@ -1,5 +1,4 @@
 from syntax_analyzer.ast_nodes import ASTNode
-from rply.token import BaseBox
 
 class Environment:
     def __init__(self):
@@ -22,28 +21,11 @@ class Compiler:
         self.env = Environment()
 
     def eval(self, node):
-        print(f"[DEBUG] Visiting: {node.name if hasattr(node, 'name') else node}")
-        # If node is a Token (like Token('VAR_INIT', '@passed')), extract its value
-        if hasattr(node, "gettokentype") and node.gettokentype() == "VAR_INIT":
-            return self.env.get_var(node.value)
+        # print(f"[DEBUG] Visiting: {node.name if hasattr(node, 'name') else node}")
         
         if node.name == "program":
             for child in node.children:
                 self.eval(child)
-        
-        elif node.name == "number_rel_operand":
-            return self.eval(node.children[0])
-        
-        elif node.name == "number":
-            val = node.value
-            if isinstance(val, str) and val.startswith('@'):
-                return self.env.get_var(val) 
-            elif '.' in str(val):
-                print(f"[DEBUG] Evaluating number: {node.value}")
-                return float(val)
-            else:
-                print(f"[DEBUG] Evaluating number: {node.value}")
-                return int(val)
             
         elif node.name == "global_decl":
             for child in node.children:
@@ -170,9 +152,9 @@ class Compiler:
             return self.eval(node.children[0])
                 
         elif node.name == "assignment_expression":
-            var_token = node.children[0]  # VAR_INIT
-            assign_op = node.children[1].value  # assign_operator
-            rhs = self.eval(node.children[2])  # assign_operand
+            var_token = node.children[0]
+            assign_op = node.children[1].value
+            rhs = self.eval(node.children[2]) 
 
             var_name = var_token.value
             var_type = self.env.get_type(var_name)
@@ -181,14 +163,7 @@ class Compiler:
             return rhs
 
         elif node.name == "follow_statement":
-            print("[DEBUG] Entered follow_statement")
-            var_token = node._parent.children[0]  # VAR_INIT token
-            var_name = var_token.value
-            value = self.eval(node.children[0])  # assignment_expression
-            var_type = self.env.get_type(var_name)
-            self.env.set_var(var_name, value, var_type)
-            print(f"[SET] {var_name} = {value} ({var_type})")
-            return value
+            pass
         
         elif node.name == "assign_operand":
             print(f"[DEBUG] Evaluating assign_operand: {node.children[0].name}")
@@ -215,6 +190,17 @@ class Compiler:
         elif node.name == "MOD":
             return self.eval(node.children[0]) % self.eval(node.children[1])  
 
+        elif node.name == "number":
+            val = node.value
+            if isinstance(val, str) and val.startswith('@'):
+                return self.env.get_var(val) 
+            elif '.' in str(val):
+                print(f"[DEBUG] Evaluating number: {node.value}")
+                return float(val)
+            else:
+                print(f"[DEBUG] Evaluating number: {node.value}")
+                return int(val)
+            
         elif node.name == "relational_expression":
             left = self.eval(node.children[0]) 
             op = node.children[1].value
@@ -232,8 +218,10 @@ class Compiler:
                 return "Win" if left >= right else "Loss"
             elif op == "!=":
                 return "Win" if left != right else "Loss"
-
-            
+    
+        elif node.name == "number_rel_operand":
+            return self.eval(node.children[0])
+        
         elif node.name == "stat_rel_operand" or node.name == "chant_rel_operand":
             if node.value:
                 return self.env.get_var(node.value) if node.value.startswith('@') else node.value
@@ -245,7 +233,7 @@ class Compiler:
 
         elif node.name == "relational_operator":
             print(f"[DEBUG] Reached relational_operator with value: {node.value}")
-            return node.value  # already returning e.g. '<', '=='
+            return node.value
         
         elif node.name == "inbound_statement":
             prompt = node.children[0].value.strip('"')
