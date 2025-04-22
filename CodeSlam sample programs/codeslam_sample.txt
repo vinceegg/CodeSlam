@@ -1,7 +1,7 @@
 # CodeSlam Sample Program
 # This program demonstrates the major features of the CodeSlam language
 
-# Variable declarations
+#Global Variables
 Feint @score = 84;
 Floater @percentageAccuracy = 76.5;
 Chant @playerName = "LeBron James";
@@ -21,79 +21,11 @@ Zone Feint @seasonStats[2][3] = {
     {28, 9, 14}
 };
 
-# Basic input and output
-Announce("Welcome to CodeSlam Basketball Analytics!");
-Announce("Enter player name:");
-Inbound("Enter name: ", @playerName);
-
-# Simple expressions
-Feint @totalScore = @points[0] + @points[1] + @points[2];
-Floater @average = @totalScore / 3.0;
-
-# Array manipulation
-@points[2] = 22;
-@seasonStats[1][0] = @seasonStats[1][0] + 5;
-
-# Conditional statements (if-else)
-Dribble (@score > 80) {
-    Announce("High Score: " & @score);
-} Pass (@score > 60) {
-    Announce("Average Score: " & @score);
-} Shoot {
-    Announce("Low Score: " & @score);
-}
-
-# Switch statement
-Switch (@totalScore) {
-    Get 60:
-        Announce("Score is exactly 60");
-        Timeout;
-    Get 70:
-        Announce("Score is exactly 70");
-        Timeout;
-    Default:
-        Announce("Score is: " & @totalScore);
-}
-
-# Loops - For loop
-Announce("Points per game:");
-Forward (@i = 0; @i < 5; @i++) {
-    Announce("Game " & (@i + 1) & ": " & @points[@i]);
-}
-
-# While loop
-Feint @counter = 0;
-Announce("While loop demonstration:");
-Play (@counter < 3) {
-    Announce("Counter: " & @counter);
-    @counter += 1;
-}
-
-# Do-while loop
-@counter = 0;
-Announce("Do-while loop demonstration:");
-Run {
-    Announce("Run counter: " & @counter);
-    @counter += 1;
-} Play (@counter < 3);
-
-# Break and continue
-Announce("Break and continue demonstration:");
-Forward (@i = 0; @i < 10; @i++) {
-    Dribble (@i == 3) {
-        Resume;  # Skip iteration where i=3
-    }
-    Dribble (@i == 7) {
-        Timeout;  # Exit loop when i=7
-    }
-    Announce("Iteration: " & @i);
-}
-
 # Function definition
 # Function with return value
 Wilt Feint @calculateTotalPoints(@points1, @points2) {
     Feint @total = Feint(@points1) + @points2; #Type casting to Feint
-    Rebound(@total);
+    Rebound @total;
 }
 
 # Void function
@@ -104,31 +36,98 @@ Wilt Dunk @displayPlayerInfo(@name, @age, @height) {
 }
 
 # Boolean function
-Wilt Stat @isEligible(Feint @age, Feint @experience) {
+Wilt Stat @isEligible( @age, @experience) {
     Dribble (@age >= 18 AND @experience >= 2) {
-        Rebound(Win);
+        Rebound Win;
     } Shoot {
-        Rebound(Loss);
+        Rebound Loss;
     }
 }
 
 # String manipulation function
-Wilt Chant @formatName(Chant @firstName, Chant @lastName) {
-    Rebound(@lastName & ", " & @firstName);
+Wilt Chant @formatName(@firstName, @lastName) {
+    Rebound @lastName & ", " & @firstName;
 }
 
 # Main function
 Team() {
-    # Function calls
-    Feint @totalPoints = @calculateTotalPoints(42, 28);
-    Announce("Total points: " & @totalPoints);
+
+    # Local Variables
+    Feint @totalScore = @points[0] + @points[1] + @points[2];
+    Floater @average = @totalScore / 3.0;
+    Feint @counter = 0;
+    Feint @totalPoints;
+    Stat @eligible;
+
+    # Basic input and output
+    Announce("Welcome to CodeSlam Basketball Analytics!");
+    Announce("Enter player name:");
+    Inbound("Enter name: ", @playerName);
+
+    # Array manipulation
+    @points[2] = 22;
+    @seasonStats[1][0] = @seasonStats[1][0] + 5;
+
+    # Conditional statements (if-else)
+    Dribble (@score > 80) {
+        Announce("High Score: " & @score);
+    } Pass (@score > 60) {
+        Announce("Average Score: " & @score);
+    } Shoot {
+        Announce("Low Score: " & @score);
+    }
+
+    # Switch statement
+    Switch (@totalScore) {
+        Get 60:
+            Announce("Score is exactly 60");
+            Timeout;
+        Get 70:
+            Announce("Score is exactly 70");
+            Timeout;
+        Default:
+            Announce("Score is: " & @totalScore);
+    }
+
+    # Loops - For loop
+    Announce("Points per game:");
+    Forward (@i = 0; @i < 5; @i++) {
+        Announce("Game " & (@i + 1) & ": " & @points);
+    }
+
+    # While loop
     
+    Announce("While loop demonstration:");
+    Play (@counter < 3) {
+        Announce("Counter: " & @counter);
+        @counter += 1;
+    }
+
+    # Do-while loop
+    @counter = 0;
+    Announce("Do-while loop demonstration:");
+    Run {
+        Announce("Run counter: " & @counter);
+        @counter += 1;
+    } Play (@counter < 3);
+
+    # Break and continue
+    Announce("Break and continue demonstration:");
+    Forward (@i = 0; @i < 10; @i++) {
+        Dribble (@i == 3) {
+            Resume;  # Skip iteration where i=3
+        }
+        Dribble (@i == 7) {
+            Timeout;  # Exit loop when i=7
+        }
+        Announce("Iteration: " & @i);
+    }
+
+    # Function calls
+    @totalPoints = @calculateTotalPoints(42, 28);
+    Announce("Total points: " & @totalPoints);
     @displayPlayerInfo("Anthony Davis", 30, 6.10);
     
-    Stat @eligible = @isEligible(22, 3);
-    Dribble (@eligible) {
-        Announce("Player is eligible");
-    }
     
     Chant @formattedName = @formatName("Stephen", "Curry");
     Announce("Formatted name: " & @formattedName);
