@@ -66,7 +66,7 @@ class Compiler:
             pass  # Later support @x = 1.5, @y = 2.6;
         
         elif node.name == "chant_dec":
-            var_token = node.children[0]  # VAR_INIT
+            var_token = node.children[0]
             var_name = var_token.value
             more_chant_node = node.children[1]
             init_value = self.eval(more_chant_node)
@@ -82,7 +82,7 @@ class Compiler:
                 return str(node.value).strip('"')
 
         elif node.name == "stat_dec":
-            var_token = node.children[0]  # VAR_INIT
+            var_token = node.children[0]
             var_name = var_token.value
             more_stat_node = node.children[1]
             init_value = self.eval(more_stat_node)
@@ -123,7 +123,6 @@ class Compiler:
             print(*outputs)
 
         elif node.name == "outputs":
-            # Always flatten nested output nodes
             results = []
             for child in node.children:
                 val = self.eval(child)
@@ -140,6 +139,25 @@ class Compiler:
                 return val
             else:
                 return "[EMPTY OUTPUT]"
+
+        elif node.name == "inbound_statement":
+            prompt = node.children[0].value.strip('"')  # clean up quotes
+            var_token = node.children[1]
+            var_name = var_token.value
+
+            user_input = input(f"{prompt} ")  # standard input
+
+            # Infer and store type (basic handling for now)
+            if user_input.isdigit():
+                value = int(user_input)
+            else:
+                try:
+                    value = float(user_input)
+                except ValueError:
+                    value = user_input  # fallback to string
+
+            self.env.set_var(var_name, value)
+            print(f"[INBOUND] {var_name} = {value}")
 
         elif node.name == "literal":
             # Detect and clean up CHANTLIT values
