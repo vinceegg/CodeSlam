@@ -121,6 +121,11 @@ def floater_init_empty(p):
 def floater_init_assign(p):
     return ASTNode("floater_init", value=p[1].value)
 
+# Rule 24: floater_lit → FLOATERLIT
+@pg.production("floater_lit : FLOATERLIT")
+def floater_lit(p):
+    return ASTNode("floater_lit", value=p[0].value)
+
 # Rule 25: floater_init_end → λ
 @pg.production("floater_init_end : ")
 def floater_init_end_empty(p):
@@ -155,6 +160,11 @@ def chant_init_empty(p):
 @pg.production("chant_init : ASSIGN CHANTLIT")
 def chant_init_assign(p):
     return ASTNode("chant_init", value=p[1].value)
+
+# Rule 32: chant_lit → CHANTLIT
+@pg.production("chant_lit : CHANTLIT")
+def chant_lit(p):
+    return ASTNode("chant_lit", value=p[0].value)
 
 # Rule 33: chant_init_end → λ
 @pg.production("chant_init_end : ")

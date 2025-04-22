@@ -34,8 +34,10 @@ class Compiler:
             if isinstance(val, str) and val.startswith('@'):
                 return self.env.get_var(val) 
             elif '.' in str(val):
+                print(f"[DEBUG] Evaluating number: {node.value}")
                 return float(val)
             else:
+                print(f"[DEBUG] Evaluating number: {node.value}")
                 return int(val)
             
         elif node.name == "global_decl":
@@ -202,8 +204,6 @@ class Compiler:
             return self.eval(node.children[0]) / self.eval(node.children[1])
         elif node.name == "MOD":
             return self.eval(node.children[0]) % self.eval(node.children[1])  
-                
-
 
         elif node.name == "relational_expression":
             left = self.eval(node.children[0])  # number_rel_operand
