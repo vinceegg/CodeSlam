@@ -309,6 +309,43 @@ class Compiler:
 
             self.env.set_var(var_name, value, expected_type)
             print(f"[INBOUND] {var_name} = {value} ({expected_type})")
+        
+        elif node.name == "dribble_statement":
+            condition_result = self.eval(node.children[0])  # expression
+            print(f"[DEBUG] Dribble condition evaluated to: {condition_result}")
+
+            if condition_result == "Win" or condition_result == True:
+                self.eval(node.children[1])  # loop_statements
+            else:
+                if len(node.children) > 2:
+                    self.eval(node.children[2])  # pass/shoot (add_condition)
+
+        elif node.name == "add_condition":
+            # Pass or Shoot follow-ups
+            keyword_node = node.children[0]
+            if keyword_node.name == "Pass":
+                condition_result = self.eval(node.children[1])  # expression
+                print(f"[DEBUG] Pass condition evaluated to: {condition_result}")
+                if condition_result == "Win" or condition_result == True:
+                    self.eval(node.children[2])  # loop_statements
+                else:
+                    if len(node.children) > 3:
+                        self.eval(node.children[3])  # next Pass or Shoot
+            elif keyword_node.name == "Shoot":
+                self.eval(node.children[1])  # loop_statements
+        
+        elif node.name == "loop_statements":
+            for child in node.children:
+                result = self.eval(child)
+                if result == "Resume":
+                    break
+
+        elif node.name == "loop_statement":
+            return self.eval(node.children[0])
+
+        elif node.name == "resume_statement":
+            print("[LOOP] Resume triggered.")
+            return "Resume"
 
         elif node.name == "literal":
             # Detect and clean up CHANTLIT values

@@ -1188,7 +1188,7 @@ def inbound_statement(p):
     return ASTNode("inbound_statement", children=[p[2], p[4]])
 
 # Rule 241: dribble_statement → DRIBBLE ( expression ) { loop_statements } add_condition
-@pg.production("dribble_statement : DRIBBLE LEFT_PAREN expression RIGHT_PAREN CODE_BLOCK_LEFT loop_statements CODE_BLOCK_RIGHT add_condition")
+@pg.production("dribble_statement : DRIBBLE LEFT_PAREN expression RIGHT_PAREN CODE_BLOCK_LEFT loop_statement CODE_BLOCK_RIGHT add_condition")
 def dribble_statement(p):
     return ASTNode("dribble_statement", children=[p[2], p[5], p[7]])
 
@@ -1223,7 +1223,7 @@ def loop_statement_team(p):
     return ASTNode("loop_statement", children=[p[0]])
 
 # Rule 248: loop_statement → resume_statement
-@pg.production("loop_statement : resume_statement")
+@pg.production("loop_statement : resume_statement team_statement")
 def loop_statement_resume(p):
     return ASTNode("loop_statement", children=[p[0]])
 
