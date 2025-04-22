@@ -766,7 +766,7 @@ def other_outputs_empty(p):
 # Rule 157: other_outputs → & outputs
 @pg.production("other_outputs : CHANT_CONCAT outputs")
 def other_outputs_concat(p):
-    return ASTNode("other_outputs", children=[p[1]])
+    return ASTNode("other_outputs", children=p[1].children)
 
 # Rule 158: literal → feint_lit
 @pg.production("literal : feint_lit")

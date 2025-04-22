@@ -5,10 +5,10 @@ from rply import ParserGenerator
 
 def main():
     code = '''
-    Team() {
-        Feint @score = 10;
-        Announce("Welcome to the court!");
-    }
+Team() {
+    Feint @score = 10;
+    Announce("Score is:" & @score);
+}
     '''
 
     # Build lexer and tokenize input

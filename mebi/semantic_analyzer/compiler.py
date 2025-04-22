@@ -8,7 +8,7 @@ class Environment:
         self.variables[name] = value
 
     def get_var(self, name):
-        return self.variables.get(name, None)
+        return self.variables.get(name, f"[ERROR: {name} not found]")
 
 
 class Compiler:
@@ -42,14 +42,19 @@ class Compiler:
             return self.eval(node.children[0])
 
         elif node.name == "feint_dec":
-            var_token = node.children[0]  # Token('VAR_INIT', '@score')
+            var_token = node.children[0]
             var_name = var_token.value
-            init_node = node.children[1]
-            init_value = self.eval(init_node)
+            more_feint_node = node.children[1]
+            init_value = self.eval(more_feint_node) 
             self.env.set_var(var_name, init_value)
+            print(f"[SET] {var_name} = {init_value}")
 
         elif node.name == "feint_init":
             return int(node.value)
+
+        elif node.name == "more_feint":
+            if node.children:
+                return self.eval(node.children[0])  # feint_init
 
         elif node.name == "team_statement":
             for stmt in node.children:
@@ -63,10 +68,23 @@ class Compiler:
             print(*outputs)
 
         elif node.name == "outputs":
-            return [self.eval(child) for child in node.children]
+            # Always flatten nested output nodes
+            results = []
+            for child in node.children:
+                val = self.eval(child)
+                results.append(val)
+            return results
 
         elif node.name == "output":
-            return self.eval(node.children[0])
+            if node.value:
+                print(f"[OUTPUT] VAR_INIT = {node.value}")
+                return self.env.get_var(node.value)
+            elif node.children:
+                val = self.eval(node.children[0])
+                print(f"[OUTPUT] Child node evaluated to: {val}")
+                return val
+            else:
+                return "[EMPTY OUTPUT]"
 
         elif node.name == "literal":
             return node.value

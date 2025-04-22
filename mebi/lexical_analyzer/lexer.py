@@ -92,6 +92,7 @@ def build_lexer():
     lg.add(TokenType.BACKSLASH.name, r"\\")
     lg.add(TokenType.INCREMENT.name, r"\+\+")
     lg.add(TokenType.DECREMENT.name, r"--")
+    lg.add(TokenType.CHANT_CONCAT.name, r"&")
 
     # --- Commenting ---
     lg.add(TokenType.SINGLE_COMMENT.name, r"//[^\n]*")
