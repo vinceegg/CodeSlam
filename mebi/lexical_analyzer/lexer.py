@@ -1,5 +1,5 @@
 from rply import LexerGenerator
-from tokens import TokenType
+from lexical_analyzer.tokens import TokenType 
 
 
 def build_lexer():
