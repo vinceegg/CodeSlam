@@ -49,12 +49,36 @@ class Compiler:
             self.env.set_var(var_name, init_value)
             print(f"[SET] {var_name} = {init_value}")
 
-        elif node.name == "feint_init":
-            return int(node.value)
-
         elif node.name == "more_feint":
             if node.children:
-                return self.eval(node.children[0])  # feint_init
+                return self.eval(node.children[0]) 
+        
+        elif node.name == "feint_init":
+            return int(node.value)
+        
+        #TODO
+        elif node.name == "feint_init_end":
+            pass
+
+        elif node.name == "floater_dec":
+            var_token = node.children[0]
+            var_name = var_token.value
+            more_floater_node = node.children[1]
+            init_value = self.eval(more_floater_node)
+            self.env.set_var(var_name, init_value)
+            print(f"[SET] {var_name} = {init_value}")
+            
+        elif node.name == "more_floater":
+            if node.children:
+                return self.eval(node.children[0])
+            
+        elif node.name == "floater_init":
+            if node.value is not None:
+                return float(node.value)
+        
+        #TODO
+        elif node.name == "floater_init_end":
+            pass  # Later support @x = 1.5, @y = 2.6;
 
         elif node.name == "team_statement":
             for stmt in node.children:
