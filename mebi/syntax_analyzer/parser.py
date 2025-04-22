@@ -626,7 +626,7 @@ def statement_run(p):
     return ASTNode("statement", children=[p[0]])
 
 # Rule 129: statement → VAR_INIT follow_statement ;
-@pg.production("statement : VAR_INIT follow_statement SEMICOLON")
+@pg.production("statement : VAR_INIT follow_statement ")
 def statement_follow(p):
     return ASTNode("statement", children=[p[0], p[1]])
 
@@ -640,15 +640,20 @@ def follow_statement_increment(p):
 def follow_statement_decrement(p):
     return ASTNode("follow_statement", children=[p[0]])
 
-# Rule 132: follow_statement → function_call
-@pg.production("follow_statement : function_call")
-def follow_statement_call(p):
-    return ASTNode("follow_statement", children=[p[0]])
+# # Rule 132: follow_statement → function_call
+# @pg.production("follow_statement : function_call")
+# def follow_statement_call(p):
+#     return ASTNode("follow_statement", children=[p[0]])
+
+# # Rule 133: follow_statement → assignment_expression team_statement
+# @pg.production("follow_statement : assignment_expression team_statement")
+# def follow_statement_assignment(p):
+#     return ASTNode("follow_statement", children=[p[0]] + p[1].children)
 
 # Rule 133: follow_statement → assignment_expression team_statement
-@pg.production("follow_statement : assignment_expression team_statement")
+@pg.production("follow_statement : assignment_expression")
 def follow_statement_assignment(p):
-    return ASTNode("follow_statement", children=[p[0]] + p[1].children)
+    return ASTNode("follow_statement", children=[p[0]])
 
 # Rule 134: follow_statement → array_manipulation
 @pg.production("follow_statement : array_manipulation")
@@ -834,7 +839,7 @@ def arithmetic_number(p):
 def arithmetic_grouped(p):
     return p[1]
 
-# Binary infix expressions (with precedence)
+# expressions (with precedence)
 @pg.production("arithmetic_expression : arithmetic_expression ADD arithmetic_expression")
 def arithmetic_add(p):
     return ASTNode("ADD", children=[p[0], p[2]])

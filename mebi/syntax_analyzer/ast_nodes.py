@@ -3,6 +3,9 @@ class ASTNode:
         self.name = name
         self.children = children if children is not None else []
         self.value = value
+        for child in self.children:
+            if isinstance(child, ASTNode):
+                child._parent = self
 
     def __repr__(self):
         return self.pretty()
