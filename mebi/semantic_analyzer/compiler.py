@@ -143,11 +143,11 @@ class Compiler:
         elif node.name == "output":
             if node.value:
                 # print(f"[OUTPUT] VAR_INIT = {node.value}")
-                return self.env.get_var(node.value)
+                return str(self.env.get_var(node.value))
             elif node.children:
                 val = self.eval(node.children[0])
                 # print(f"[OUTPUT] Child node evaluated to: {val}")
-                return val
+                return str(val)
             else:
                 return "[EMPTY OUTPUT]"
             
