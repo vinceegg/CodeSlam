@@ -6,9 +6,9 @@ import sys
 import os
 # Add the parent directory (CODESLAM) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# Add the mebi directory to the Python path
-mebi_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'mebi'))
-sys.path.append(mebi_path)
+# Add the runcomp directory to the Python path
+runcomp_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'runcomp'))
+sys.path.append(runcomp_path)
 from Analyzers.lexical_analyzer.lexical import *  # Import all function from lexical.py
 from Analyzers.syntax_analyzer import parse  # Import the parser
 from tkinter import END
@@ -711,7 +711,7 @@ class App(customtkinter.CTk):
             )
 
     def sidebar_button_semantic(self):
-        """Run semantic analysis using the mebi compiler"""
+        """Run semantic analysis using the runner compiler"""
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
         
@@ -719,7 +719,7 @@ class App(customtkinter.CTk):
         code = self.codebox.get("1.0", "end-1c")
         
         try:
-            from mebi.main import run_compiler
+            from runcomp.main import run_compiler
             
             # Define a custom input function that uses our command input box
             def get_terminal_input(prompt):
@@ -755,7 +755,7 @@ class App(customtkinter.CTk):
                 self.terminal_output.configure(state="disabled")
                     
         except ImportError as e:
-            self.append_terminal_output("Error importing mebi compiler:", text_color="red")
+            self.append_terminal_output("Error importing runcomp compiler:", text_color="red")
             self.append_terminal_output(str(e), text_color="red")
 
     def process_command_input(self, event):
