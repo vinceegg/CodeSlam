@@ -12,7 +12,7 @@ from syntax_analyzer.parser import pg
 from semantic_analyzer.compiler import Compiler
 from rply import ParserGenerator
 
-def run_compiler(code):
+def run_compiler(code, input_func=None):
     # Create StringIO to capture output
     output = io.StringIO()
     old_stdout = sys.stdout
@@ -28,6 +28,8 @@ def run_compiler(code):
         try:
             ast = parser.parse(tokens)
             compiler = Compiler()
+            # Pass the input function to the compiler
+            compiler.input_func = input_func
             compiler.eval(ast)  # This will write to our StringIO
             return output.getvalue()  # Return the captured output
             
@@ -40,16 +42,14 @@ def run_compiler(code):
 
 def main():
     code = '''
-Team() {
-    Feint @year = 2024;  
+Team(){
+Chant @name;
 
-    # Check for leap year
-    Dribble ((@year % 4 == 0 AND @year % 100 != 0) OR (@year % 400 == 0)) {
-        Announce(@year & " is a leap year.");
-    } Shoot {
-        Announce(@year & " is not a leap year.");
-    }
-} 
+Inbound("Enter name: ", @name);
+
+Announce("User's name is: " & @name);
+}
+
  '''
     print(run_compiler(code))
 

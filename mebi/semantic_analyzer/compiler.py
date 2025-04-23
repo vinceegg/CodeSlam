@@ -19,6 +19,13 @@ class Environment:
 class Compiler:
     def __init__(self):
         self.env = Environment()
+        self.input_func = None  # Default to None, will use built-in input() if not set
+
+    def get_input(self, prompt):
+        """Get user input using either the custom input function or built-in input()"""
+        if self.input_func:
+            return self.input_func(prompt)
+        return input(prompt)
 
     def eval(self, node):
         # print(f"[DEBUG] Visiting: {node.name if hasattr(node, 'name') else node}")
@@ -286,7 +293,7 @@ class Compiler:
             if not expected_type:
                 raise ValueError(f"[ERROR] Variable {var_name} not declared before Inbound().")
 
-            user_input = input(f"{prompt} ")
+            user_input = self.get_input(f"{prompt} ")
 
             # Type-check based on expected type
             try:
@@ -306,7 +313,7 @@ class Compiler:
                 else:
                     raise ValueError(f"[ERROR] Unsupported type '{expected_type}'")
             except ValueError as ve:
-                raise ValueError(f"[TYPE ERROR] {var_name} expects {expected_type} input: {ve}") # Double check error messages
+                raise ValueError(f"[TYPE ERROR] {var_name} expects {expected_type} input: {ve}")
 
             self.env.set_var(var_name, value, expected_type)
             # print(f"[INBOUND] {var_name} = {value} ({expected_type})")

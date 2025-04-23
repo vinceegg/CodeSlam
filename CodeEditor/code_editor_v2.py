@@ -461,14 +461,15 @@ class App(customtkinter.CTk):
         self.terminal_output.grid(row=1, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
         self.terminal_output.insert("0.0", "Terminal Output:\n\n")
 
-        # Keep track of user input mode (ADDED)
-        self.input_mode = False
-        self.current_prompt = ">>"
-
         # Command input field (entry widget)
-        self.command_input = customtkinter.CTkEntry(self)
+        self.command_input = customtkinter.CTkEntry(self, placeholder_text="Enter your input here...")
         self.command_input.grid(row=2, column=1, padx=(20, 0), pady=(10, 20), sticky="ew")
-        # self.command_input.bind("<Return>", self.execute_command)  # Bind Enter key to run the command
+        self.command_input.bind("<Return>", self.process_command_input)
+
+        # Variables for input handling
+        self.waiting_for_input = False
+        self.input_processed = tkinter.BooleanVar(value=False)
+        self.last_input = None
 
         # set default values
         self.sideBtnLexical.configure(text="Lexical")
@@ -719,7 +720,30 @@ class App(customtkinter.CTk):
         
         try:
             from mebi.main import run_compiler
-            output = run_compiler(code)
+            
+            # Define a custom input function that uses our command input box
+            def get_terminal_input(prompt):
+                self.terminal_output.configure(state="normal")
+                # Show the prompt in terminal
+                self.terminal_output.insert(END, prompt)
+                self.terminal_output.see(END)
+                self.terminal_output.configure(state="disabled")
+                
+                # Reset input flags
+                self.input_processed.set(False)
+                self.waiting_for_input = True
+                
+                # Enable and focus the input box
+                self.command_input.configure(state="normal")
+                self.command_input.focus_set()
+                
+                # Wait for input to be processed
+                self.wait_variable(self.input_processed)
+                
+                return self.last_input
+            
+            # Run the compiler with our custom input function
+            output = run_compiler(code, input_func=get_terminal_input)
             
             # Display the output directly in the terminal
             if output:
@@ -727,71 +751,35 @@ class App(customtkinter.CTk):
                 # Process the output to handle escape sequences
                 processed_output = bytes(output, "utf-8").decode("unicode_escape")
                 self.terminal_output.insert(END, processed_output)
-                self.terminal_output.configure(state="disabled")
                 self.terminal_output.see(END)
+                self.terminal_output.configure(state="disabled")
                     
         except ImportError as e:
             self.append_terminal_output("Error importing mebi compiler:", text_color="red")
             self.append_terminal_output(str(e), text_color="red")
 
-    # ADDED
-    def enable_terminal_input(self):
-        """Enable user input in the terminal."""
-        self.input_mode = True # Set input mode to True         
-        self.terminal_output.insert(END, f"{self.current_prompt}")  # Add the prompt (>>) to the terminal
-        self.terminal_output.see(END)  # Auto-scroll to the end  # Auto-scroll to the end
-        self.terminal_output.focus_set()  # Set focus to the terminal
-        # Get the current end position of the terminal
-        self.input_start_pos = self.terminal_output.index(END + "-1c")
-
-    # ADDED
-    def handle_terminal_key(self, event):
-        """Handle key events in the terminal during input mode."""
-        if not self.input_mode:
-            return  # Do nothing if not in input mode
+    def process_command_input(self, event):
+        """Process input from the command input box."""
+        user_input = self.command_input.get()
         
-        # Only allow typing at or after the input position
-        current_pos = self.terminal_output.index(tkinter.INSERT)
-        if self.terminal_output.compare(current_pos, "<", self.input_start_pos):
-            self.terminal_output.mark_set(tkinter.INSERT, END) # Move cursor to end if trying to edit past text
-            return "break" # Prevent the key event
+        if self.waiting_for_input:
+            # Add the input to terminal with newline
+            self.terminal_output.configure(state="normal")
+            self.terminal_output.insert(END, user_input + "\n")
+            self.terminal_output.configure(state="disabled")
+            self.terminal_output.see(END)
             
-        # Allow normal typing otherwise
-        return None
-
-    # ADDED
-    def process_terminal_input(self, event):
-        """Process user input when Enter is pressed in the terminal."""
-        if not self.input_mode:
-            return "break" # Do nothing if not in input mode
+            # Store the input and signal it's processed
+            self.last_input = user_input
+            self.input_processed.set(True)
+            self.waiting_for_input = False
             
-        # Get the line where the cursor is
-        current_line = self.terminal_output.get("insert linestart", "insert lineend")
+            # Clear the input box
+            self.command_input.delete(0, END)
+            # Disable the input box until next input request
+            self.command_input.configure(state="disabled")
         
-        # Extract just the input part (after the prompt)
-        if current_line.startswith(self.current_prompt):
-            user_input = current_line[len(self.current_prompt):] # Remove prompt from input
-            
-            # Reset input mode
-            self.input_mode = False
-            
-            # Add a newline
-            self.terminal_output.insert(END, "\n")
-            
-            # Process the input
-            if user_input.strip():
-                # Here you would call your semantic analyzer
-                self.terminal_output.insert(END, "No semantic analyzer function yet\n")
-            
-            # Start a new prompt
-            self.enable_terminal_input()
-            
-        return "break"  # Prevent the default Enter behavior
-            
-    def on_configure(self, event):
-        """Update line numbers when code editor is configured/resized"""
-        self.update_line_numbers()
-        self.line_numbers.yview_moveto(self.codebox.yview()[0])
+        return "break"
 
     def update_button_colors(self):
         """Update button colors based on appearance mode"""
@@ -828,10 +816,13 @@ class App(customtkinter.CTk):
                     
     def clear_terminal_output(self):
         """Clear the terminal output."""
-        self.terminal_output.configure(state="normal")  # Make it editable temporarily
-        self.terminal_output.delete("1.0", END)  # Clear all text
-        self.terminal_output.insert("0.0", "Terminal Output:\n\n")  # Add initial text
-        self.terminal_output.configure(state="disabled")  # Make it read-only again
+        self.terminal_output.configure(state="normal")
+        self.terminal_output.delete("1.0", END)
+        self.terminal_output.insert("0.0", "Terminal Output:\n\n")
+        self.terminal_output.configure(state="disabled")
+        # Reset input state
+        self.waiting_for_input = False
+        self.command_input.configure(state="disabled")
 
     def append_terminal_output(self, text, text_color="white"):
         """Append text to the terminal output with specified color"""
