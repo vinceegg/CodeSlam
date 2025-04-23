@@ -42,16 +42,48 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Team(){
-Chant @name;
+Team() {
+    Chant @letter;
 
-Inbound("Enter name: ", @name);
+    Inbound("Enter a letter: ", @letter);
 
-Announce("User's name is: " & @name);
+    Dribble (@letter == "a") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass (@letter == "e") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass (@letter == "i") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass (@letter == "o") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass (@letter == "u") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Shoot {
+        Announce("The letter " & @letter & " is NOT a Vowel.");
+    }
 }
 
+
  '''
-    print(run_compiler(code))
+     # Build lexer and tokenize input
+    lexer = build_lexer()
+    tokens = lexer.lex(code)
+
+    # Build parser and parse tokens into AST
+    parser = pg.build()
+    try:
+        ast = parser.parse(tokens)
+        print("\nPARSE SUCCESSFUL!")
+        print("AST Output:\n", ast)
+        # --- Evaluate ---
+        print("\nEVALUATION RESULT:")
+        compiler = Compiler()
+        compiler.eval(ast)
+    except Exception as e:
+        print("\nPARSE ERROR!")
+        # ast = parser.parse(tokens)
+        # print("AST Output:\n", ast)
+        print(e)
+    # print(run_compiler(code))
 
 if __name__ == "__main__":
     main()
