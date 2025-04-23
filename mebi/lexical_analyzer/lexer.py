@@ -97,9 +97,10 @@ def build_lexer():
     lg.add(TokenType.CHANT_CONCAT.name, r"&")
 
     # --- Commenting ---
-    lg.add(TokenType.SINGLE_COMMENT.name, r"//[^\n]*")
-    lg.add(TokenType.MULTI_COMMENT.name, r"/\*[\s\S]*?\*/")
-
+    lg.add(TokenType.SINGLE_COMMENT.name, r"\#[^\n]*")
+    lg.add(TokenType.MULTI_COMMENT.name, r"\|[\s\S]*?\|")
+    lg.ignore(r"\|[\s\S]*?\|")
+    lg.ignore(r"\#[^\n]*")
     # --- Escape Sequences ---
     lg.add(TokenType.BACKSLASH_AND.name, r"\\&")
     lg.add(TokenType.BACKSLASH_AT.name, r"\\@")

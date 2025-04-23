@@ -19,7 +19,6 @@ Team() {
         Announce("\n");
     }
 }
-
  '''
 
     # Build lexer and tokenize input
