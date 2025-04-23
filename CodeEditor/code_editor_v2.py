@@ -22,11 +22,11 @@ from tkinter.scrolledtext import ScrolledText
 import re
 
 # Load the image
-image_path = "assets/icons/CodeSLAM-LOGO.png"
-image = Image.open(image_path)
+# image_path = "assets/icons/CodeSLAM-LOGO.png"
+# image = Image.open(image_path)
 
 # Create CTkImage with a specified size
-logo_image = CTkImage(image, size=(100, 100))  # Set desired width and height here
+# logo_image = CTkImage(image, size=(100, 100))  # Set desired width and height here
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue")
@@ -383,8 +383,8 @@ class App(customtkinter.CTk):
         self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(4, weight=1)
         # Replace the "CodeSlam" text with the image
-        self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, image=logo_image, text="")
-        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        # self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, image=logo_image, text="")
+        # self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
         
         # create sidebar buttons with improved styling
