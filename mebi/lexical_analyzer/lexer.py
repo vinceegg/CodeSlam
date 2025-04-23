@@ -39,6 +39,7 @@ def build_lexer():
         
     lg.add(TokenType.ADD_ASSIGN.name, r"\+=")
     lg.add(TokenType.INCREMENT.name, r"\+\+")
+    lg.add(TokenType.EQUAL.name, r"==")
     
     # --- Identifiers ---
     lg.add(TokenType.VAR_INIT.name, r"@[a-zA-Z_][a-zA-Z0-9_]*")
@@ -65,7 +66,6 @@ def build_lexer():
     lg.add(TokenType.ASSIGN.name, r"=")
 
     # --- Relational Operators ---
-    lg.add(TokenType.EQUAL.name, r"==")
     lg.add(TokenType.NOT_EQUAL.name, r"!=")
     lg.add(TokenType.LESS_EQUAL.name, r"<=")
     lg.add(TokenType.GREATER_EQUAL.name, r">=")

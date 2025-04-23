@@ -6,19 +6,15 @@ from rply import ParserGenerator
 def main():
     code = '''
 Team() {
-    Feint @i = 1;
-    Feint @j = 1;
-    Feint @rows = 5;
-    Feint @cols = 8;
+    Feint @year = 2024;  
 
-    Forward (@i = 1; @i <= @rows; @i++) {
-        @j = 1;
-        Forward (@j = 1; @j <= @cols; @j++) {
-            Announce("* ");
-        }
-        Announce("\n");
+    # Check for leap year
+    Dribble ((@year % 4 == 0 AND @year % 100 != 0) OR (@year % 400 == 0)) {
+        Announce(@year & " is a leap year.");
+    } Shoot {
+        Announce(@year & " is not a leap year.");
     }
-}
+} 
  '''
 
     # Build lexer and tokenize input
