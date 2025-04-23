@@ -4,10 +4,16 @@ import customtkinter
 import subprocess
 import sys
 import os
+
 # Add the parent directory (CODESLAM) to the Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 from Analyzers.lexical_analyzer.lexical import *  # Import all function from lexical.py
-from Analyzers.syntax_analyzer import parse  # Import the parser
+from Analyzers.syntax_analyzer.ast_builder import ASTBuilder
+from Analyzers.syntax_analyzer.ast_nodes import *
+from Analyzers.syntax_analyzer.tokens import TokenType
 from tkinter import END
 
 from customtkinter import CTkImage
@@ -684,18 +690,20 @@ class App(customtkinter.CTk):
             return
         
         try:
-            result = parse(tokens)
-            if result:
+            # Create AST Builder and parse tokens
+            ast_builder = ASTBuilder()
+            ast = ast_builder.parse(tokens)
+            
+            if ast:
                 self.append_terminal_output("No Syntax Error/s", text_color="green")
+                self.append_terminal_output("\nAbstract Syntax Tree (AST):", text_color="white")
+                self.display_ast(ast)
                 self.sideBtnSemantic.configure(
                     state="normal",
                     fg_color="#1f538d"
                 )
         except SyntaxError as e:
-            if e.token == "EOF":
-                error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: Expected Token: {{{e.expected}}}"
-            else:
-                error_msg = f"Syntax Error at line {e.line_number}, column {e.column}: Unexpected Token: {e.token}\nExpected Token: {{{e.expected}}}"
+            error_msg = str(e)  # Use the string representation of the error
             self.append_terminal_output(error_msg, text_color="red")
             
             if hasattr(e, 'line_number') and hasattr(e, 'column'):
@@ -705,6 +713,138 @@ class App(customtkinter.CTk):
                 state="disabled",
                 fg_color="#2B2B2B"
             )
+
+    def display_ast(self, node, level=0):
+        """Recursively display the AST structure"""
+        indent = "  " * level
+        
+        if isinstance(node, Program):
+            self.append_terminal_output(f"{indent}Program:", text_color="white")
+            self.display_ast(node.global_decl, level + 1)
+            self.display_ast(node.function_def, level + 1)
+            self.display_ast(node.team_block, level + 1)
+            
+        elif isinstance(node, GlobalDecl):
+            self.append_terminal_output(f"{indent}GlobalDecl:", text_color="white")
+            for decl in node.declarations:
+                self.display_ast(decl, level + 1)
+                
+        elif isinstance(node, GlobalDeclaration):
+            self.append_terminal_output(f"{indent}GlobalDeclaration:", text_color="white")
+            self.display_ast(node.declaration, level + 1)
+            
+        elif isinstance(node, VariableDec):
+            self.append_terminal_output(f"{indent}VariableDec: {node.var_type} {node.identifier}", text_color="white")
+            if node.init_value:
+                self.display_ast(node.init_value, level + 1)
+                
+        elif isinstance(node, ArrayDec):
+            self.append_terminal_output(f"{indent}ArrayDec: {node.array_type} {node.identifier}", text_color="white")
+            for dim in node.dimensions:
+                self.display_ast(dim, level + 1)
+                
+        elif isinstance(node, FunctionDef):
+            self.append_terminal_output(f"{indent}FunctionDef:", text_color="white")
+            for func in node.functions:
+                self.display_ast(func, level + 1)
+                
+        elif isinstance(node, Function):
+            self.append_terminal_output(f"{indent}Function: {node.func_type} {node.identifier}", text_color="white")
+            self.append_terminal_output(f"{indent}  Parameters: {', '.join(node.parameters)}", text_color="white")
+            self.display_ast(node.body, level + 1)
+            
+        elif isinstance(node, TeamBlock):
+            self.append_terminal_output(f"{indent}TeamBlock:", text_color="white")
+            self.display_ast(node.local_decl, level + 1)
+            for stmt in node.statements:
+                self.display_ast(stmt, level + 1)
+                
+        elif isinstance(node, Statement):
+            self.append_terminal_output(f"{indent}Statement:", text_color="white")
+            self.display_ast(node.statement, level + 1)
+            
+        elif isinstance(node, AnnounceStatement):
+            self.append_terminal_output(f"{indent}AnnounceStatement:", text_color="white")
+            self.display_ast(node.expression, level + 1)
+            
+        elif isinstance(node, InboundStatement):
+            self.append_terminal_output(f"{indent}InboundStatement: {node.message} {node.variable}", text_color="white")
+            
+        elif isinstance(node, DribbleStatement):
+            self.append_terminal_output(f"{indent}DribbleStatement:", text_color="white")
+            self.display_ast(node.condition, level + 1)
+            self.display_ast(node.body, level + 1)
+            if node.else_block:
+                self.display_ast(node.else_block, level + 1)
+                
+        elif isinstance(node, SwitchStatement):
+            self.append_terminal_output(f"{indent}SwitchStatement:", text_color="white")
+            self.display_ast(node.expression, level + 1)
+            for case in node.cases:
+                self.display_ast(case, level + 1)
+            if node.default:
+                self.display_ast(node.default, level + 1)
+                
+        elif isinstance(node, Case):
+            self.append_terminal_output(f"{indent}Case:", text_color="white")
+            self.display_ast(node.value, level + 1)
+            self.display_ast(node.body, level + 1)
+            
+        elif isinstance(node, ForwardStatement):
+            self.append_terminal_output(f"{indent}ForwardStatement:", text_color="white")
+            self.display_ast(node.init, level + 1)
+            self.display_ast(node.condition, level + 1)
+            self.display_ast(node.update, level + 1)
+            self.display_ast(node.body, level + 1)
+            
+        elif isinstance(node, PlayStatement):
+            self.append_terminal_output(f"{indent}PlayStatement:", text_color="white")
+            self.display_ast(node.condition, level + 1)
+            self.display_ast(node.body, level + 1)
+            
+        elif isinstance(node, RunPlayStatement):
+            self.append_terminal_output(f"{indent}RunPlayStatement:", text_color="white")
+            self.display_ast(node.body, level + 1)
+            self.display_ast(node.condition, level + 1)
+            
+        elif isinstance(node, AssignmentStatement):
+            self.append_terminal_output(f"{indent}AssignmentStatement: {node.identifier} {node.operator}", text_color="white")
+            if node.value:
+                self.display_ast(node.value, level + 1)
+                
+        elif isinstance(node, Block):
+            self.append_terminal_output(f"{indent}Block:", text_color="white")
+            for stmt in node.statements:
+                self.display_ast(stmt, level + 1)
+                
+        elif isinstance(node, Expression):
+            self.append_terminal_output(f"{indent}Expression:", text_color="white")
+            self.display_ast(node.expression, level + 1)
+            
+        elif isinstance(node, BinaryOp):
+            self.append_terminal_output(f"{indent}BinaryOp: {node.operator}", text_color="white")
+            self.display_ast(node.left, level + 1)
+            self.display_ast(node.right, level + 1)
+            
+        elif isinstance(node, UnaryOp):
+            self.append_terminal_output(f"{indent}UnaryOp: {node.operator}", text_color="white")
+            self.display_ast(node.operand, level + 1)
+            
+        elif isinstance(node, Literal):
+            self.append_terminal_output(f"{indent}Literal: {node.value} ({node.type})", text_color="white")
+            
+        elif isinstance(node, Identifier):
+            self.append_terminal_output(f"{indent}Identifier: {node.name}", text_color="white")
+            
+        elif isinstance(node, FunctionCall):
+            self.append_terminal_output(f"{indent}FunctionCall: {node.name}", text_color="white")
+            for arg in node.arguments:
+                self.display_ast(arg, level + 1)
+                
+        elif isinstance(node, ArrayAccess):
+            self.append_terminal_output(f"{indent}ArrayAccess: {node.array}", text_color="white")
+            for index in node.indices:
+                self.display_ast(index, level + 1)
 
     def sidebar_button_semantic(self):
         """Placeholder function for semantic analysis"""

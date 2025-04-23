@@ -1,16 +1,12 @@
 class SyntaxError(Exception):
-    """Custom exception for syntax errors"""
-    def __init__(self, message, line_number=None, column=None, expected=None, token=None, nonterminal=None, production_rule=None):
+    """Exception raised for syntax errors during parsing."""
+    def __init__(self, message: str, line_number: int = 0, column: int = 0):
         super().__init__(message)
         self.line_number = line_number
         self.column = column
-        self.expected = expected
-        self.token = token
-        self.nonterminal = nonterminal
-        self.production_rule = production_rule
-
+        
     def __str__(self):
-        return self.args[0]  # Return the formatted error message
+        return f"{super().__str__()} at line {self.line_number}, column {self.column}"
 
     def as_tuple(self):
-        return (self.error_message, self.line_number, self.column)
+        return (str(self), self.line_number, self.column)
