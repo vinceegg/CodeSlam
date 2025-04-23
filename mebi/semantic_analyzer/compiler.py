@@ -39,7 +39,7 @@ class Compiler:
             var_name = var_token.value
             init_value = self.eval(node.children[1])
             self.env.set_var(var_name, init_value, type_name="Feint")
-            print(f"[SET] {var_name} = {init_value} (Feint)")
+            # print(f"[SET] {var_name} = {init_value} (Feint)")
 
         elif node.name == "more_feint":
             if node.children:
@@ -58,7 +58,7 @@ class Compiler:
             more_floater_node = node.children[1]
             init_value = self.eval(node.children[1])
             self.env.set_var(var_name, init_value, type_name="Floater")
-            print(f"[SET] {var_name} = {init_value} (Floater)")
+            # print(f"[SET] {var_name} = {init_value} (Floater)")
             
         elif node.name == "more_floater":
             if node.children:
@@ -78,7 +78,7 @@ class Compiler:
             more_chant_node = node.children[1]
             init_value = self.eval(node.children[1])
             self.env.set_var(var_name, init_value, type_name="Chant")
-            print(f"[SET] {var_name} = {init_value} (Chant)")
+            # print(f"[SET] {var_name} = {init_value} (Chant)")
         
         elif node.name == "more_chant":
             if node.children:
@@ -94,7 +94,7 @@ class Compiler:
             more_stat_node = node.children[1]
             init_value = self.eval(node.children[1])
             self.env.set_var(var_name, init_value, type_name="Stat")
-            print(f"[SET] {var_name} = {init_value} (Stat)")
+            # print(f"[SET] {var_name} = {init_value} (Stat)")
         
         elif node.name == "stat_init":
             return node.value
@@ -130,7 +130,8 @@ class Compiler:
         # Double check formatting of the print statement: spaces
         elif node.name == "announce_statement":
             outputs = self.eval(node.children[0])
-            print(*outputs)
+            # Print without space in between for formatting consistency
+            print("".join(outputs), end="")
 
         elif node.name == "outputs":
             results = []
@@ -141,11 +142,11 @@ class Compiler:
 
         elif node.name == "output":
             if node.value:
-                print(f"[OUTPUT] VAR_INIT = {node.value}")
+                # print(f"[OUTPUT] VAR_INIT = {node.value}")
                 return self.env.get_var(node.value)
             elif node.children:
                 val = self.eval(node.children[0])
-                print(f"[OUTPUT] Child node evaluated to: {val}")
+                # print(f"[OUTPUT] Child node evaluated to: {val}")
                 return val
             else:
                 return "[EMPTY OUTPUT]"
@@ -161,21 +162,21 @@ class Compiler:
             var_name = var_token.value
             var_type = self.env.get_type(var_name)
             self.env.set_var(var_name, rhs, var_type)
-            print(f"[SET] {var_name} = {rhs} ({var_type})")
+            # print(f"[SET] {var_name} = {rhs} ({var_type})")
             return rhs
 
         elif node.name == "follow_statement":
             pass
         
         elif node.name == "assign_operand":
-            print(f"[DEBUG] Evaluating assign_operand: {node.children[0].name}")
+            # print(f"[DEBUG] Evaluating assign_operand: {node.children[0].name}")
             val = self.eval(node.children[0])
-            print(f"[DEBUG] assign_operand evaluated to: {val}")
+            # print(f"[DEBUG] assign_operand evaluated to: {val}")
             return val
 
         elif node.name == "expression":
             val = self.eval(node.children[0])
-            print(f"[DEBUG] expression evaluated to: {val}")
+            # print(f"[DEBUG] expression evaluated to: {val}")
             return val
 
         elif node.name == "arithmetic_expression":
@@ -197,17 +198,17 @@ class Compiler:
             if isinstance(val, str) and val.startswith('@'):
                 return self.env.get_var(val) 
             elif '.' in str(val):
-                print(f"[DEBUG] Evaluating number: {node.value}")
+                # print(f"[DEBUG] Evaluating number: {node.value}")
                 return float(val)
             else:
-                print(f"[DEBUG] Evaluating number: {node.value}")
+                # print(f"[DEBUG] Evaluating number: {node.value}")
                 return int(val)
             
         elif node.name == "relational_expression":
             left = self.eval(node.children[0]) 
             op = node.children[1].value
             right = self.eval(node.children[2])
-            print(f"[RELATIONAL] Evaluating: {left} {op} {right}")
+            # print(f"[RELATIONAL] Evaluating: {left} {op} {right}")
             if op == "<":
                 return "Win" if left < right else "Loss"
             elif op == ">":
@@ -234,7 +235,7 @@ class Compiler:
             return node.value
 
         elif node.name == "relational_operator":
-            print(f"[DEBUG] Reached relational_operator with value: {node.value}")
+            # print(f"[DEBUG] Reached relational_operator with value: {node.value}")
             return node.value
         
         elif node.name == "logical_expression":
@@ -308,11 +309,11 @@ class Compiler:
                 raise ValueError(f"[TYPE ERROR] {var_name} expects {expected_type} input: {ve}") # Double check error messages
 
             self.env.set_var(var_name, value, expected_type)
-            print(f"[INBOUND] {var_name} = {value} ({expected_type})")
+            # print(f"[INBOUND] {var_name} = {value} ({expected_type})")
         
         elif node.name == "dribble_statement":
             condition_result = self.eval(node.children[0])  # expression
-            print(f"[DEBUG] Dribble condition evaluated to: {condition_result}")
+            # print(f"[DEBUG] Dribble condition evaluated to: {condition_result}")
 
             if condition_result == "Win" or condition_result == True:
                 self.eval(node.children[1])  # loop_statements
@@ -326,17 +327,17 @@ class Compiler:
                 keyword_node = node.children[i]
                 if keyword_node.name == "Pass":
                     condition = self.eval(node.children[i + 1])
-                    print(f"[DEBUG] Pass condition evaluated to: {condition}")
+                    # print(f"[DEBUG] Pass condition evaluated to: {condition}")
                     if condition == "Win":
                         self.eval(node.children[i + 2])
                         break
                     i += 3
                 elif keyword_node.name == "Shoot":
-                    print(f"[DEBUG] Executing Shoot fallback block.")
+                    # print(f"[DEBUG] Executing Shoot fallback block.")
                     self.eval(node.children[i + 1])
                     break
                 else:
-                    print(f"[WARN] Unknown keyword in add_condition: {keyword_node.name}")
+                    # print(f"[WARN] Unknown keyword in add_condition: {keyword_node.name}")
                     break
         elif node.name == "Shoot":
             return node 
@@ -352,7 +353,7 @@ class Compiler:
             init_node = node.children[1]
             init_val = self.eval(init_node)
             self.env.set_var(loop_var_name, init_val, "Feint")
-            print(f"[FORWARD] {loop_var_name} initialized to {init_val}")
+            # print(f"[FORWARD] {loop_var_name} initialized to {init_val}")
 
             # Condition expression
             condition_node = node.children[2]
@@ -366,7 +367,7 @@ class Compiler:
 
             while True:
                 condition_val = self.eval(condition_node)
-                print(f"[FORWARD] Condition evaluated to: {condition_val}")
+                # print(f"[FORWARD] Condition evaluated to: {condition_val}")
                 if condition_val != "Win":
                     break
 
@@ -396,7 +397,7 @@ class Compiler:
                         raise RuntimeError("[FORWARD] Unknown increment/decrement operation")
 
                     self.env.set_var(loop_var_name, new_val, "Feint")
-                    print(f"[FORWARD] {loop_var_name} updated to {new_val}")
+                    # print(f"[FORWARD] {loop_var_name} updated to {new_val}")
 
         elif node.name == "forward_lit":
             # forward_lit can either be a literal or a variable
@@ -421,7 +422,7 @@ class Compiler:
             return self.eval(node.children[0])
 
         elif node.name == "resume_statement":
-            print("[LOOP] Resume triggered.")
+            # print("[LOOP] Resume triggered.")
             return "Resume"
 
         elif node.name == "literal":
