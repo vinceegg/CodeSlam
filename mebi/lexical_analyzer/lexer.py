@@ -36,10 +36,12 @@ def build_lexer():
 
     for word, token in keywords.items():
         lg.add(token.name, rf"\b{word}\b")
-
+        
+    lg.add(TokenType.ADD_ASSIGN.name, r"\+=")
+    lg.add(TokenType.INCREMENT.name, r"\+\+")
+    
     # --- Identifiers ---
     lg.add(TokenType.VAR_INIT.name, r"@[a-zA-Z_][a-zA-Z0-9_]*")
-
     # --- Literals ---
     lg.add(TokenType.NEGAFLOATER.name, r"-\d+\.\d+")
     lg.add(TokenType.FLOATERLIT.name, r"\d+\.\d+")
@@ -55,7 +57,7 @@ def build_lexer():
     lg.add(TokenType.MOD.name, r"%")
 
     # --- Assignment Operators ---
-    lg.add(TokenType.ADD_ASSIGN.name, r"\+=")
+
     lg.add(TokenType.SUB_ASSIGN.name, r"-=")
     lg.add(TokenType.MUL_ASSIGN.name, r"\*=")
     lg.add(TokenType.DIV_ASSIGN.name, r"/=")
@@ -90,7 +92,7 @@ def build_lexer():
     lg.add(TokenType.QUOTE.name, r'"')
     lg.add(TokenType.UNDERSCORE.name, r"_")
     lg.add(TokenType.BACKSLASH.name, r"\\")
-    lg.add(TokenType.INCREMENT.name, r"\+\+")
+
     lg.add(TokenType.DECREMENT.name, r"--")
     lg.add(TokenType.CHANT_CONCAT.name, r"&")
 

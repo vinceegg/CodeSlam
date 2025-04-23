@@ -6,6 +6,10 @@ pg = ParserGenerator([token.name for token in TokenType],
                      precedence=[('left', ['ADD', 'SUB']), ('left', ['MUL', 'DIV', "MOD"])
     ])
 
+@pg.error
+def error_handler(token):
+    raise ValueError(f"Syntax error at token: '{token.gettokentype()}' (value: {token.getstr()}) on line {token.source_pos.lineno}")
+
 # Rule 1: program → global_decl function_def team_block
 @pg.production("program : global_decl function_def team_block")
 def program(p):
@@ -1283,7 +1287,7 @@ def get_default_empty(p):
     return ASTNode("get_default", children=[])
 
 # Rule 258: forward_statement → FORWARD ( VAR_INIT = forward_lit ; expression ; VAR_INIT forward_inc_dec ) { team_statement
-@pg.production("forward_statement : FORWARD LEFT_PAREN VAR_INIT ASSIGN forward_lit SEMICOLON expression SEMICOLON VAR_INIT forward_inc_dec RIGHT_PAREN CODE_BLOCK_LEFT team_statement CODE_BLOCK_RIGHT")
+@pg.production("forward_statement : FORWARD LEFT_PAREN VAR_INIT ASSIGN forward_lit SEMICOLON expression SEMICOLON VAR_INIT forward_inc_dec RIGHT_PAREN CODE_BLOCK_LEFT loop_statements CODE_BLOCK_RIGHT")
 def forward_statement(p):
     return ASTNode("forward_statement", children=[p[2], p[4], p[6], p[8], p[9], p[12]])
 

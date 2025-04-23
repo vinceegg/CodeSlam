@@ -343,7 +343,74 @@ class Compiler:
 
         elif node.name == "Pass":
             return node 
-        
+
+        elif node.name == "forward_statement":
+            loop_var_token = node.children[0]  # VAR_INIT
+            loop_var_name = loop_var_token.value
+
+            # Initial value (can be VAR_INIT or literal)
+            init_node = node.children[1]
+            init_val = self.eval(init_node)
+            self.env.set_var(loop_var_name, init_val, "Feint")
+            print(f"[FORWARD] {loop_var_name} initialized to {init_val}")
+
+            # Condition expression
+            condition_node = node.children[2]
+
+            # Update components
+            update_var_token = node.children[3]
+            update_expr = node.children[4]
+
+            # Loop body
+            loop_body = node.children[5]
+
+            while True:
+                condition_val = self.eval(condition_node)
+                print(f"[FORWARD] Condition evaluated to: {condition_val}")
+                if condition_val != "Win":
+                    break
+
+                # Execute loop body
+                for stmt in loop_body.children:
+                    result = self.eval(stmt)
+                    if result == "Resume":
+                        break
+
+                # Apply update
+                current_val = self.env.get_var(loop_var_name)
+
+                if update_expr.name == "forward_inc_dec":
+                    update_child = update_expr.children[0]
+                    if update_child.name == "increment":
+                        new_val = current_val + 1
+                    elif update_child.name == "decrement":
+                        new_val = current_val - 1
+                    elif update_child.name == "forward_assign_operator":
+                        op = update_child.value
+                        operand_val = self.eval(update_expr.children[1])
+                        if op == "+=":
+                            new_val = current_val + operand_val
+                        elif op == "-=":
+                            new_val = current_val - operand_val
+                    else:
+                        raise RuntimeError("[FORWARD] Unknown increment/decrement operation")
+
+                    self.env.set_var(loop_var_name, new_val, "Feint")
+                    print(f"[FORWARD] {loop_var_name} updated to {new_val}")
+
+        elif node.name == "forward_lit":
+            # forward_lit can either be a literal or a variable
+            if node.value:
+                val = node.value
+                if isinstance(val, str) and val.startswith('@'):
+                    return self.env.get_var(val)
+                elif '.' in str(val):
+                    return float(val)
+                else:
+                    return int(val)
+            elif node.children:
+                return self.eval(node.children[0])
+
         elif node.name == "loop_statements":
             for child in node.children:
                 result = self.eval(child)
