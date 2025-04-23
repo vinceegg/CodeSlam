@@ -6,6 +6,9 @@ import sys
 import os
 # Add the parent directory (CODESLAM) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add the mebi directory to the Python path
+mebi_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'mebi'))
+sys.path.append(mebi_path)
 from Analyzers.lexical_analyzer.lexical import *  # Import all function from lexical.py
 from Analyzers.syntax_analyzer import parse  # Import the parser
 from tkinter import END
@@ -707,32 +710,29 @@ class App(customtkinter.CTk):
             )
 
     def sidebar_button_semantic(self):
-        """Placeholder function for semantic analysis"""
+        """Run semantic analysis using the mebi compiler"""
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
         
-        # Get the tokens from the lexical analyzer table
-        tokens = []
-        for widget in self.scrollable_frame.winfo_children():
-            if isinstance(widget, customtkinter.CTkFrame) and widget.grid_info()['row'] > 0:
-                lexeme_label = widget.winfo_children()[0]
-                token_label = widget.winfo_children()[1]
-                
-                lexeme = lexeme_label.cget("text")
-                token_type = token_label.cget("text")
-                
-                token = Token(TokenType[token_type], token_type)
-                tokens.append(token)
+        # Get code from editor
+        code = self.codebox.get("1.0", "end-1c")
         
-        if not tokens:
-            self.append_terminal_output("No tokens to analyze. Run lexical analysis first.")
-            return
+        try:
+            from mebi.main import run_compiler
+            output = run_compiler(code)
             
-        # Placeholder for semantic analysis
-        self.append_terminal_output("Semantic analysis not implemented yet.")
-        self.append_terminal_output("Tokens available for analysis:")
-        for token in tokens:
-            self.append_terminal_output(f"- {token.type}: {token.value}")
+            # Display the output directly in the terminal
+            if output:
+                self.terminal_output.configure(state="normal")
+                # Process the output to handle escape sequences
+                processed_output = bytes(output, "utf-8").decode("unicode_escape")
+                self.terminal_output.insert(END, processed_output)
+                self.terminal_output.configure(state="disabled")
+                self.terminal_output.see(END)
+                    
+        except ImportError as e:
+            self.append_terminal_output("Error importing mebi compiler:", text_color="red")
+            self.append_terminal_output(str(e), text_color="red")
 
     # ADDED
     def enable_terminal_input(self):
