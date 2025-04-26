@@ -45,10 +45,10 @@ def main():
 Team(){
 Feint @i = 0;
 
-Play (@i < 3) {
+Run {
     Announce(@i);
     @i += 1;
-}
+} Play (@i < 3);
 
 }
 

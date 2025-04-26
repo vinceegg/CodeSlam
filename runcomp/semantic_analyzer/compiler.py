@@ -1153,6 +1153,15 @@ class Compiler:
             while self.eval(condition_node):
                 self.eval(body_node)
 
+        elif node.name == "run_play_statement":
+            body_node = node.children[0]       # the team_statement (block)
+            condition_node = node.children[1]  # the expression (boolean)
+
+            while True:
+                self.eval(body_node)
+                if not self.eval(condition_node):
+                    break
+
         elif node.name == "literal":
             val = node.value
 
