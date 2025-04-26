@@ -466,7 +466,7 @@ class Compiler:
                 if keyword_node.name == "Pass":
                     condition = self.eval(node.children[i + 1])
                     # print(f"[DEBUG] Pass condition evaluated to: {condition}")
-                    if condition == "Win":
+                    if condition == "Win" or condition == True:
                         self.eval(node.children[i + 2])
                         break
                     i += 3

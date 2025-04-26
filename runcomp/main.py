@@ -43,24 +43,20 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team() {
-    Feint @n = 10;
-    Feint @i;
-    Feint @a = 0;
-    Feint @b = 1;
-    Feint @next;
+    Chant @letter = "e";
 
-    Forward (@i = 2; @i < @n; @i++) {
-        @next = @a + @b;
-        @a = @b;
-        @b = @next;
-    }
-
-    # Now @a and @b are the last two values
-    Forward (@i = 0; @i < @n; @i++) {
-        Announce(@b & " ");
-        @next = @b - @a;
-        @b = @a;
-        @a = @next;
+    Dribble (@letter == "a") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass (@letter == "e") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass (@letter == "i") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass (@letter == "o") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass (@letter == "u") {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Shoot {
+        Announce("The letter " & @letter & " is NOT a Vowel.");
     }
 }
 
