@@ -664,16 +664,6 @@ def follow_statement_decrement(p):
 # def follow_statement_call(p):
 #     return ASTNode("follow_statement", children=[p[0]])
 
-# # Rule 133: follow_statement → assignment_expression team_statement
-# @pg.production("follow_statement : assignment_expression team_statement")
-# def follow_statement_assignment(p):
-#     return ASTNode("follow_statement", children=[p[0]] + p[1].children)
-
-# Rule 133: follow_statement → assignment_expression team_statement
-# @pg.production("follow_statement : assignment_expression")
-# def follow_statement_assignment(p):
-#     return ASTNode("follow_statement", children=[p[0]])
-
 # Rule 134: follow_statement → array_manipulation
 @pg.production("follow_statement : array_manipulation")
 def follow_statement_array(p):
@@ -1023,18 +1013,8 @@ def assign_operator(p):
     return ASTNode("assign_operator", value=p[0].value)
 
 # Rule 230: assign_operand → arithmetic_expression
-@pg.production("assign_operand : arithmetic_expression")
+@pg.production("assign_operand : expression")
 def assign_operand_arith(p):
-    return ASTNode("assign_operand", children=[p[0]])
-
-# Rule 231: assign_operand → relational_expression
-@pg.production("assign_operand : relational_expression")
-def assign_operand_rel(p):
-    return ASTNode("assign_operand", children=[p[0]])
-
-# Rule 232: assign_operand → logical_expression
-@pg.production("assign_operand : logical_expression")
-def assign_operand_log(p):
     return ASTNode("assign_operand", children=[p[0]])
 
 # Rule 233: assign_operand → function_call

@@ -263,15 +263,16 @@ class Compiler:
 
         elif node.name == "output":
             if node.value:
-                # print(f"[OUTPUT] VAR_INIT = {node.value}")
-                return str(self.env.get_var(node.value))
+                if isinstance(node.value, str) and node.value.startswith("@"):
+                    return str(self.env.get_var(node.value))
+                else:
+                    return str(node.value.strip('"'))  # Strip quotes if literal
             elif node.children:
                 val = self.eval(node.children[0])
-                # print(f"[OUTPUT] Child node evaluated to: {val}")
                 return str(val)
             else:
                 return "[EMPTY OUTPUT]"
-            
+
         elif node.name == "statement":
             return self.eval(node.children[0])
                 
@@ -319,35 +320,37 @@ class Compiler:
 
         # -- Relational Expressions --
         elif node.name == "relational_expression":
-            # If only one child (no tail), evaluate the arithmetic_expression directly
-            if len(node.children) == 1:
-                return self.eval(node.children[0])
-
-            # Otherwise, children[0] is left arithmetic, children[1] is EQUAL/NOT_EQUAL node
             left = self.eval(node.children[0])
-            op_node = node.children[1]
 
-            # Evaluate based on the relational operator
-            if op_node.name == "EQUAL":
+            # Check if there is a relational_expression_tail
+            if len(node.children) == 2:
+                op_node = node.children[1]
+
+                # relational_expression_tail might be empty
+                if not op_node.children:
+                    # No relational operator: pure arithmetic value
+                    return left
+
+                operator = op_node.name
                 right = self.eval(op_node.children[0])
-                return left == right
-            elif op_node.name == "NOT_EQUAL":
-                right = self.eval(op_node.children[0])
-                return left != right
-            elif op_node.name == "LESS_THAN":
-                right = self.eval(op_node.children[0])
-                return left < right
-            elif op_node.name == "GREATER_THAN":
-                right = self.eval(op_node.children[0])
-                return left > right
-            elif op_node.name == "LESS_EQUAL":
-                right = self.eval(op_node.children[0])
-                return left <= right
-            elif op_node.name == "GREATER_EQUAL":
-                right = self.eval(op_node.children[0])
-                return left >= right
+
+                if operator == "EQUAL":
+                    return left == right
+                elif operator == "NOT_EQUAL":
+                    return left != right
+                elif operator == "LESS_THAN":
+                    return left < right
+                elif operator == "GREATER_THAN":
+                    return left > right
+                elif operator == "LESS_EQUAL":
+                    return left <= right
+                elif operator == "GREATER_EQUAL":
+                    return left >= right
+                else:
+                    raise Exception(f"[EVAL ERROR] Unknown relational operator: {operator}")
             else:
-                raise Exception(f"[EVAL ERROR] Unknown relational operator: {op_node.name}")
+                # No relational tail at all
+                return left
 
 
         # -- Logical Expressions --
@@ -370,16 +373,9 @@ class Compiler:
         elif node.name == "factor":
             return self.eval(node.children[0])
 
-        elif node.name == "NEG_OP":
-            return -self.eval(node.children[0])
-
         # -- Parenthesis (grouped expressions) --
         elif node.name == "grouped_expression":
             return self.eval(node.children[0])
-
-        # -- Literals (number, string, boolean) --
-        # elif node.name == "literal":
-        #     return self.parse_literal(node.value)
 
         # -- Variables (@var) --
         elif node.name == "variable":
