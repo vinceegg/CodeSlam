@@ -43,25 +43,13 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team() {
-    Chant @letter;
-
-    Inbound("Enter a letter: ", @letter);
-
-    Dribble (@letter == "a") {
-        Announce("The letter " & @letter & " is a Vowel.");
-    } Pass (@letter == "e") {
-        Announce("The letter " & @letter & " is a Vowel.");
-    } Pass (@letter == "i") {
-        Announce("The letter " & @letter & " is a Vowel.");
-    } Pass (@letter == "o") {
-        Announce("The letter " & @letter & " is a Vowel.");
-    } Pass (@letter == "u") {
-        Announce("The letter " & @letter & " is a Vowel.");
-    } Shoot {
-        Announce("The letter " & @letter & " is NOT a Vowel.");
+    Feint @m = 4;
+    
+    Forward(@n = 0; @n < @m; @n++){
+        Announce("Hello World!" & @n);
     }
+    Announce("Goodbye World!" & @m);
 }
-
 
  '''
      # Build lexer and tokenize input

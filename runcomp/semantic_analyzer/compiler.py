@@ -296,107 +296,99 @@ class Compiler:
             return val
 
         elif node.name == "expression":
-            val = self.eval(node.children[0])
-            # print(f"[DEBUG] expression evaluated to: {val}")
-            return val
+            return self.eval(node.children[0])
 
+        # -- Arithmetic Expressions --
         elif node.name == "arithmetic_expression":
             return self.eval(node.children[0])
 
         elif node.name == "ADD":
             return self.eval(node.children[0]) + self.eval(node.children[1])
+
         elif node.name == "SUB":
             return self.eval(node.children[0]) - self.eval(node.children[1])
+
         elif node.name == "MUL":
             return self.eval(node.children[0]) * self.eval(node.children[1])
+
         elif node.name == "DIV":
             return self.eval(node.children[0]) / self.eval(node.children[1])
-        elif node.name == "MOD":
-            return self.eval(node.children[0]) % self.eval(node.children[1])  
 
-        elif node.name == "number":
-            val = node.value
-            if isinstance(val, str) and val.startswith('@'):
-                return self.env.get_var(val) 
-            elif '.' in str(val):
-                # print(f"[DEBUG] Evaluating number: {node.value}")
-                return float(val)
-            else:
-                # print(f"[DEBUG] Evaluating number: {node.value}")
-                return int(val)
-            
+        elif node.name == "MOD":
+            return self.eval(node.children[0]) % self.eval(node.children[1])
+
+        # -- Relational Expressions --
         elif node.name == "relational_expression":
-            left = self.eval(node.children[0]) 
-            op = node.children[1].value
-            right = self.eval(node.children[2])
-            # print(f"[RELATIONAL] Evaluating: {left} {op} {right}")
-            if op == "<":
-                return "Win" if left < right else "Loss"
-            elif op == ">":
-                return "Win" if left > right else "Loss"
-            elif op == "==":
-                return "Win" if left == right else "Loss"
-            elif op == "<=":
-                return "Win" if left <= right else "Loss"
-            elif op == ">=":
-                return "Win" if left >= right else "Loss"
-            elif op == "!=":
-                return "Win" if left != right else "Loss"
-    
-        elif node.name == "number_rel_operand":
-            return self.eval(node.children[0])
-        
-        elif node.name == "stat_rel_operand" or node.name == "chant_rel_operand":
-            if node.value:
-                return self.env.get_var(node.value) if node.value.startswith('@') else node.value
-            else:
+            # If only one child (no tail), evaluate the arithmetic_expression directly
+            if len(node.children) == 1:
                 return self.eval(node.children[0])
 
-        elif node.name == "other_relational_operator":
-            return node.value
+            # Otherwise, children[0] is left arithmetic, children[1] is EQUAL/NOT_EQUAL node
+            left = self.eval(node.children[0])
+            op_node = node.children[1]
 
-        elif node.name == "relational_operator":
-            # print(f"[DEBUG] Reached relational_operator with value: {node.value}")
-            return node.value
-        
+            # Evaluate based on the relational operator
+            if op_node.name == "EQUAL":
+                right = self.eval(op_node.children[0])
+                return left == right
+            elif op_node.name == "NOT_EQUAL":
+                right = self.eval(op_node.children[0])
+                return left != right
+            elif op_node.name == "LESS_THAN":
+                right = self.eval(op_node.children[0])
+                return left < right
+            elif op_node.name == "GREATER_THAN":
+                right = self.eval(op_node.children[0])
+                return left > right
+            elif op_node.name == "LESS_EQUAL":
+                right = self.eval(op_node.children[0])
+                return left <= right
+            elif op_node.name == "GREATER_EQUAL":
+                right = self.eval(op_node.children[0])
+                return left >= right
+            else:
+                raise Exception(f"[EVAL ERROR] Unknown relational operator: {op_node.name}")
+
+
+        # -- Logical Expressions --
         elif node.name == "logical_expression":
             return self.eval(node.children[0])
 
-        elif node.name == "not_expr":
-            operand = self.eval(node.children[0])
-            return "Win" if operand == "Loss" else "Loss"
+        elif node.name == "AND_OP":
+            return self.eval(node.children[0]) and self.eval(node.children[1])
 
-        elif node.name == "compound_log_expr":
-            result = self.eval(node.children[0])
-            op = node.children[1].value
-            right = self.eval(node.children[2])
+        elif node.name == "OR_OP":
+            return self.eval(node.children[0]) or self.eval(node.children[1])
 
-            if op == "AND":
-                result = "Win" if result == "Win" and right == "Win" else "Loss"
-            elif op == "OR":
-                result = "Win" if result == "Win" or right == "Win" else "Loss"
+        elif node.name == "NOT_OP":
+            return not self.eval(node.children[0])
 
-            # Handle any additional AND/OR via more_log_term
-            i = 3
-            while i < len(node.children):
-                op = node.children[i].value
-                right = self.eval(node.children[i + 1])
-                if op == "AND":
-                    result = "Win" if result == "Win" and right == "Win" else "Loss"
-                elif op == "OR":
-                    result = "Win" if result == "Win" or right == "Win" else "Loss"
-                i += 2
-
-            return result
-
-        elif node.name == "log_term":
+        # -- Terms and Factors --
+        elif node.name == "term":
             return self.eval(node.children[0])
 
-        elif node.name == "other_log_term":
+        elif node.name == "factor":
             return self.eval(node.children[0])
 
-        elif node.name == "log_operator":
-            return node.value
+        elif node.name == "NEG_OP":
+            return -self.eval(node.children[0])
+
+        # -- Parenthesis (grouped expressions) --
+        elif node.name == "grouped_expression":
+            return self.eval(node.children[0])
+
+        # -- Literals (number, string, boolean) --
+        # elif node.name == "literal":
+        #     return self.parse_literal(node.value)
+
+        # -- Variables (@var) --
+        elif node.name == "variable":
+            return self.env.get_var(node.value)
+
+        # -- Tail Empty Nodes (just skip) --
+        elif node.name in ["arithmetic_expression_tail", "relational_expression_tail", "logical_expression_tail", "term_tail"]:
+            return None
+            
 
         elif node.name == "inbound_statement":
             prompt = node.children[0].value.strip('"')
@@ -470,11 +462,10 @@ class Compiler:
             loop_var_token = node.children[0]  # VAR_INIT
             loop_var_name = loop_var_token.value
 
-            # Initial value (can be VAR_INIT or literal)
+            # Initial value
             init_node = node.children[1]
             init_val = self.eval(init_node)
             self.env.set_var(loop_var_name, init_val, "Feint")
-            # print(f"[FORWARD] {loop_var_name} initialized to {init_val}")
 
             # Condition expression
             condition_node = node.children[2]
@@ -488,8 +479,7 @@ class Compiler:
 
             while True:
                 condition_val = self.eval(condition_node)
-                # print(f"[FORWARD] Condition evaluated to: {condition_val}")
-                if condition_val != "Win":
+                if not condition_val:  # ✅ Directly check if condition fails
                     break
 
                 # Execute loop body
@@ -514,11 +504,12 @@ class Compiler:
                             new_val = current_val + operand_val
                         elif op == "-=":
                             new_val = current_val - operand_val
+                        else:
+                            raise RuntimeError("[FORWARD] Unknown assign operator in update.")
                     else:
                         raise RuntimeError("[FORWARD] Unknown increment/decrement operation")
 
                     self.env.set_var(loop_var_name, new_val, "Feint")
-                    # print(f"[FORWARD] {loop_var_name} updated to {new_val}")
 
         elif node.name == "forward_lit":
             # forward_lit can either be a literal or a variable
@@ -547,10 +538,28 @@ class Compiler:
             return "Resume"
 
         elif node.name == "literal":
-            # Detect and clean up CHANTLIT values
-            if isinstance(node.value, str) and node.value.startswith('"') and node.value.endswith('"'):
-                return node.value.strip('"')
-            return node.value
+            val = node.value
+
+            # Handle string literal (CHANTLIT)
+            if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
+                return val.strip('"')
+
+            # Handle booleans WIN and LOSS
+            if val == "WIN":
+                return True
+            elif val == "LOSS":
+                return False
+
+            # Handle numbers
+            try:
+                if '.' in str(val):
+                    return float(val)
+                else:
+                    return int(val)
+            except (ValueError, TypeError):
+                # Fallback (return as-is if cannot parse)
+                return val
+
 
         else:
             print(f"[WARN] No eval rule for: {node.name}")
