@@ -309,6 +309,7 @@ class Compiler:
 
             return [(var_name, value)] + additional
 
+        # --- FLOATER_CONST: list of declarations ---
         elif node.name == "const_floater":
             var_token = node.children[0]   # VAR_INIT
             init_node = node.children[1]   # floater_const_init
@@ -342,6 +343,7 @@ class Compiler:
 
             return [(var_name, value)] + additional_constants
 
+        # --- CHANT_CONST: list of declarations ---
         elif node.name == "const_chant":
             var_token = node.children[0]   # VAR_INIT
             init_node = node.children[1]   # chant_const_init
@@ -375,6 +377,7 @@ class Compiler:
 
             return [(var_name, value)] + additional_constants
 
+        # --- STAT_CONST: list of declarations ---
         elif node.name == "const_stat":
             var_token = node.children[0]   # VAR_INIT
             init_node = node.children[1]   # stat_const_init
@@ -405,7 +408,6 @@ class Compiler:
             else:
                 raise ValueError(f"[TYPE ERROR] Invalid boolean literal: {node.value}")
 
-
         elif node.name == "stat_const_end":
             if not node.children:
                 return []  # No additional variables
@@ -416,6 +418,98 @@ class Compiler:
             value, additional_constants = self.eval(init_node)
 
             return [(var_name, value)] + additional_constants
+
+        elif node.name == "array_dec":
+            return self.eval(node.children[0]) 
+
+        elif node.name == "feint_array":
+            var_token = node.children[0]   # VAR_INIT
+            first_dimension = int(node.children[1].value)  # feint_lit
+            second_dimension_node = node.children[2]       # 2D_array
+            initializer = node.children[3]                 # feint_array_init
+
+            var_name = var_token.value
+            second_dimension = None
+
+            # Check if 2D_array is provided
+            if second_dimension_node.children:
+                second_dimension = int(second_dimension_node.children[0].value)
+
+            if initializer.children:
+                data = self.eval(initializer)
+
+                if second_dimension is None:
+                    # 1D Array: [1,2,3]
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 1D array initializer.")
+                    self.env.set_var(var_name, data, type_name="FeintArray")
+                else:
+                    # 2D Array: [[1,2,3], [4,5,6]]
+                    if not (isinstance(data, list) and all(isinstance(row, list) for row in data)):
+                        raise ValueError("[TYPE ERROR] Expected list of lists for 2D array initializer.")
+                    self.env.set_var(var_name, data, type_name="FeintArray2D")
+            else:
+                # No initializer provided; create an empty array
+                if second_dimension is None:
+                    self.env.set_var(var_name, [0]*first_dimension, type_name="FeintArray")
+                else:
+                    self.env.set_var(var_name, [[0]*second_dimension for _ in range(first_dimension)], type_name="FeintArray2D")
+
+        elif node.name == "2D_array":
+            if not node.children:
+                return None
+            return int(node.children[0].value)  # Make sure it returns int not node
+
+
+        elif node.name == "feint_array_init":
+            if node.children:
+                return self.eval(node.children[0])  # eval feint_row
+            else:
+                return []
+
+        elif node.name == "feint_row":
+            values = []
+            temp_row = []
+
+            for child in node.children:
+                val = self.eval(child)
+
+                if isinstance(val, list):
+                    # Nested list (from 2D array syntax like { {1,2,3}, {4,5,6} })
+                    values.append(val)
+                else:
+                    # Single value
+                    temp_row.append(val)
+
+            if values:
+                # 2D array case
+                if temp_row:
+                    values.insert(0, temp_row)  # Include first row
+                return values
+            else:
+                # 1D array case
+                return temp_row
+
+        elif node.name == "2D_feint_row":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                evaluated.append(val)
+            return evaluated
+
+        elif node.name == "more_feint_lit":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                evaluated.append(val)
+            return evaluated
+
+        elif node.name == "feint_lit":
+            return int(node.value)
 
         elif node.name == "function_def":
             for child in node.children:
@@ -453,7 +547,10 @@ class Compiler:
             return results
 
         elif node.name == "output":
-            if node.value:
+            if node.children:
+                val = self.eval(node.children[0])
+                return str(val)
+            elif node.value:
                 if isinstance(node.value, str) and node.value.startswith("@"):
                     var_value = self.env.get_var(node.value)
                     var_type = self.env.get_type(node.value)
@@ -464,9 +561,6 @@ class Compiler:
                         return str(var_value)
                 else:
                     return str(node.value.strip('"'))
-            elif node.children:
-                val = self.eval(node.children[0])
-                return str(val)
             else:
                 return "[EMPTY OUTPUT]"
 
@@ -576,9 +670,32 @@ class Compiler:
         elif node.name == "variable":
             return self.env.get_var(node.value)
 
+        elif node.name == "array_access":
+            if node.value is None:
+                raise ValueError("[EVAL ERROR] array_access node is missing .value (variable name)")
+            array = self.env.get_var(node.value)
+            idx = self.eval(node.children[0])
+            return array[idx]
+
+
+        elif node.name == "array_access_2d":
+            array = self.env.get_var(node.value)
+            row_idx = self.eval(node.children[0])  # first element_index
+            col_idx = self.eval(node.children[1])  # second element_index
+            return array[row_idx][col_idx]
+
         # -- Tail Empty Nodes (just skip) --
         elif node.name in ["arithmetic_expression_tail", "relational_expression_tail", "logical_expression_tail", "term_tail"]:
             return None
+
+        elif node.name == "element_index":
+            val = node.value
+            if isinstance(val, str) and val.startswith("@"):
+                # If it's a variable (e.g., @i), fetch its value from environment
+                return self.env.get_var(val)
+            else:
+                # Otherwise it's a literal integer (e.g., 3)
+                return int(val)
             
 
         elif node.name == "inbound_statement":

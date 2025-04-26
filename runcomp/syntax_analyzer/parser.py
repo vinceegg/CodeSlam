@@ -658,10 +658,10 @@ def follow_statement_increment(p):
 def follow_statement_decrement(p):
     return ASTNode("follow_statement", children=[p[0]])
 
-# # Rule 132: follow_statement → function_call
-# @pg.production("follow_statement : function_call")
-# def follow_statement_call(p):
-#     return ASTNode("follow_statement", children=[p[0]])
+# Rule 132: follow_statement → function_call
+@pg.production("follow_statement : function_call")
+def follow_statement_call(p):
+    return ASTNode("follow_statement", children=[p[0]])
 
 # Rule 134: follow_statement → array_manipulation
 @pg.production("follow_statement : array_manipulation")
@@ -675,6 +675,11 @@ def array_manipulation(p):
 
 # Rule 136: element_index → feint_lit
 @pg.production("element_index : feint_lit")
+def element_index(p):
+    return ASTNode("element_index", value=p[0].value)
+
+# Rule 136: element_index → VAR_INIT
+@pg.production("element_index : VAR_INIT")
 def element_index(p):
     return ASTNode("element_index", value=p[0].value)
 
@@ -699,19 +704,9 @@ def array_man_empty(p):
     return ASTNode("array_man", children=[])
 
 # Rule 141: array_elem → feint_lit
-@pg.production("array_elem : feint_lit")
+@pg.production("array_elem : expression")
 def array_elem_feint(p):
-    return ASTNode("array_elem", value=p[0].value)
-
-# Rule 142: array_elem → floater_lit
-@pg.production("array_elem : floater_lit")
-def array_elem_floater(p):
-    return ASTNode("array_elem", value=p[0].value)
-
-# Rule 143: array_elem → chant_lit
-@pg.production("array_elem : chant_lit")
-def array_elem_chant(p):
-    return ASTNode("array_elem", value=p[0].value)
+    return ASTNode("array_elem", children=[p[0]])
 
 # Rule 144: rebound_statement → REBOUND rebound_value ;
 @pg.production("rebound_statement : REBOUND rebound_value SEMICOLON")
@@ -743,35 +738,10 @@ def announce_statement(p):
 def outputs(p):
     return ASTNode("outputs", children=[p[0]] + p[1].children)
 
-# Rule 150: output → literal
-@pg.production("output : literal")
-def output_literal(p):
-    return ASTNode("output", children=[p[0]])
-
 # Rule 151: output → expression
 @pg.production("output : expression")
 def output_expression(p):
     return ASTNode("output", children=[p[0]])
-
-# Rule 152: output → VAR_INIT
-@pg.production("output : VAR_INIT")
-def output_identifier(p):
-    return ASTNode("output", value=p[0].value)
-
-# Rule 153: output → stat_value
-@pg.production("output : stat_value")
-def output_stat(p):
-    return ASTNode("output", children=[p[0]])
-
-# Rule 154: output → array_access
-@pg.production("output : array_access")
-def output_array(p):
-    return ASTNode("output", children=[p[0]])
-
-# Rule 155: array_access → VAR_INIT [ element_index ] 2d_manipulation
-@pg.production("array_access : VAR_INIT ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT 2d_manipulation")
-def array_access(p):
-    return ASTNode("array_access", children=[p[0], p[2], p[4]])
 
 # Rule 156: other_outputs → λ
 @pg.production("other_outputs : ")
@@ -937,9 +907,43 @@ def factor_not(p):
 def factor_literal(p):
     return p[0]
 
-@pg.production("factor : VAR_INIT")
-def factor_var(p):
-    return ASTNode("variable", value=p[0].value)
+@pg.production("factor : VAR_INIT array_access")
+def factor_var_or_array(p):
+    var_token = p[0]      # VAR_INIT token
+    array_access_node = p[1]  # array_access or no_array_access
+
+    if array_access_node.name == "no_array_access":
+        return ASTNode("variable", value=var_token.value)
+    else:
+        return ASTNode(array_access_node.name, value=var_token.value, children=array_access_node.children)
+
+
+# If NO array access (simple variable)
+@pg.production("array_access :")
+def array_access_empty(p):
+    return ASTNode("no_array_access")
+
+@pg.production("array_access : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT array_access_tail")
+def array_access_1d_or_2d(p):
+    first_index = p[1]
+    tail = p[3]
+    
+    if tail.name == "array_access_tail_2d":
+        second_index = tail.children[0]
+        return ASTNode("array_access_2d", children=[first_index, second_index])
+    else:
+        return ASTNode("array_access", children=[first_index])
+
+# If there is a second [ expr ]
+@pg.production("array_access_tail : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT")
+def array_access_tail_2d(p):
+    return ASTNode("array_access_tail_2d", children=[p[1]])
+
+# If no second [ expr ]
+@pg.production("array_access_tail :")
+def array_access_tail_empty(p):
+    return ASTNode("array_access_tail_empty")
+
 
 # Rule 173: number → feint_lit
 @pg.production("number : feint_lit")
