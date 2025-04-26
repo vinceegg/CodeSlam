@@ -574,52 +574,60 @@ class Compiler:
         elif node.name == "assignment_expression":
             var_token = node.children[0]
             array_access_node = node.children[1]
-            assign_op = node.children[2].value
-            rhs = self.eval(node.children[3])
+            assign_op = node.children[2].value   # "=", "+=", "-=", etc.
+            rhs = self.eval(node.children[3])    # right-hand side evaluated
 
             var_name = var_token.value
             var_type = self.env.get_type(var_name)
 
-            print(f"[DEBUG] ASSIGNMENT TARGET VAR: {var_name}")
-            print(f"[DEBUG] array_access_node: {array_access_node.name}")
+            # Define operator behavior
+            op_map = {
+                '=':  lambda old, new: new,
+                '+=': lambda old, new: old + new,
+                '-=': lambda old, new: old - new,
+                '*=': lambda old, new: old * new,
+                '/=': lambda old, new: old / new,
+                '%=': lambda old, new: old % new,
+            }
 
-            # --- 🛡️ PROTECT CONSTANTS ---
+            if assign_op not in op_map:
+                raise ValueError(f"[EVAL ERROR] Unknown assignment operator: {assign_op}")
+
             if array_access_node.name == "no_array_access":
+                # ---PREVENT CONSTANT REASSIGNMENT ---
                 if var_type in ["ConstFeint", "ConstFloater", "ConstChant", "ConstStat"]:
                     raise ValueError(f"[ERROR] Cannot reassign to constant variable '{var_name}' ({var_type}).")
 
-                self.env.set_var(var_name, rhs, var_type)
+                current_val = self.env.get_var(var_name)
+                new_val = op_map[assign_op](current_val, rhs)
+                self.env.set_var(var_name, new_val, var_type)
 
+            # 1D Array Assignment
             elif array_access_node.name == "array_access":
                 array = self.env.get_var(var_name)
-                print(f"[DEBUG] Current 1D array {var_name}: {array}")
-
                 idx = self.eval(array_access_node.children[0])
 
-                print(f"[DEBUG] Assigning array[{idx}] = {rhs}")
-
-                array[idx] = rhs
+                current_val = array[idx]
+                new_val = op_map[assign_op](current_val, rhs)
+                array[idx] = new_val
                 self.env.set_var(var_name, array)
 
+            # 2D Array Assignment
             elif array_access_node.name == "array_access_2d":
                 array = self.env.get_var(var_name)
-                print(f"[DEBUG] Current 2D array {var_name}: {array}")
-
-                if not (isinstance(array, list) and all(isinstance(row, list) for row in array)):
-                    raise ValueError(f"[TYPE ERROR] '{var_name}' is not a 2D array.")
-
                 row_idx = self.eval(array_access_node.children[0])
                 col_idx = self.eval(array_access_node.children[1])
 
-                print(f"[DEBUG] Assigning array[{row_idx}][{col_idx}] = {rhs}")
-
-                array[row_idx][col_idx] = rhs
+                current_val = array[row_idx][col_idx]
+                new_val = op_map[assign_op](current_val, rhs)
+                array[row_idx][col_idx] = new_val
                 self.env.set_var(var_name, array)
 
             else:
                 raise ValueError(f"[EVAL ERROR] Unexpected array access node: {array_access_node.name}")
 
             return rhs
+
 
         elif node.name == "follow_statement":
             pass

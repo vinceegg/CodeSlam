@@ -45,8 +45,9 @@ def main():
 Zone Feint @board[3] = {1,2,3};
 
 Team(){
-    @board[1]= 10;
-    Announce("Hello World!" & @board[1]);
+    Feint @m = 2;
+    @m %= @board[1];
+    Announce("Hello World!" & @m);
 }
 
 

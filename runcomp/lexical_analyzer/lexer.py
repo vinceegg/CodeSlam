@@ -50,20 +50,19 @@ def build_lexer():
     lg.add(TokenType.FEINTLIT.name, r"\d+")
     lg.add(TokenType.CHANTLIT.name, r'"([^"\\]|\\.)*"')
 
+    # --- Assignment Operators ---
+    lg.add(TokenType.SUB_ASSIGN.name, r"-=")
+    lg.add(TokenType.MUL_ASSIGN.name, r"\*=")
+    lg.add(TokenType.DIV_ASSIGN.name, r"/=")
+    lg.add(TokenType.MOD_ASSIGN.name, r"%=")
+    lg.add(TokenType.ASSIGN.name, r"=")
+    
     # --- Arithmetic Operators ---
     lg.add(TokenType.ADD.name, r"\+")
     lg.add(TokenType.SUB.name, r"-")
     lg.add(TokenType.MUL.name, r"\*")
     lg.add(TokenType.DIV.name, r"/")
     lg.add(TokenType.MOD.name, r"%")
-
-    # --- Assignment Operators ---
-
-    lg.add(TokenType.SUB_ASSIGN.name, r"-=")
-    lg.add(TokenType.MUL_ASSIGN.name, r"\*=")
-    lg.add(TokenType.DIV_ASSIGN.name, r"/=")
-    lg.add(TokenType.MOD_ASSIGN.name, r"%=")
-    lg.add(TokenType.ASSIGN.name, r"=")
 
     # --- Relational Operators ---
     lg.add(TokenType.NOT_EQUAL.name, r"!=")

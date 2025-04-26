@@ -860,7 +860,6 @@ def arithmetic_expression(p):
     return ASTNode("arithmetic_expression", children=[p[0], p[1]])
 
 # Rule 181+: arithmetic_expression_tail
-
 @pg.production("arithmetic_expression_tail : ADD term arithmetic_expression_tail")
 def arithmetic_expression_tail_add(p):
     return ASTNode("ADD", children=[p[1], p[2]])
