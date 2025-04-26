@@ -43,19 +43,27 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team() {
-    Feint @year = 2004;  
-    Stat @leapYear, @leapYear2;
-    
-    @leapYear = @year % 4 == 0 AND @year % 100 != 0;
-    @leapYear2 = @year % 400 == 0;
+    Feint @n = 10;
+    Feint @i;
+    Feint @a = 0;
+    Feint @b = 1;
+    Feint @next;
 
-    # Check for leap year
-    Dribble (@leapYear OR @leapYear2) {
-        Announce(@year & " is a leap year.");
-    } Shoot {
-        Announce(@year & " is not a leap year.");
+    Forward (@i = 2; @i < @n; @i++) {
+        @next = @a + @b;
+        @a = @b;
+        @b = @next;
+    }
+
+    # Now @a and @b are the last two values
+    Forward (@i = 0; @i < @n; @i++) {
+        Announce(@b & " ");
+        @next = @b - @a;
+        @b = @a;
+        @a = @next;
     }
 }
+
  '''
      # Build lexer and tokenize input
     lexer = build_lexer()

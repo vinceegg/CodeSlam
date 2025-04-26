@@ -26,7 +26,44 @@ class Compiler:
         if self.input_func:
             return self.input_func(prompt)
         return input(prompt)
+    
+    def eval_arithmetic_tail(self, left, tail_node):
+        if not tail_node.children:
+            return left  # no more operations
 
+        op = tail_node.name
+        right = self.eval(tail_node.children[0])  # next term
+        next_tail = tail_node.children[1]         # next tail
+
+        if op == "ADD":
+            result = left + right
+        elif op == "SUB":
+            result = left - right
+        else:
+            raise Exception(f"[EVAL ERROR] Unknown arithmetic tail operation: {op}")
+
+        # continue recursively
+        return self.eval_arithmetic_tail(result, next_tail)
+    
+    def eval_term_tail(self, left, tail_node):
+        if not tail_node.children:
+            return left  # no more operations
+
+        op = tail_node.name
+        right = self.eval(tail_node.children[0])  # next factor
+        next_tail = tail_node.children[1]         # next tail
+
+        if op == "MUL":
+            result = left * right
+        elif op == "DIV":
+            result = left / right
+        elif op == "MOD":
+            result = left % right
+        else:
+            raise Exception(f"[EVAL ERROR] Unknown term tail operation: {op}")
+
+        # continue recursively
+        return self.eval_term_tail(result, next_tail)
     def eval(self, node):
         # print(f"[DEBUG] Visiting: {node.name if hasattr(node, 'name') else node}")
         
@@ -301,7 +338,15 @@ class Compiler:
 
         # -- Arithmetic Expressions --
         elif node.name == "arithmetic_expression":
-            return self.eval(node.children[0])
+            left = self.eval(node.children[0])  # term
+            tail = node.children[1]              # arithmetic_expression_tail
+            return self.eval_arithmetic_tail(left, tail)
+
+        elif node.name == "term":
+            left = self.eval(node.children[0])  # factor
+            tail = node.children[1]             # term_tail
+            return self.eval_term_tail(left, tail)
+
 
         elif node.name == "ADD":
             return self.eval(node.children[0]) + self.eval(node.children[1])
