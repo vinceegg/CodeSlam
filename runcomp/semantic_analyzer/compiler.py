@@ -480,6 +480,12 @@ class Compiler:
 
             var_name = var_token.value
             var_type = self.env.get_type(var_name)
+
+            # --- 🛡️ PROTECT CONSTANTS ---
+            if var_type in ["ConstFeint", "ConstFloater", "ConstChant", "ConstStat"]:
+                raise ValueError(f"[ERROR] Cannot reassign to constant variable '{var_name}' ({var_type}).")
+
+            # --- Proceed if not constant ---
             self.env.set_var(var_name, rhs, var_type)
             # print(f"[SET] {var_name} = {rhs} ({var_type})")
             return rhs

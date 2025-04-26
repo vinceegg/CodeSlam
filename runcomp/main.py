@@ -44,6 +44,7 @@ def main():
     code = '''
 Const Stat @sc = Win, @sc2 = Loss, @sc3 = Win;
 Team(){
+    @sc = Loss;
     Announce(@sc);
     Announce(@sc2);
     Announce(@sc3);
