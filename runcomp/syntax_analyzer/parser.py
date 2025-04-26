@@ -644,7 +644,7 @@ def statement_follow(p):
     return ASTNode("statement", children=[p[0]])
 
 # Rule 129: statement → VAR_INIT follow_statement ;
-@pg.production("statement : VAR_INIT follow_statement ")
+@pg.production("statement : VAR_INIT follow_statement SEMICOLON")
 def statement_follow(p):
     return ASTNode("statement", children=[p[0], p[1]])
 

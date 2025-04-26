@@ -791,7 +791,36 @@ class Compiler:
                 self.eval(stmt)
 
         elif node.name == "statement":
-            return self.eval(node.children[0])
+            if len(node.children) == 2:
+                # VAR_INIT + follow_statement (Increment or Decrement)
+                var_token = node.children[0]
+                follow = node.children[1]
+
+                var_name = var_token.value
+                var_type = self.env.get_type(var_name)
+
+                if var_type is None:
+                    raise ValueError(f"[ERROR] Variable '{var_name}' not declared.")
+
+                # Only allow increment/decrement on numeric types (Feint or Floater)
+                if var_type not in ["Feint", "Floater"]:
+                    raise ValueError(f"[TYPE ERROR] Cannot apply increment/decrement on non-numeric type '{var_type}'.")
+
+                value = self.env.get_var(var_name)
+
+                if follow.children[0].name == "increment":
+                    value += 1
+                elif follow.children[0].name == "decrement":
+                    value -= 1
+                else:
+                    raise ValueError(f"[EVAL ERROR] Unknown follow_statement action.")
+
+                self.env.set_var(var_name, value, var_type)
+                return value
+
+            else:
+                # Handle other statement types if needed
+                return self.eval(node.children[0])
 
         # Double check formatting of the print statement: spaces
         elif node.name == "announce_statement":

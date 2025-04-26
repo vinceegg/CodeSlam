@@ -43,12 +43,12 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team(){
-Feint @i = 0;
+Feint @i = 5;
 
 Run {
     Announce(@i);
-    @i += 1;
-} Play (@i < 3);
+    @i--;
+} Play (@i > 3);
 
 }
 

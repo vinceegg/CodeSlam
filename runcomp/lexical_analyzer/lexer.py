@@ -39,6 +39,7 @@ def build_lexer():
         
     lg.add(TokenType.ADD_ASSIGN.name, r"\+=")
     lg.add(TokenType.INCREMENT.name, r"\+\+")
+    lg.add(TokenType.DECREMENT.name, r"--")
     lg.add(TokenType.EQUAL.name, r"==")
     
     # --- Identifiers ---
@@ -92,7 +93,6 @@ def build_lexer():
     lg.add(TokenType.UNDERSCORE.name, r"_")
     lg.add(TokenType.BACKSLASH.name, r"\\")
 
-    lg.add(TokenType.DECREMENT.name, r"--")
     lg.add(TokenType.CHANT_CONCAT.name, r"&")
 
     # --- Commenting ---
