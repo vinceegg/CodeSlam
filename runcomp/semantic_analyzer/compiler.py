@@ -65,15 +65,19 @@ class Compiler:
         # continue recursively
         return self.eval_term_tail(result, next_tail)
     def eval(self, node):
-        # print(f"[DEBUG] Visiting: {node.name if hasattr(node, 'name') else node}")
-        
+        # --- Top level: PROGRAM node ---
         if node.name == "program":
             for child in node.children:
                 self.eval(child)
-            
+
+        # --- GLOBAL_DECL: list of declarations ---
         elif node.name == "global_decl":
             for child in node.children:
                 self.eval(child)
+
+        # --- GLOBAL_DECLARATION: either a variable or constant ---
+        elif node.name == "global_declaration":
+            return self.eval(node.children[0])
 
         elif node.name == "variable_dec":
             return self.eval(node.children[0])
