@@ -54,7 +54,7 @@ class Compiler:
         
         elif node.name == "feint_init":
             return int(node.value)
-        
+        # TEST
         #TODO
         elif node.name == "feint_init_end":
             pass
