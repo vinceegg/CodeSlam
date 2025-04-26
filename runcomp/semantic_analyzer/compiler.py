@@ -48,69 +48,183 @@ class Compiler:
             self.env.set_var(var_name, init_value, type_name="Feint")
             # print(f"[SET] {var_name} = {init_value} (Feint)")
 
+        elif node.name == "feint_dec":
+            first_var = node.children[0]  # VAR_INIT
+            first_value = None
+            additional = []
+
+            if node.children[1].children:
+                # more_feint: [feint_init, feint_init_end]
+                first_value = self.eval(node.children[1].children[0])  # feint_init
+                additional = self.eval(node.children[1].children[1])   # feint_init_end
+
+            self.env.set_var(first_var.value, first_value, "Feint")
+            for var_name, value in additional:
+                self.env.set_var(var_name, value, "Feint")
+
         elif node.name == "more_feint":
             if node.children:
                 return self.eval(node.children[0]) 
         
         elif node.name == "feint_init":
+            if node.value is None:
+                return None  # uninitialized
             return int(node.value)
-        # TEST
-        #TODO
+        
         elif node.name == "feint_init_end":
-            pass
+            if not node.children:
+                return []
+
+            var_token = node.children[0]  # VAR_INIT
+            var_name = var_token.value
+            more = node.children[1]       # more_feint
+
+            value = None
+            if more.children:
+                value = self.eval(more.children[0])  # feint_init
+                nested = self.eval(more.children[1])  # feint_init_end
+            else:
+                nested = []
+
+            return [(var_name, value)] + nested
 
         elif node.name == "floater_dec":
-            var_token = node.children[0]
-            var_name = var_token.value
-            more_floater_node = node.children[1]
-            init_value = self.eval(node.children[1])
-            self.env.set_var(var_name, init_value, type_name="Floater")
-            # print(f"[SET] {var_name} = {init_value} (Floater)")
+            first_var = node.children[0]  # VAR_INIT
+            init_val = self.eval(node.children[1])  # more_floater
+
+            all_vars = [(first_var.value, init_val)]
+            additional = getattr(node.children[1], "additional_vars", [])
+            all_vars += additional
+
+            for var_name, val in all_vars:
+                self.env.set_var(var_name, val, type_name="Floater")
+
             
         elif node.name == "more_floater":
-            if node.children:
-                return self.eval(node.children[0])
-            
+            if not node.children:
+                return None
+
+            init_val = self.eval(node.children[0])  # floater_init
+            rest = self.eval(node.children[1])      # floater_init_end
+
+            # If no trailing variables
+            if rest is None:
+                return init_val
+
+            node.additional_vars = rest
+            return init_val
+
+                    
         elif node.name == "floater_init":
-            if node.value is not None:
+            if node.value is None:
+                return None
+            try:
                 return float(node.value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid floater value: {node.value}")
+
         
-        #TODO
         elif node.name == "floater_init_end":
-            pass
+            if not node.children:
+                return []
+
+            var_token = node.children[0]  # VAR_INIT
+            var_name = var_token.value
+            more_floater = node.children[1]
+
+            # Evaluate the right-hand side of this variable (if initialized or not)
+            val = self.eval(more_floater)
+            rest = getattr(more_floater, "additional_vars", [])
+
+            result = [(var_name, val)] + rest
+            node.additional_vars = result
+            return result
+
         
         elif node.name == "chant_dec":
-            var_token = node.children[0]
-            var_name = var_token.value
-            more_chant_node = node.children[1]
-            init_value = self.eval(node.children[1])
-            self.env.set_var(var_name, init_value, type_name="Chant")
-            # print(f"[SET] {var_name} = {init_value} (Chant)")
+            first_var = node.children[0]  # VAR_INIT
+            init_val = self.eval(node.children[1])  # more_chant
+
+            all_vars = [(first_var.value, init_val)]
+            additional = getattr(node.children[1], "additional_vars", [])
+            all_vars += additional
+
+            for var_name, val in all_vars:
+                self.env.set_var(var_name, val, type_name="Chant")
         
         elif node.name == "more_chant":
-            if node.children:
-                return self.eval(node.children[0])
-        
-        elif node.name == "chant_init":
-            if node.value is not None:
-                return str(node.value).strip('"')
+            if not node.children:
+                return None
 
-        elif node.name == "stat_dec":
-            var_token = node.children[0]
+            init_val = self.eval(node.children[0])  # chant_init
+            rest = self.eval(node.children[1])      # chant_init_end
+
+            if rest is None:
+                return init_val
+
+            node.additional_vars = rest
+            return init_val
+
+        elif node.name == "chant_init":
+            if node.value is None:
+                return None
+            return str(node.value).strip('"')
+
+        elif node.name == "chant_init_end":
+            if not node.children:
+                return []
+
+            var_token = node.children[0]  # VAR_INIT
             var_name = var_token.value
-            more_stat_node = node.children[1]
-            init_value = self.eval(node.children[1])
-            self.env.set_var(var_name, init_value, type_name="Stat")
-            # print(f"[SET] {var_name} = {init_value} (Stat)")
-        
+            more_chant = node.children[1]
+
+            val = self.eval(more_chant)
+            rest = getattr(more_chant, "additional_vars", [])
+
+            result = [(var_name, val)] + rest
+            node.additional_vars = result
+            return result
+ 
+        elif node.name == "stat_dec":
+            first_var = node.children[0]  # VAR_INIT
+            init_val = self.eval(node.children[1])  # more_stat
+
+            all_vars = [(first_var.value, init_val)]
+            additional = getattr(node.children[1], "additional_vars", [])
+            all_vars += additional
+
+            for var_name, val in all_vars:
+                self.env.set_var(var_name, val, type_name="Stat")
+
         elif node.name == "stat_init":
             return node.value
         
         elif node.name == "more_stat":
-            if node.children:
-                return self.eval(node.children[0])
-        elif node.name == "stat_value":
-            return node.value
+            if not node.children:
+                return None  # Uninitialized
+            init_val = self.eval(node.children[0])  # stat_init
+            rest = self.eval(node.children[1])      # stat_init_end
+
+            if rest is None:
+                return init_val
+
+            node.additional_vars = rest
+            return init_val
+        
+        elif node.name == "stat_init_end":
+            if not node.children:
+                return []
+
+            var_token = node.children[0]  # VAR_INIT
+            var_name = var_token.value
+            more_stat = node.children[1]
+
+            val = self.eval(more_stat)
+            rest = getattr(more_stat, "additional_vars", [])
+
+            result = [(var_name, val)] + rest
+            node.additional_vars = result
+            return result
         
         elif node.name == "function_def":
             for child in node.children:
