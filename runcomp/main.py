@@ -42,12 +42,14 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Zone Stat @board[3] = {Win, Loss, Win};
-
 Team(){
-    Stat @m;
-    @board[1]= Win;
-    Announce("Hello World!" & @board[1]);
+Feint @i = 0;
+
+Play (@i < 3) {
+    Announce(@i);
+    @i += 1;
+}
+
 }
 
 

@@ -1146,6 +1146,13 @@ class Compiler:
             # print("[LOOP] Resume triggered.")
             return "Resume"
 
+        elif node.name == "play_statement":
+            condition_node = node.children[0]  # the expression (boolean)
+            body_node = node.children[1]       # the team_statement (block)
+
+            while self.eval(condition_node):
+                self.eval(body_node)
+
         elif node.name == "literal":
             val = node.value
 
