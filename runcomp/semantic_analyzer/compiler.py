@@ -347,22 +347,6 @@ class Compiler:
             tail = node.children[1]             # term_tail
             return self.eval_term_tail(left, tail)
 
-
-        elif node.name == "ADD":
-            return self.eval(node.children[0]) + self.eval(node.children[1])
-
-        elif node.name == "SUB":
-            return self.eval(node.children[0]) - self.eval(node.children[1])
-
-        elif node.name == "MUL":
-            return self.eval(node.children[0]) * self.eval(node.children[1])
-
-        elif node.name == "DIV":
-            return self.eval(node.children[0]) / self.eval(node.children[1])
-
-        elif node.name == "MOD":
-            return self.eval(node.children[0]) % self.eval(node.children[1])
-
         # -- Relational Expressions --
         elif node.name == "relational_expression":
             left = self.eval(node.children[0])
