@@ -439,15 +439,26 @@ class Compiler:
                 data = self.eval(initializer)
 
                 if second_dimension is None:
-                    # 1D Array: [1,2,3]
+                    # 1D Array
                     if not isinstance(data, list):
                         raise ValueError("[TYPE ERROR] Expected list for 1D array initializer.")
                     self.env.set_var(var_name, data, type_name="FeintArray")
                 else:
-                    # 2D Array: [[1,2,3], [4,5,6]]
-                    if not (isinstance(data, list) and all(isinstance(row, list) for row in data)):
-                        raise ValueError("[TYPE ERROR] Expected list of lists for 2D array initializer.")
-                    self.env.set_var(var_name, data, type_name="FeintArray2D")
+                    # 2D Array
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 2D array initializer.")
+                    
+                    total_elements = first_dimension * second_dimension
+                    if len(data) != total_elements:
+                        raise ValueError(f"[TYPE ERROR] Array initializer size mismatch: expected {total_elements}, got {len(data)}")
+
+                    # Now reshape the flat list into list of lists
+                    reshaped = []
+                    for i in range(first_dimension):
+                        row = data[i * second_dimension : (i + 1) * second_dimension]
+                        reshaped.append(row)
+                    
+                    self.env.set_var(var_name, reshaped, type_name="FeintArray2D")
             else:
                 # No initializer provided; create an empty array
                 if second_dimension is None:
