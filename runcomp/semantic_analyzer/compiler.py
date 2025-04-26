@@ -79,9 +79,11 @@ class Compiler:
         elif node.name == "global_declaration":
             return self.eval(node.children[0])
 
+        # --- VARIABLE_DEC: list of declarations ---
         elif node.name == "variable_dec":
             return self.eval(node.children[0])
 
+        # --- FEINT_DEC: list of declarations ---
         elif node.name == "feint_dec":
             var_token = node.children[0]
             var_name = var_token.value
@@ -129,6 +131,7 @@ class Compiler:
 
             return [(var_name, value)] + nested
 
+        # --- FLOAT_DEC: list of declarations ---
         elif node.name == "floater_dec":
             first_var = node.children[0]  # VAR_INIT
             init_val = self.eval(node.children[1])  # more_floater
@@ -181,7 +184,7 @@ class Compiler:
             node.additional_vars = result
             return result
 
-        
+        # --- CHANT_DEC: list of declarations ---
         elif node.name == "chant_dec":
             first_var = node.children[0]  # VAR_INIT
             init_val = self.eval(node.children[1])  # more_chant
@@ -226,6 +229,7 @@ class Compiler:
             node.additional_vars = result
             return result
  
+        # --- CHANT_DEC: list of declarations ---
         elif node.name == "stat_dec":
             first_var = node.children[0]  # VAR_INIT
             init_val = self.eval(node.children[1])  # more_stat
@@ -266,7 +270,153 @@ class Compiler:
             result = [(var_name, val)] + rest
             node.additional_vars = result
             return result
+
+        # --- CONSTANT DECLARATION ---
+        elif node.name == "const_dec":
+            return self.eval(node.children[0])
+
+        # --- FEINT_CONST: list of declarations ---
+        elif node.name == "const_feint":
+            var_token = node.children[0]   # VAR_INIT
+            init_node = node.children[1]   # feint_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            # Set the first variable
+            self.env.set_var(var_name, value, type_name="ConstFeint")
+
+            # Set any additional variables
+            for name, val in additional_constants:
+                self.env.set_var(name, val, type_name="ConstFeint")
+
+        elif node.name == "feint_const_init":
+            value = self.eval(node.children[0])  # feint_const
+            additional = self.eval(node.children[1])  # feint_const_end
+            return value, additional
+
+        elif node.name == "feint_const":
+            return int(node.value) # Just return the literal integer
+
+        elif node.name == "feint_const_end":
+            if not node.children:
+                return []  # No additional variables
+            var_token = node.children[0]  # VAR_INIT
+            init_node = node.children[1]  # feint_const_init
+
+            var_name = var_token.value
+            value, additional = self.eval(init_node)
+
+            return [(var_name, value)] + additional
+
+        elif node.name == "const_floater":
+            var_token = node.children[0]   # VAR_INIT
+            init_node = node.children[1]   # floater_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            # Set the first variable
+            self.env.set_var(var_name, value, type_name="ConstFloater")
+
+            # Set any additional variables
+            for name, val in additional_constants:
+                self.env.set_var(name, val, type_name="ConstFloater")
+                
+        elif node.name == "floater_const_init":
+            value = self.eval(node.children[0])  # floater_const
+            additional = self.eval(node.children[1])  # floater_const_end
+            return value, additional
+                        
+        elif node.name == "floater_const":
+            return float(node.value)  # <-- CAST to float
         
+        elif node.name == "floater_const_end":
+            if not node.children:
+                return []  # No additional variables
+            var_token = node.children[0]  # VAR_INIT
+            init_node = node.children[1]  # floater_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            return [(var_name, value)] + additional_constants
+
+        elif node.name == "const_chant":
+            var_token = node.children[0]   # VAR_INIT
+            init_node = node.children[1]   # chant_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            # Set the first variable
+            self.env.set_var(var_name, value, type_name="ConstChant")
+
+            # Set any additional variables
+            for name, val in additional_constants:
+                self.env.set_var(name, val, type_name="ConstChant")
+                
+        elif node.name == "chant_const_init":
+            value = self.eval(node.children[0])  # chant_const
+            additional = self.eval(node.children[1])  # chant_const_end
+            return value, additional
+
+        elif node.name == "chant_const":
+            return str(node.value).strip('"')  # <-- REMOVE surrounding quotes if needed
+
+        elif node.name == "chant_const_end":
+            if not node.children:
+                return []  # No additional variables
+            var_token = node.children[0]  # VAR_INIT
+            init_node = node.children[1]  # chant_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            return [(var_name, value)] + additional_constants
+
+        elif node.name == "const_stat":
+            var_token = node.children[0]   # VAR_INIT
+            init_node = node.children[1]   # stat_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            # Set the first variable
+            self.env.set_var(var_name, value, type_name="ConstStat")
+
+            # Set any additional variables
+            for name, val in additional_constants:
+                self.env.set_var(name, val, type_name="ConstStat")
+                
+        elif node.name == "stat_const_init":
+            value = self.eval(node.children[0])  # stat_const
+            additional = self.eval(node.children[1])  # stat_const_end
+            return value, additional
+
+        elif node.name == "stat_const":
+            return self.eval(node.children[0])  # Evaluate the stat_value
+
+        elif node.name == "stat_value":
+            if node.value == "Win":
+                return True
+            elif node.value == "Loss":
+                return False
+            else:
+                raise ValueError(f"[TYPE ERROR] Invalid boolean literal: {node.value}")
+
+
+        elif node.name == "stat_const_end":
+            if not node.children:
+                return []  # No additional variables
+            var_token = node.children[0]  # VAR_INIT
+            init_node = node.children[1]  # stat_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            return [(var_name, value)] + additional_constants
+
         elif node.name == "function_def":
             for child in node.children:
                 self.eval(child)
@@ -305,9 +455,15 @@ class Compiler:
         elif node.name == "output":
             if node.value:
                 if isinstance(node.value, str) and node.value.startswith("@"):
-                    return str(self.env.get_var(node.value))
+                    var_value = self.env.get_var(node.value)
+                    var_type = self.env.get_type(node.value)
+                    
+                    if var_type in ["Stat", "ConstStat"]:
+                        return "Win" if var_value else "Loss"
+                    else:
+                        return str(var_value)
                 else:
-                    return str(node.value.strip('"'))  # Strip quotes if literal
+                    return str(node.value.strip('"'))
             elif node.children:
                 val = self.eval(node.children[0])
                 return str(val)

@@ -319,10 +319,9 @@ def stat_const_init(p):
     return ASTNode("stat_const_init", children=[p[0], p[1]])
 
 # Rule 65: stat_const → = WIN | = LOSS
-@pg.production("stat_const : ASSIGN WIN")
-@pg.production("stat_const : ASSIGN LOSS")
+@pg.production("stat_const : ASSIGN stat_value")
 def stat_const(p):
-    return ASTNode("stat_const", value=p[1].value)
+    return ASTNode("stat_const", children=[p[1]])
 
 # Rule 66: stat_const_end → "," VAR_INIT stat_const_init
 @pg.production("stat_const_end : COMMA VAR_INIT stat_const_init")

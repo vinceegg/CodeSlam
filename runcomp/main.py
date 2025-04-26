@@ -42,15 +42,11 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Team() {
-    Feint @year = 2024;  
-
-    # Check for leap year
-    Dribble ((@year % 4 == 0 AND @year % 100 != 0) OR (@year % 400 == 0)) {
-        Announce(@year & " is a leap year.");
-    } Shoot {
-        Announce(@year & " is not a leap year.");
-    }
+Const Stat @sc = Win, @sc2 = Loss, @sc3 = Win;
+Team(){
+    Announce(@sc);
+    Announce(@sc2);
+    Announce(@sc3);
 }
 
  '''
