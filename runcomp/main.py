@@ -42,11 +42,11 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Zone Floater @board[3] = {1.0,2.0,3.0};
+Zone Chant @board[3] = {"1.0", "2.0" , "3.0"};
 
 Team(){
-    Feint @m = 2;
-    @m *= @board[1];
+    Chant @m;
+    @m = @board[1];
     Announce("Hello World!" & @m);
 }
 
