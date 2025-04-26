@@ -423,9 +423,11 @@ class Compiler:
 
             return [(var_name, value)] + additional_constants
 
+        # --- ARRAY_DEC: list of declarations ---
         elif node.name == "array_dec":
             return self.eval(node.children[0]) 
 
+        # --- FEINT_DEC: list of declarations ---
         elif node.name == "feint_array":
             var_token = node.children[0]
             first_dimension = int(node.children[1].value)
@@ -515,6 +517,7 @@ class Compiler:
         elif node.name == "feint_lit":
             return int(node.value)
 
+        # --- FLOATER_DEC: list of declarations ---
         elif node.name == "floater_array":
             var_token = node.children[0]   # VAR_INIT
             first_dimension = int(node.children[1].value)  # feint_lit (used as dimension)
@@ -599,6 +602,7 @@ class Compiler:
         elif node.name == "floater_lit":
             return float(node.value)
 
+        # --- CHANT_DEC: list of declarations ---
         elif node.name == "chant_array":
             var_token = node.children[0]   # VAR_INIT
             first_dimension = int(node.children[1].value)  # feint_lit (used as dimension)
@@ -685,6 +689,87 @@ class Compiler:
             if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
                 return val[1:-1]  # Remove the surrounding quotes
             return str(val)
+
+        # --- STAT_DEC: list of declarations ---
+        # elif node.name == "stat_array":
+        #     var_token = node.children[0]   # VAR_INIT
+        #     first_dimension = int(node.children[1].value)  # feint_lit (used as dimension)
+        #     second_dimension_node = node.children[2]       # 2D_array
+        #     initializer = node.children[3]                 # stat_array_init
+
+        #     var_name = var_token.value
+        #     second_dimension = None
+
+        #     if second_dimension_node.children:
+        #         second_dimension = int(second_dimension_node.children[0].value)
+
+        #     if initializer.children:
+        #         data = self.eval(initializer)  # should return flat list of True/False
+
+        #         if second_dimension is None:
+        #             # 1D Stat Array
+        #             if not isinstance(data, list):
+        #                 raise ValueError("[TYPE ERROR] Expected list for 1D stat array initializer.")
+        #             self.env.set_var(var_name, data, type_name="StatArray")
+        #         else:
+        #             # 2D Stat Array
+        #             if not isinstance(data, list):
+        #                 raise ValueError("[TYPE ERROR] Expected list for 2D stat array initializer.")
+
+        #             total_elements = first_dimension * second_dimension
+        #             if len(data) != total_elements:
+        #                 raise ValueError(f"[TYPE ERROR] Stat array initializer size mismatch: expected {total_elements}, got {len(data)}")
+
+        #             reshaped = []
+        #             for i in range(first_dimension):
+        #                 row = data[i * second_dimension : (i + 1) * second_dimension]
+        #                 reshaped.append(row)
+
+        #             self.env.set_var(var_name, reshaped, type_name="StatArray2D")
+        #     else:
+        #         # No initializer provided
+        #         if second_dimension is None:
+        #             self.env.set_var(var_name, [False] * first_dimension, type_name="StatArray")
+        #         else:
+        #             self.env.set_var(var_name, [[False] * second_dimension for _ in range(first_dimension)], type_name="StatArray2D")
+
+        # elif node.name == "stat_array_init":
+        #     if node.children:
+        #         return self.eval(node.children[0])  # evaluate stat_row
+        #     else:
+        #         return []
+
+        # elif node.name == "stat_row":
+        #     values = []
+        #     for child in node.children:
+        #         val = self.eval(child)
+
+        #         if isinstance(val, list):
+        #             values.extend(val)  # flatten nested list
+        #         else:
+        #             values.append(val)
+        #     return values
+
+        # elif node.name == "2D_stat_row":
+        #     if not node.children:
+        #         return []
+        #     evaluated = []
+        #     for child in node.children:
+        #         val = self.eval(child)
+        #         if isinstance(val, list):
+        #             evaluated.extend(val)
+        #         else:
+        #             evaluated.append(val)
+        #     return evaluated
+                
+        # elif node.name == "more_stat_value":
+        #     if not node.children:
+        #         return []
+        #     evaluated = []
+        #     for child in node.children:
+        #         val = self.eval(child)
+        #         evaluated.append(val)
+        #     return evaluated
 
         elif node.name == "function_def":
             for child in node.children:
