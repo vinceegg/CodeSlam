@@ -792,34 +792,43 @@ class Compiler:
 
         elif node.name == "statement":
             if len(node.children) == 2:
-                # VAR_INIT + follow_statement (Increment or Decrement)
                 var_token = node.children[0]
                 follow = node.children[1]
 
-                var_name = var_token.value
-                var_type = self.env.get_type(var_name)
+                # If follow_statement is increment or decrement
+                follow_action = follow.children[0]
 
-                if var_type is None:
-                    raise ValueError(f"[ERROR] Variable '{var_name}' not declared.")
+                if follow_action.name in ["increment", "decrement"]:
+                    var_name = var_token.value
+                    var_type = self.env.get_type(var_name)
 
-                # Only allow increment/decrement on numeric types (Feint or Floater)
-                if var_type not in ["Feint", "Floater"]:
-                    raise ValueError(f"[TYPE ERROR] Cannot apply increment/decrement on non-numeric type '{var_type}'.")
+                    if var_type is None:
+                        raise ValueError(f"[ERROR] Variable '{var_name}' not declared.")
 
-                value = self.env.get_var(var_name)
+                    if var_type not in ["Feint", "Floater"]:
+                        raise ValueError(f"[TYPE ERROR] Cannot apply increment/decrement on non-numeric type '{var_type}'.")
 
-                if follow.children[0].name == "increment":
-                    value += 1
-                elif follow.children[0].name == "decrement":
-                    value -= 1
+                    value = self.env.get_var(var_name)
+
+                    if follow_action.name == "increment":
+                        value += 1
+                    elif follow_action.name == "decrement":
+                        value -= 1
+                    else:
+                        raise ValueError(f"[EVAL ERROR] Unknown follow_statement action.")
+
+                    self.env.set_var(var_name, value, var_type)
+                    return value
+
+                # If follow_statement is function_call
+                elif follow_action.name == "function_call":
+                    return self.eval(follow_action)
+
                 else:
-                    raise ValueError(f"[EVAL ERROR] Unknown follow_statement action.")
-
-                self.env.set_var(var_name, value, var_type)
-                return value
+                    raise ValueError(f"[EVAL ERROR] Unknown follow_statement type: {follow_action.name}")
 
             else:
-                # Handle other statement types if needed
+                # Handle other statement types (not VAR_INIT + follow)
                 return self.eval(node.children[0])
 
         # Double check formatting of the print statement: spaces
