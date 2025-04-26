@@ -43,12 +43,18 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team(){
-Feint @i = 5;
+Feint @x = 1;
 
-Run {
-    Announce(@i);
-    @i--;
-} Play (@i > 3);
+Switch (@x) {
+    Get 1:
+        Announce("One");
+        Timeout;
+    Get 2:
+        Announce("Two");
+        Timeout;
+    Default:
+        Announce("Other");
+}
 
 }
 

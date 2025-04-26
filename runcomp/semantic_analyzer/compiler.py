@@ -68,6 +68,45 @@ class Compiler:
 
         # continue recursively
         return self.eval_term_tail(result, next_tail)
+        
+    def flatten_cases(self, node):
+        """
+        Flattens all GET cases into a list of (value, team_statement) pairs.
+        """
+        cases = []
+
+        if node.name == "get_case":
+            get_value_node = node.children[0]  # get_value node
+            team_statement_node = node.children[1]  # team_statement node
+            timeout_node = node.children[2]    # timeout_statement node
+            get_case_end_node = node.children[3]  # get_case_end (next case or empty)
+
+            # Parse value
+            raw_value = get_value_node.value
+
+            # 🔥 Detect and cast the type properly:
+            if isinstance(raw_value, str):
+                if raw_value.startswith('"') and raw_value.endswith('"'):
+                    # Chant literal (remove quotes)
+                    value = raw_value[1:-1]
+                else:
+                    try:
+                        # Try to interpret as integer first
+                        value = int(raw_value)
+                    except ValueError:
+                        value = raw_value  # fallback: keep as string if not int
+            else:
+                value = raw_value
+
+            cases.append((value, team_statement_node))
+
+            # Recurse if there are more cases
+            if get_case_end_node.children:
+                for child in get_case_end_node.children:
+                    cases.extend(self.flatten_cases(child))
+
+        return cases
+
     def eval(self, node):
         # --- Top level: PROGRAM node ---
         if node.name == "program":
@@ -1104,6 +1143,29 @@ class Compiler:
 
         elif node.name == "Pass":
             return node 
+
+        elif node.name == "switch_statement":
+            switch_var_token = node.children[0]  # VAR_INIT node
+            cases_node = node.children[1]         # get_case node
+            default_node = node.children[2]       # get_default node
+
+            switch_var_name = switch_var_token.value
+            switch_value = self.env.get_var(switch_var_name)
+
+            matched = False
+
+            # Handle cases
+            cases = self.flatten_cases(cases_node)
+
+            for case_value, case_body in cases:
+                if switch_value == case_value:
+                    self.eval(case_body)
+                    matched = True
+                    break  # stop after first match
+
+            if not matched and default_node.children:
+                # Execute default if no case matched
+                self.eval(default_node.children[0])
 
         elif node.name == "forward_statement":
             loop_var_token = node.children[0]  # VAR_INIT
