@@ -515,6 +515,90 @@ class Compiler:
         elif node.name == "feint_lit":
             return int(node.value)
 
+        elif node.name == "floater_array":
+            var_token = node.children[0]   # VAR_INIT
+            first_dimension = int(node.children[1].value)  # feint_lit (used as dimension)
+            second_dimension_node = node.children[2]       # 2D_array
+            initializer = node.children[3]                 # floater_array_init
+
+            var_name = var_token.value
+            second_dimension = None
+
+            # Check if second dimension is provided
+            if second_dimension_node.children:
+                second_dimension = int(second_dimension_node.children[0].value)
+
+            if initializer.children:
+                data = self.eval(initializer)  # should return flat list of floaters
+
+                if second_dimension is None:
+                    # 1D Floater Array
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 1D floater array initializer.")
+                    self.env.set_var(var_name, data, type_name="FloaterArray")
+                else:
+                    # 2D Floater Array
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 2D floater array initializer.")
+
+                    total_elements = first_dimension * second_dimension
+                    if len(data) != total_elements:
+                        raise ValueError(f"[TYPE ERROR] Floater array initializer size mismatch: expected {total_elements}, got {len(data)}")
+
+                    reshaped = []
+                    for i in range(first_dimension):
+                        row = data[i * second_dimension : (i + 1) * second_dimension]
+                        reshaped.append(row)
+
+                    self.env.set_var(var_name, reshaped, type_name="FloaterArray2D")
+            else:
+                # No initializer provided
+                if second_dimension is None:
+                    self.env.set_var(var_name, [0.0] * first_dimension, type_name="FloaterArray")
+                else:
+                    self.env.set_var(var_name, [[0.0] * second_dimension for _ in range(first_dimension)], type_name="FloaterArray2D")
+
+        elif node.name == "floater_array_init":
+            if node.children:
+                return self.eval(node.children[0])  # evaluate floater_row
+            else:
+                return []
+
+        elif node.name == "floater_row":
+            values = []
+            for child in node.children:
+                val = self.eval(child)
+
+                if isinstance(val, list):
+                    values.extend(val)  # flatten nested list
+                else:
+                    values.append(val)
+            return values
+
+        elif node.name == "2D_floater_row":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                if isinstance(val, list):
+                    evaluated.extend(val)
+                else:
+                    evaluated.append(val)
+            return evaluated
+
+        elif node.name == "more_floater_lit":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                evaluated.append(val)
+            return evaluated
+
+        elif node.name == "floater_lit":
+            return float(node.value)
+
         elif node.name == "function_def":
             for child in node.children:
                 self.eval(child)
@@ -574,8 +658,8 @@ class Compiler:
         elif node.name == "assignment_expression":
             var_token = node.children[0]
             array_access_node = node.children[1]
-            assign_op = node.children[2].value   # "=", "+=", "-=", etc.
-            rhs = self.eval(node.children[3])    # right-hand side evaluated
+            assign_op = node.children[2].value 
+            rhs = self.eval(node.children[3])
 
             var_name = var_token.value
             var_type = self.env.get_type(var_name)
