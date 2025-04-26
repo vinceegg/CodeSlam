@@ -663,15 +663,15 @@ def follow_statement_decrement(p):
 def follow_statement_call(p):
     return ASTNode("follow_statement", children=[p[0]])
 
-# Rule 134: follow_statement → array_manipulation
-@pg.production("follow_statement : array_manipulation")
-def follow_statement_array(p):
-    return ASTNode("follow_statement", children=[p[0]])
+# # Rule 134: follow_statement → array_manipulation
+# @pg.production("follow_statement : array_manipulation")
+# def follow_statement_array(p):
+#     return ASTNode("follow_statement", children=[p[0]])
 
-# Rule 135: array_manipulation → [ element_index ] 2d_manipulation array_man
-@pg.production("array_manipulation : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT 2d_manipulation array_man")
-def array_manipulation(p):
-    return ASTNode("array_manipulation", children=[p[1], p[3], p[4]])
+# # Rule 135: array_manipulation → [ element_index ] 2d_manipulation array_man
+# @pg.production("array_manipulation : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT 2d_manipulation array_man")
+# def array_manipulation(p):
+#     return ASTNode("array_manipulation", children=[p[1], p[3], p[4]])
 
 # Rule 136: element_index → feint_lit
 @pg.production("element_index : feint_lit")
@@ -1001,9 +1001,9 @@ def stat_type_casting(p):
     return ASTNode("stat_type_casting", children=[p[2]])
 
 # Rule 223: assignment_expression → assign_operator assign_operand ;
-@pg.production("assignment_expression : VAR_INIT assign_operator assign_operand SEMICOLON")
+@pg.production("assignment_expression : VAR_INIT array_access assign_operator assign_operand SEMICOLON")
 def assignment_expression(p):
-    return ASTNode("assignment_expression", children=[p[0], p[1], p[2]])
+    return ASTNode("assignment_expression", children=[p[0], p[1], p[2], p[3]])
 
 # Rule 224–229: assign_operator → = | += | -= | *= | /= | %=
 @pg.production("assign_operator : ASSIGN")

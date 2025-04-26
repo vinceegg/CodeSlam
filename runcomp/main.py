@@ -42,11 +42,13 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Zone Feint @board[2][3] = { {1,2,3}, {4,5,6}};
+Zone Feint @board[3] = {1,2,3};
 
 Team(){
-    Announce("Hello World!" & @board[1][1]);
+    @board[1]= 10;
+    Announce("Hello World!" & @board[1]);
 }
+
 
  '''
      # Build lexer and tokenize input

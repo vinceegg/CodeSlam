@@ -9,11 +9,15 @@ class Environment:
 
     def get_var(self, name):
         var = self.variables.get(name)
-        return var["value"] if var else f"[ERROR: {name} not found]"
+        if var is None:
+            raise ValueError(f"[ERROR] Variable '{name}' not found.")
+        return var["value"]
 
     def get_type(self, name):
         var = self.variables.get(name)
-        return var["type"] if var else None
+        if var is None:
+            raise ValueError(f"[ERROR] Variable '{name}' not found.")
+        return var["type"]
 
 
 class Compiler:
@@ -423,15 +427,14 @@ class Compiler:
             return self.eval(node.children[0]) 
 
         elif node.name == "feint_array":
-            var_token = node.children[0]   # VAR_INIT
-            first_dimension = int(node.children[1].value)  # feint_lit
-            second_dimension_node = node.children[2]       # 2D_array
-            initializer = node.children[3]                 # feint_array_init
+            var_token = node.children[0]
+            first_dimension = int(node.children[1].value)
+            second_dimension_node = node.children[2]
+            initializer = node.children[3]
 
             var_name = var_token.value
             second_dimension = None
 
-            # Check if 2D_array is provided
             if second_dimension_node.children:
                 second_dimension = int(second_dimension_node.children[0].value)
 
@@ -439,12 +442,11 @@ class Compiler:
                 data = self.eval(initializer)
 
                 if second_dimension is None:
-                    # 1D Array
                     if not isinstance(data, list):
                         raise ValueError("[TYPE ERROR] Expected list for 1D array initializer.")
+                    print(f"[DEBUG] Storing 1D array {var_name}: {data}")
                     self.env.set_var(var_name, data, type_name="FeintArray")
                 else:
-                    # 2D Array
                     if not isinstance(data, list):
                         raise ValueError("[TYPE ERROR] Expected list for 2D array initializer.")
                     
@@ -452,15 +454,14 @@ class Compiler:
                     if len(data) != total_elements:
                         raise ValueError(f"[TYPE ERROR] Array initializer size mismatch: expected {total_elements}, got {len(data)}")
 
-                    # Now reshape the flat list into list of lists
                     reshaped = []
                     for i in range(first_dimension):
                         row = data[i * second_dimension : (i + 1) * second_dimension]
                         reshaped.append(row)
-                    
+
+                    print(f"[DEBUG] Reshaped 2D array {var_name}: {reshaped}")
                     self.env.set_var(var_name, reshaped, type_name="FeintArray2D")
             else:
-                # No initializer provided; create an empty array
                 if second_dimension is None:
                     self.env.set_var(var_name, [0]*first_dimension, type_name="FeintArray")
                 else:
@@ -480,26 +481,15 @@ class Compiler:
 
         elif node.name == "feint_row":
             values = []
-            temp_row = []
-
             for child in node.children:
                 val = self.eval(child)
 
                 if isinstance(val, list):
-                    # Nested list (from 2D array syntax like { {1,2,3}, {4,5,6} })
-                    values.append(val)
+                    # If child is already a list (e.g., {1,2,3}), flatten it
+                    values.extend(val)
                 else:
-                    # Single value
-                    temp_row.append(val)
-
-            if values:
-                # 2D array case
-                if temp_row:
-                    values.insert(0, temp_row)  # Include first row
-                return values
-            else:
-                # 1D array case
-                return temp_row
+                    values.append(val)
+            return values
 
         elif node.name == "2D_feint_row":
             if not node.children:
@@ -507,7 +497,10 @@ class Compiler:
             evaluated = []
             for child in node.children:
                 val = self.eval(child)
-                evaluated.append(val)
+                if isinstance(val, list):
+                    evaluated.extend(val)  # Flatten again
+                else:
+                    evaluated.append(val)
             return evaluated
 
         elif node.name == "more_feint_lit":
@@ -580,19 +573,52 @@ class Compiler:
                 
         elif node.name == "assignment_expression":
             var_token = node.children[0]
-            assign_op = node.children[1].value
-            rhs = self.eval(node.children[2]) 
+            array_access_node = node.children[1]
+            assign_op = node.children[2].value
+            rhs = self.eval(node.children[3])
 
             var_name = var_token.value
             var_type = self.env.get_type(var_name)
 
-            # --- 🛡️ PROTECT CONSTANTS ---
-            if var_type in ["ConstFeint", "ConstFloater", "ConstChant", "ConstStat"]:
-                raise ValueError(f"[ERROR] Cannot reassign to constant variable '{var_name}' ({var_type}).")
+            print(f"[DEBUG] ASSIGNMENT TARGET VAR: {var_name}")
+            print(f"[DEBUG] array_access_node: {array_access_node.name}")
 
-            # --- Proceed if not constant ---
-            self.env.set_var(var_name, rhs, var_type)
-            # print(f"[SET] {var_name} = {rhs} ({var_type})")
+            # --- 🛡️ PROTECT CONSTANTS ---
+            if array_access_node.name == "no_array_access":
+                if var_type in ["ConstFeint", "ConstFloater", "ConstChant", "ConstStat"]:
+                    raise ValueError(f"[ERROR] Cannot reassign to constant variable '{var_name}' ({var_type}).")
+
+                self.env.set_var(var_name, rhs, var_type)
+
+            elif array_access_node.name == "array_access":
+                array = self.env.get_var(var_name)
+                print(f"[DEBUG] Current 1D array {var_name}: {array}")
+
+                idx = self.eval(array_access_node.children[0])
+
+                print(f"[DEBUG] Assigning array[{idx}] = {rhs}")
+
+                array[idx] = rhs
+                self.env.set_var(var_name, array)
+
+            elif array_access_node.name == "array_access_2d":
+                array = self.env.get_var(var_name)
+                print(f"[DEBUG] Current 2D array {var_name}: {array}")
+
+                if not (isinstance(array, list) and all(isinstance(row, list) for row in array)):
+                    raise ValueError(f"[TYPE ERROR] '{var_name}' is not a 2D array.")
+
+                row_idx = self.eval(array_access_node.children[0])
+                col_idx = self.eval(array_access_node.children[1])
+
+                print(f"[DEBUG] Assigning array[{row_idx}][{col_idx}] = {rhs}")
+
+                array[row_idx][col_idx] = rhs
+                self.env.set_var(var_name, array)
+
+            else:
+                raise ValueError(f"[EVAL ERROR] Unexpected array access node: {array_access_node.name}")
+
             return rhs
 
         elif node.name == "follow_statement":
