@@ -42,13 +42,19 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-
 Team() {
-Feint @player1 = ~5, @player2 = 5, @player3;
+    Feint @i;
 
-Announce(@player1 & @player3 & "We are the best team!");
+    Forward(@i = 0; @i < 5; @i++) {
+        Dribble(@i == 2) {
+            Timeout;
+        }
+        Dribble(@i == 1) {
+            Resume;
+        }
+        Announce(@i);
+    }
 }
-
  '''
      # Build lexer and tokenize input
     lexer = build_lexer()

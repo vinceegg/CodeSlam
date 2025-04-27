@@ -1277,13 +1277,16 @@ class Compiler:
         
         elif node.name == "dribble_statement":
             condition_result = self.eval(node.children[0])  # expression
-            # print(f"[DEBUG] Dribble condition evaluated to: {condition_result}")
 
             if condition_result == "Win" or condition_result == True:
-                self.eval(node.children[1])  # loop_statements
+                result = self.eval(node.children[1])  # loop_statements
+                if result == "Resume" or result == "Timeout":
+                    return result  # immediately bubble it up
             else:
                 if len(node.children) > 2:
-                    self.eval(node.children[2])  # pass/shoot (add_condition)
+                    result = self.eval(node.children[2])  # add_condition (Pass/Shoot)
+                    if result == "Resume" or result == "Timeout":
+                        return result  # immediately bubble it up
 
         elif node.name == "add_condition":
             i = 0
@@ -1291,18 +1294,20 @@ class Compiler:
                 keyword_node = node.children[i]
                 if keyword_node.name == "Pass":
                     condition = self.eval(node.children[i + 1])
-                    # print(f"[DEBUG] Pass condition evaluated to: {condition}")
                     if condition == "Win" or condition == True:
-                        self.eval(node.children[i + 2])
+                        result = self.eval(node.children[i + 2])
+                        if result == "Resume" or result == "Timeout":
+                            return result
                         break
                     i += 3
                 elif keyword_node.name == "Shoot":
-                    # print(f"[DEBUG] Executing Shoot fallback block.")
-                    self.eval(node.children[i + 1])
+                    result = self.eval(node.children[i + 1])
+                    if result == "Resume" or result == "Timeout":
+                        return result
                     break
                 else:
-                    # print(f"[WARN] Unknown keyword in add_condition: {keyword_node.name}")
                     break
+
         elif node.name == "Shoot":
             return node 
 
@@ -1351,6 +1356,7 @@ class Compiler:
             # Loop body
             loop_body = node.children[5]
 
+            done = False  # Flag if Timeout happens
             while True:
                 condition_val = self.eval(condition_node)
                 if not condition_val:  # ✅ Directly check if condition fails
@@ -1360,8 +1366,14 @@ class Compiler:
                 for stmt in loop_body.children:
                     result = self.eval(stmt)
                     if result == "Resume":
+                        break 
+                    if result == "Timeout":
+                        done = True
                         break
 
+                if done:
+                    break
+                
                 # Apply update
                 current_val = self.env.get_var(loop_var_name)
 
@@ -1403,27 +1415,55 @@ class Compiler:
                 result = self.eval(child)
                 if result == "Resume":
                     break
+                if result == "Timeout":
+                    return "Timeout"
 
         elif node.name == "loop_statement":
             return self.eval(node.children[0])
 
         elif node.name == "resume_statement":
-            # print("[LOOP] Resume triggered.")
             return "Resume"
-
+        
+        elif node.name == "timeout_statement":
+            return "Timeout"
+        
         elif node.name == "play_statement":
-            condition_node = node.children[0]  # the expression (boolean)
-            body_node = node.children[1]       # the team_statement (block)
+            condition_node = node.children[0]
+            body_node = node.children[1]
 
             while self.eval(condition_node):
-                self.eval(body_node)
+                done = False  # Flag if Timeout happens
+
+                for stmt in body_node.children:
+                    result = self.eval(stmt)
+                    if result == "Resume":
+                        break  # skip to condition check
+                    if result == "Timeout":
+                        done = True
+                        break
+
+                if done:
+                    break  # break the while loop
+
 
         elif node.name == "run_play_statement":
-            body_node = node.children[0]       # the team_statement (block)
-            condition_node = node.children[1]  # the expression (boolean)
+            body_node = node.children[0]
+            condition_node = node.children[1]
 
             while True:
-                self.eval(body_node)
+                done = False
+
+                for stmt in body_node.children:
+                    result = self.eval(stmt)
+                    if result == "Resume":
+                        break  # skip checking condition immediately
+                    if result == "Timeout":
+                        done = True
+                        break
+
+                if done:
+                    break
+
                 if not self.eval(condition_node):
                     break
 
