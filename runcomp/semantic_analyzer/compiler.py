@@ -119,31 +119,37 @@ class Compiler:
         return cases
 
     def call_function(self, func_name, args):
-        func_node = self.env.functions.get(func_name)
+        func_node = self.env.get_func(func_name)
         if func_node is None:
             raise ValueError(f"[ERROR] Function '{func_name}' not found.")
 
-        params_node = func_node.children[1]  # func_parameters
-        body_node = func_node.children[2]    # function_statement
-        rebound_node = func_node.children[3] # rebound_statement
+        param_node = func_node.children[1]  # func_parameters
+        body_node = func_node.children[2]   # function_statement
+        rebound_node = func_node.children[3]  # rebound_statement
 
-        # Optionally, create a new environment if you want function-local variables
+        # --- Setup a new local environment ---
         old_env = self.env
         self.env = Environment()
 
-        # (Optional) bind parameters later if needed
+        # --- BIND PARAMETERS TO ARGUMENTS ---
+        param_names = [child.value for child in param_node.children]  # list of parameter names (@arg, @x, etc.)
 
-        # Execute the function body
+        if len(param_names) != len(args):
+            raise ValueError(f"[ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
+
+        for name, value in zip(param_names, args):
+            self.env.set_var(name, value, type_name="Feint")  # or None if you want to omit type for now
+
+        # --- EVALUATE BODY ---
         self.eval(body_node)
 
-        # Execute rebound to get return value
-        rebound_value = self.eval(rebound_node.children[0]) if rebound_node else None
+        # --- RETURN VALUE FROM REBOUND ---
+        rebound_value = self.eval(rebound_node) if rebound_node else None
 
-        # Restore previous environment
-        self.env = old_env
+        self.env = old_env  # Restore caller environment
 
         return rebound_value
-    
+
     def eval(self, node):
         # --- Top level: PROGRAM node ---
         if node.name == "program":
