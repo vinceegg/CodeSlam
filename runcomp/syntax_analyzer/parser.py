@@ -266,7 +266,7 @@ def feint_const_init(p):
     return ASTNode("feint_const_init", children=[p[0], p[1]])
 
 # Rule 50: feint_const → ASSIGN feint_lit
-@pg.production("feint_const : ASSIGN feint_lit")
+@pg.production("feint_const : ASSIGN number_lit")
 def feint_const(p):
     return ASTNode("feint_const", value=p[1].value)
 

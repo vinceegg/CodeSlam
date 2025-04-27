@@ -347,7 +347,13 @@ class Compiler:
             return value, additional
 
         elif node.name == "feint_const":
-            return int(node.value) # Just return the literal integer
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return int(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid feint value: {node.value}")
 
         elif node.name == "feint_const_end":
             if not node.children:

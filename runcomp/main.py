@@ -42,13 +42,8 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
+Const Feint @start = ~1;
 Team() {
-    Chant @word = "level";
-    Feint @start = ~32;
-    Feint @end;
-    Feint @length = 0;    
-    Stat @is_palindrome = Win;
-
     Announce(@start);
 }
 
