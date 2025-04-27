@@ -700,10 +700,10 @@ def follow_statement_call(p):
 def element_index(p):
     return ASTNode("element_index", value=p[0].value)
 
-# # Rule 136: element_index → VAR_INIT
-# @pg.production("element_index : VAR_INIT")
-# def element_index(p):
-#     return ASTNode("element_index", value=p[0].value)
+# Rule 136: element_index → VAR_INIT
+@pg.production("element_index : VAR_INIT")
+def element_index(p):
+    return ASTNode("element_index", value=p[0].value)
 
 # # Rule 137: 2d_manipulation → [ element_index ]
 # @pg.production("2d_manipulation : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT")
