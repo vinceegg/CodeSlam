@@ -42,9 +42,9 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Const Floater @start = ~1.0;
+Zone Feint @start[3] = {1, ~2, ~3};
 Team() {
-    Announce(@start);
+    Announce(@start[0]);
 }
 
  '''

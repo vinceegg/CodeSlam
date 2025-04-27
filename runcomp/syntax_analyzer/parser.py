@@ -80,8 +80,8 @@ def more_feint_full(p):
 def feint_init_empty(p):
     return ASTNode("feint_init", children=[])
 
-# Rule 15: feint_init → ASSIGN number_lit
-@pg.production("feint_init : ASSIGN number_lit")
+# Rule 15: feint_init → ASSIGN feint_lits
+@pg.production("feint_init : ASSIGN feint_lits")
 def feint_init_assign(p):
     return ASTNode("feint_init", value=p[1].value)
 
@@ -91,15 +91,15 @@ def feint_lit(p):
     return ASTNode("feint_lit", value=p[0].value)
 
 #ADDED
-# Rule 16: number_lit → FEINTLIT
-@pg.production("number_lit : FEINTLIT")
+# Rule 16: feint_lits → FEINTLIT
+@pg.production("feint_lits : FEINTLIT")
 def feint_lit(p):
-    return ASTNode("number_lit", value=p[0].value)
+    return ASTNode("feint_lits", value=p[0].value)
 
-# Rule 16: number_lit → NEGAFEINT
-@pg.production("number_lit : NEGAFEINT")
+# Rule 16: feint_lits → NEGAFEINT
+@pg.production("feint_lits : NEGAFEINT")
 def feint_lit(p):
-    return ASTNode("number_lit", value=p[0].value)
+    return ASTNode("feint_lits", value=p[0].value)
 
 # Rule 17: feint_init_end → λ
 @pg.production("feint_init_end : ")
@@ -265,8 +265,8 @@ def const_feint(p):
 def feint_const_init(p):
     return ASTNode("feint_const_init", children=[p[0], p[1]])
 
-# Rule 50: feint_const → ASSIGN feint_lit
-@pg.production("feint_const : ASSIGN number_lit")
+# Rule 50: feint_const → ASSIGN feint_lits
+@pg.production("feint_const : ASSIGN feint_lits")
 def feint_const(p):
     return ASTNode("feint_const", value=p[1].value)
 
@@ -395,13 +395,13 @@ def feint_array_init_empty(p):
 def feint_array_init(p):
     return ASTNode("feint_array_init", children=[p[2]])
 
-# Rule 76: feint_row → feint_lit more_feint_lit
-@pg.production("feint_row : feint_lit more_feint_lit")
+# Rule 76: feint_row → feint_lits more_feint_lit
+@pg.production("feint_row : feint_lits more_feint_lit")
 def feint_row_inline(p):
     return ASTNode("feint_row", children=[p[0]] + p[1].children)
 
-# Rule 77: feint_row → { feint_lit more_feint_lit } 2D_feint_row
-@pg.production("feint_row : CODE_BLOCK_LEFT feint_lit more_feint_lit CODE_BLOCK_RIGHT 2D_feint_row")
+# Rule 77: feint_row → { feint_lits more_feint_lit } 2D_feint_row
+@pg.production("feint_row : CODE_BLOCK_LEFT feint_lits more_feint_lit CODE_BLOCK_RIGHT 2D_feint_row")
 def feint_row_nested(p):
     return ASTNode("feint_row", children=[p[1]] + p[2].children + p[4].children)
 
@@ -410,8 +410,8 @@ def feint_row_nested(p):
 def two_d_feint_row_empty(p):
     return ASTNode("2D_feint_row", children=[])
 
-# Rule 79: 2D_feint_row → , { feint_lit more_feint_lit } 2D_feint_row
-@pg.production("2D_feint_row : COMMA CODE_BLOCK_LEFT feint_lit more_feint_lit CODE_BLOCK_RIGHT 2D_feint_row")
+# Rule 79: 2D_feint_row → , { feint_lits more_feint_lit } 2D_feint_row
+@pg.production("2D_feint_row : COMMA CODE_BLOCK_LEFT feint_lits more_feint_lit CODE_BLOCK_RIGHT 2D_feint_row")
 def two_d_feint_row_recursive(p):
     return ASTNode("2D_feint_row", children=[p[2]] + p[3].children + p[5].children)
 
@@ -421,7 +421,7 @@ def more_feint_lit_empty(p):
     return ASTNode("more_feint_lit", children=[])
 
 # Rule 81: more_feint_lit → , feint_lit more_feint_lit
-@pg.production("more_feint_lit : COMMA feint_lit more_feint_lit")
+@pg.production("more_feint_lit : COMMA feint_lits more_feint_lit")
 def more_feint_lit_recursive(p):
     return ASTNode("more_feint_lit", children=[p[1]] + p[2].children)
 

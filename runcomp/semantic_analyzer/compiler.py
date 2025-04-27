@@ -520,7 +520,6 @@ class Compiler:
                         row = data[i * second_dimension : (i + 1) * second_dimension]
                         reshaped.append(row)
 
-                    print(f"[DEBUG] Reshaped 2D array {var_name}: {reshaped}")
                     self.env.set_var(var_name, reshaped, type_name="FeintArray2D")
             else:
                 if second_dimension is None:
@@ -573,8 +572,14 @@ class Compiler:
                 evaluated.append(val)
             return evaluated
 
-        elif node.name == "feint_lit":
-            return int(node.value)
+        elif node.name == "feint_lits":
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return int(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid feint value: {node.value}")
 
         # --- FLOATER_DEC: list of declarations ---
         elif node.name == "floater_array":
