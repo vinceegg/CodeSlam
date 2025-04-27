@@ -670,7 +670,7 @@ class Compiler:
                     value = '-' + value[1:]  # Translate ~ to -
                 return float(value)
             except Exception:
-                raise ValueError(f"[TYPE ERROR] Invalid float value: {node.value}")
+                raise ValueError(f"[TYPE ERROR] Invalid floater value: {node.value}")
 
         # --- CHANT_DEC: list of declarations ---
         elif node.name == "chant_array":

@@ -700,35 +700,35 @@ def follow_statement_call(p):
 def element_index(p):
     return ASTNode("element_index", value=p[0].value)
 
-# Rule 136: element_index → VAR_INIT
-@pg.production("element_index : VAR_INIT")
-def element_index(p):
-    return ASTNode("element_index", value=p[0].value)
+# # Rule 136: element_index → VAR_INIT
+# @pg.production("element_index : VAR_INIT")
+# def element_index(p):
+#     return ASTNode("element_index", value=p[0].value)
 
-# Rule 137: 2d_manipulation → [ element_index ]
-@pg.production("2d_manipulation : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT")
-def two_d_manipulation(p):
-    return ASTNode("2d_manipulation", children=[p[1]])
+# # Rule 137: 2d_manipulation → [ element_index ]
+# @pg.production("2d_manipulation : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT")
+# def two_d_manipulation(p):
+#     return ASTNode("2d_manipulation", children=[p[1]])
 
-# Rule 138: 2d_manipulation → λ
-@pg.production("2d_manipulation : ")
-def two_d_manipulation_empty(p):
-    return ASTNode("2d_manipulation", children=[])
+# # Rule 138: 2d_manipulation → λ
+# @pg.production("2d_manipulation : ")
+# def two_d_manipulation_empty(p):
+#     return ASTNode("2d_manipulation", children=[])
 
-# Rule 139: array_man → = array_elem
-@pg.production("array_man : ASSIGN array_elem")
-def array_man(p):
-    return ASTNode("array_man", children=[p[1]])
+# # Rule 139: array_man → = array_elem
+# @pg.production("array_man : ASSIGN array_elem")
+# def array_man(p):
+#     return ASTNode("array_man", children=[p[1]])
 
-# Rule 140: array_man → λ
-@pg.production("array_man : ")
-def array_man_empty(p):
-    return ASTNode("array_man", children=[])
+# # Rule 140: array_man → λ
+# @pg.production("array_man : ")
+# def array_man_empty(p):
+#     return ASTNode("array_man", children=[])
 
-# Rule 141: array_elem → feint_lit
-@pg.production("array_elem : expression")
-def array_elem_feint(p):
-    return ASTNode("array_elem", children=[p[0]])
+# # Rule 141: array_elem → feint_lit
+# @pg.production("array_elem : expression")
+# def array_elem_feint(p):
+#     return ASTNode("array_elem", children=[p[0]])
 
 # Rule 144: rebound_statement → REBOUND rebound_value ;
 @pg.production("rebound_statement : REBOUND rebound_value SEMICOLON")
