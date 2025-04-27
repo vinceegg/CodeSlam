@@ -966,30 +966,30 @@ def array_access_tail_empty(p):
     return ASTNode("array_access_tail_empty")
 
 
-# Rule 173: number → feint_lit
-@pg.production("number : feint_lit")
-def number_feint(p):
-    return ASTNode("number", value=p[0].value)
+# # Rule 173: number → feint_lit
+# @pg.production("number : feint_lit")
+# def number_feint(p):
+#     return ASTNode("number", value=p[0].value)
 
-# Rule 174: number → floater_lit
-@pg.production("number : floater_lit")
-def number_floater(p):
-    return ASTNode("number", value=p[0].value)
+# # Rule 174: number → floater_lit
+# @pg.production("number : floater_lit")
+# def number_floater(p):
+#     return ASTNode("number", value=p[0].value)
 
-# Rule 175: number → VAR_INIT
-@pg.production("number : VAR_INIT")
-def number_var(p):
-    return ASTNode("number", value=p[0].value)
+# # Rule 175: number → VAR_INIT
+# @pg.production("number : VAR_INIT")
+# def number_var(p):
+#     return ASTNode("number", value=p[0].value)
 
-# Rule 176: number → nega_feint_lit
-@pg.production("number : NEGAFEINT")
-def number_nega_feint(p):
-    return ASTNode("number", value=p[0].value)
+# # Rule 176: number → nega_feint_lit
+# @pg.production("number : NEGAFEINT")
+# def number_nega_feint(p):
+#     return ASTNode("number", value=p[0].value)
 
-# Rule 177: number → nega_floater_lit
-@pg.production("number : nega_floater_lit")
-def number_nega_floater(p):
-    return ASTNode("number", value=p[0].value)
+# # Rule 177: number → nega_floater_lit
+# @pg.production("number : nega_floater_lit")
+# def number_nega_floater(p):
+#     return ASTNode("number", value=p[0].value)
 
 # Rule 178: number_type_cast → feint_type_casting
 @pg.production("number_type_cast : feint_type_casting")
