@@ -80,8 +80,8 @@ def more_feint_full(p):
 def feint_init_empty(p):
     return ASTNode("feint_init", children=[])
 
-# Rule 15: feint_init → ASSIGN feint_lit
-@pg.production("feint_init : ASSIGN feint_lit")
+# Rule 15: feint_init → ASSIGN number_lit
+@pg.production("feint_init : ASSIGN number_lit")
 def feint_init_assign(p):
     return ASTNode("feint_init", value=p[1].value)
 
@@ -89,6 +89,17 @@ def feint_init_assign(p):
 @pg.production("feint_lit : FEINTLIT")
 def feint_lit(p):
     return ASTNode("feint_lit", value=p[0].value)
+
+#ADDED
+# Rule 16: number_lit → FEINTLIT
+@pg.production("number_lit : FEINTLIT")
+def feint_lit(p):
+    return ASTNode("number_lit", value=p[0].value)
+
+# Rule 16: number_lit → NEGAFEINT
+@pg.production("number_lit : NEGAFEINT")
+def feint_lit(p):
+    return ASTNode("number_lit", value=p[0].value)
 
 # Rule 17: feint_init_end → λ
 @pg.production("feint_init_end : ")
@@ -121,7 +132,7 @@ def floater_init_empty(p):
     return ASTNode("floater_init", children=[])
 
 # Rule 23: floater_init → ASSIGN floater_lit
-@pg.production("floater_init : ASSIGN floater_lit")
+@pg.production("floater_init : ASSIGN float_lits")
 def floater_init_assign(p):
     return ASTNode("floater_init", value=p[1].value)
 
@@ -129,6 +140,17 @@ def floater_init_assign(p):
 @pg.production("floater_lit : FLOATERLIT")
 def floater_lit(p):
     return ASTNode("floater_lit", value=p[0].value)
+
+# ADDED
+# Rule 24: float_lits → FLOATERLIT
+@pg.production("float_lits : FLOATERLIT")
+def floater_lit(p):
+    return ASTNode("float_lits", value=p[0].value)
+
+# Rule 24: float_lits → FLOATERLIT
+@pg.production("float_lits : NEGAFLOATER")
+def floater_lit(p):
+    return ASTNode("float_lits", value=p[0].value)
 
 # Rule 25: floater_init_end → λ
 @pg.production("floater_init_end : ")

@@ -44,31 +44,12 @@ def main():
     code = '''
 Team() {
     Chant @word = "level";
-    Feint @start = 0;
+    Feint @start = ~32;
     Feint @end;
     Feint @length = 0;    
     Stat @is_palindrome = Win;
 
-    Forward (@start = 0; @word[@start] != ""; @start++) {
-        @length = @length + 1;
-    }
-    
-    @start = 0;
-    @end = @length - 1;
-
-    Forward (@start = 0; @start < @end; @start++) {
-        Dribble (@word[@start] != @word[@end]) {
-            @is_palindrome = Loss;
-            Timeout;  
-        }
-        @end = @end - 1;
-    }
-
-    Dribble (@is_palindrome) {
-        Announce("Palindrome!");
-    } Shoot {
-        Announce("Not a Palindrome.");
-    }
+    Announce(@start);
 }
 
  '''

@@ -151,11 +151,17 @@ class Compiler:
         elif node.name == "more_feint":
             if node.children:
                 return self.eval(node.children[0]) 
-        
+                
         elif node.name == "feint_init":
             if node.value is None:
                 return None  # uninitialized
-            return int(node.value)
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return int(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid feint value: {node.value}")
         
         elif node.name == "feint_init_end":
             if not node.children:
@@ -204,13 +210,15 @@ class Compiler:
                     
         elif node.name == "floater_init":
             if node.value is None:
-                return None
+                return None # Uninitialized
             try:
-                return float(node.value)
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return float(value)
             except Exception:
                 raise ValueError(f"[TYPE ERROR] Invalid floater value: {node.value}")
 
-        
         elif node.name == "floater_init_end":
             if not node.children:
                 return []
@@ -1020,7 +1028,6 @@ class Compiler:
             else:
                 # No relational tail at all
                 return left
-
 
         # -- Logical Expressions --
         elif node.name == "logical_expression":

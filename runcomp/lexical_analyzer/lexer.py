@@ -44,10 +44,11 @@ def build_lexer():
     
     # --- Identifiers ---
     lg.add(TokenType.VAR_INIT.name, r"@[a-zA-Z_][a-zA-Z0-9_]*")
+    
     # --- Literals ---
-    lg.add(TokenType.NEGAFLOATER.name, r"-\d+\.\d+")
+    lg.add(TokenType.NEGAFLOATER.name, r"~\d+\.\d+")
     lg.add(TokenType.FLOATERLIT.name, r"\d+\.\d+")
-    lg.add(TokenType.NEGAFEINT.name, r"-\d+")
+    lg.add(TokenType.NEGAFEINT.name, r"~\d+")
     lg.add(TokenType.FEINTLIT.name, r"\d+")
     lg.add(TokenType.CHANTLIT.name, r'"([^"\\]|\\.)*"')
 
@@ -98,17 +99,18 @@ def build_lexer():
     # --- Commenting ---
     lg.add(TokenType.SINGLE_COMMENT.name, r"\#[^\n]*")
     lg.add(TokenType.MULTI_COMMENT.name, r"\|[\s\S]*?\|")
-    lg.ignore(r"\|[\s\S]*?\|")
-    lg.ignore(r"\#[^\n]*")
+    
     # --- Escape Sequences ---
     lg.add(TokenType.BACKSLASH_AND.name, r"\\&")
     lg.add(TokenType.BACKSLASH_AT.name, r"\\@")
     lg.add(TokenType.ESCAPE_SEQUENCE.name, r"\\[ntr\"\\]")
 
-    # --- Whitespace and Control Characters (ignored) ---
+    # --- Comments, Whitespace and Control Characters (ignored) ---
     lg.ignore(r"[ \t\r\f\v]+")
     lg.ignore(r"\n")  # Optional: Handle newline tracking separately if needed
-
+    lg.ignore(r"\#[^\n]*")
+    lg.ignore(r"\|[\s\S]*?\|")
+    
     return lg.build()
 
 
