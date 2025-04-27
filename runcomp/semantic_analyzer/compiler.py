@@ -144,12 +144,14 @@ class Compiler:
             self.env.set_var(name, value)  # or None if you want to omit type for now
         
         # --- EVALUATE BODY ---
-        self.eval(body_node)
+        for stmt in body_node.children:
+            self.eval(stmt)
         
         # --- RETURN VALUE ---
         # Dunk functions return nothing
         if expected_type == "Dunk":
-                return None  
+            self.env = old_env  # Restore the caller environment
+            return None  
             
         # Otherwise handle rebound normally
         rebound_value = self.eval(rebound_node)
@@ -966,9 +968,7 @@ class Compiler:
             return params
 
         elif node.name == "function_statement":
-            for child in node.children:
-                self.eval(child)
-            return None
+            return node
 
         elif node.name == "team_block":
             for child in node.children:

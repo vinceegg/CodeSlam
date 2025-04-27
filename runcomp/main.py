@@ -47,7 +47,10 @@ Dunk @sayHello() {
 }
 
 Team() {
+    Feint @tmp, @tmp2 = 0;
     @sayHello();
+    Announce("Hello World!" & @tmp);
+    
 }
 
  '''
