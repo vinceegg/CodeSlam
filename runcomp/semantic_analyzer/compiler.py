@@ -119,10 +119,13 @@ class Compiler:
         return cases
 
     def call_function(self, func_name, args):
-        func_node = self.env.get_func(func_name)
-        if func_node is None:
+        func_info = self.env.functions.get(func_name)
+        if func_info is None:
             raise ValueError(f"[ERROR] Function '{func_name}' not found.")
 
+        func_node = func_info["node"]
+        expected_type = func_info["type"]
+        
         param_node = func_node.children[1]  # func_parameters
         body_node = func_node.children[2]   # function_statement
         rebound_node = func_node.children[3]  # rebound_statement
@@ -138,15 +141,28 @@ class Compiler:
             raise ValueError(f"[ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
 
         for name, value in zip(param_names, args):
-            self.env.set_var(name, value, type_name="Feint")  # or None if you want to omit type for now
-
+            self.env.set_var(name, value)  # or None if you want to omit type for now
+        
         # --- EVALUATE BODY ---
         self.eval(body_node)
-
+        
         # --- RETURN VALUE FROM REBOUND ---
         rebound_value = self.eval(rebound_node) if rebound_node else None
-
-        self.env = old_env  # Restore caller environment
+        self.env = old_env  # Restore the caller environment
+        
+        # Type checking
+        if expected_type == "Feint":
+            if not isinstance(rebound_value, int):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Feint (integer), got {type(rebound_value).__name__}")
+        elif expected_type == "Floater":
+            if not isinstance(rebound_value, float):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Floater (float), got {type(rebound_value).__name__}")
+        elif expected_type == "Chant":
+            if not isinstance(rebound_value, str):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Chant (string), got {type(rebound_value).__name__}")
+        elif expected_type == "Stat":
+            if not isinstance(rebound_value, bool):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Stat (boolean), got {type(rebound_value).__name__}")
 
         return rebound_value
 
@@ -895,7 +911,7 @@ class Compiler:
         elif node.name == "feint_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
-            self.env.functions[func_name] = node    # Store the full function AST
+            self.env.functions[func_name] = {"node": node, "type": "Feint"} # Store the full function AST and return type
             return None
 
         elif node.name == "func_parameters":

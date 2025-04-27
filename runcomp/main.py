@@ -42,19 +42,32 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Team() {
+Wilt Feint @testLoop(@limit) {
     Feint @i;
 
-    Forward(@i = 0; @i < 5; @i++) {
+    Forward(@i = 0; @i < @limit; @i++) {
         Dribble(@i == 2) {
+            Announce("Timeout at i = " & @i);
             Timeout;
         }
         Dribble(@i == 1) {
+            Announce("Resume at i = " & @i);
             Resume;
         }
-        Announce(@i);
+        Announce("i = " & @i);
     }
+
+    Rebound "chant";
 }
+
+Team() {
+    Feint @result;
+
+    @result = @testLoop(5);
+
+    Announce("Result after function: " & @result);
+}
+
  '''
      # Build lexer and tokenize input
     lexer = build_lexer()
