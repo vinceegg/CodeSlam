@@ -42,9 +42,16 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Zone Feint @start[2][3] = {{1, ~2, ~3}, {4, 5, 6}};
+Wilt Feint @function(){
+    Announce("Wilt Feint!");
+    Rebound 3 + 1;
+}
 Team() {
-    Announce(@start[1][1]);
+    Feint @func;
+    
+    @func = @function() + 1;
+    
+    Announce(@func);
 }
 
  '''
@@ -64,10 +71,7 @@ Team() {
         compiler.eval(ast)
     except Exception as e:
         print("\nPARSE ERROR!")
-        # ast = parser.parse(tokens)
-        # print("AST Output:\n", ast)
         print(e)
-    # print(run_compiler(code))
 
 if __name__ == "__main__":
     main()

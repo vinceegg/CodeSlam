@@ -731,24 +731,24 @@ def element_index(p):
 #     return ASTNode("array_elem", children=[p[0]])
 
 # Rule 144: rebound_statement → REBOUND rebound_value ;
-@pg.production("rebound_statement : REBOUND rebound_value SEMICOLON")
+@pg.production("rebound_statement : REBOUND expression SEMICOLON")
 def rebound_statement(p):
     return ASTNode("rebound_statement", children=[p[1]])
 
-# Rule 145: rebound_value → literal
-@pg.production("rebound_value : literal")
-def rebound_value_literal(p):
-    return ASTNode("rebound_value", children=[p[0]])
+# # Rule 145: rebound_value → literal
+# @pg.production("rebound_value : literal")
+# def rebound_value_literal(p):
+#     return ASTNode("rebound_value", children=[p[0]])
 
-# Rule 146: rebound_value → VAR_INIT
-@pg.production("rebound_value : VAR_INIT")
-def rebound_value_identifier(p):
-    return ASTNode("rebound_value", value=p[0].value)
+# # Rule 146: rebound_value → VAR_INIT
+# @pg.production("rebound_value : VAR_INIT")
+# def rebound_value_identifier(p):
+#     return ASTNode("rebound_value", value=p[0].value)
 
-# Rule 147: rebound_value → expression
-@pg.production("rebound_value : expression")
-def rebound_value_expression(p):
-    return ASTNode("rebound_value", children=[p[0]])
+# # Rule 147: rebound_value → expression
+# @pg.production("rebound_value : expression")
+# def rebound_value_expression(p):
+#     return ASTNode("rebound_value", children=[p[0]])
 
 # Rule 148: announce_statement → ANNOUNCE ( outputs ) ;
 @pg.production("announce_statement : ANNOUNCE LEFT_PAREN outputs RIGHT_PAREN SEMICOLON")
@@ -928,16 +928,35 @@ def factor_not(p):
 def factor_literal(p):
     return p[0]
 
-@pg.production("factor : VAR_INIT array_access")
-def factor_var_or_array(p):
-    var_token = p[0]      # VAR_INIT token
-    array_access_node = p[1]  # array_access or no_array_access
+# VAR_INIT followed by a postfix (either array access or function call)
+@pg.production("factor : VAR_INIT postfix")
+def factor_var_with_postfix(p):
+    var_token = p[0]         # The variable token (@something)
+    postfix_node = p[1]       # array_access, function_call, or none
 
-    if array_access_node.name == "no_array_access":
+    if postfix_node.name == "no_postfix":
         return ASTNode("variable", value=var_token.value)
+    elif postfix_node.name == "array_access" or postfix_node.name == "array_access_2d":
+        return ASTNode(postfix_node.name, value=var_token.value, children=postfix_node.children)
+    elif postfix_node.name == "function_call":
+        return ASTNode("function_call", value=var_token.value, children=postfix_node.children)
     else:
-        return ASTNode(array_access_node.name, value=var_token.value, children=array_access_node.children)
+        raise Exception(f"[ERROR] Unexpected postfix: {postfix_node.name}")
 
+# postfix : array_access
+@pg.production("postfix : array_access")
+def postfix_array_access(p):
+    return p[0]
+
+# postfix : function_call
+@pg.production("postfix : function_call")
+def postfix_function_call(p):
+    return p[0]
+
+# postfix : (empty)
+@pg.production("postfix :")
+def postfix_empty(p):
+    return ASTNode("no_postfix")  # means plain variable
 
 # If NO array access (simple variable)
 @pg.production("array_access :")
@@ -1051,10 +1070,15 @@ def assign_operand_func(p):
 def assign_operand_arith(p):
     return ASTNode("assign_operand", children=[p[0]])
 
-# Rule 234: function_call → VAR_INIT ( arguments )
-@pg.production("function_call : VAR_INIT LEFT_PAREN arguments RIGHT_PAREN")
+# Rule 234: function_call → ( arguments )
+@pg.production("function_call : LEFT_PAREN arguments RIGHT_PAREN")
 def function_call(p):
-    return ASTNode("function_call", children=[p[0], p[2]])
+    return ASTNode("function_call", children=[p[1]])
+
+# Rule 235: arguments → λ
+@pg.production("arguments : ")
+def arguments(p):
+    return ASTNode("arguments",  children=[])
 
 # Rule 235: arguments → arg more_args
 @pg.production("arguments : arg more_args")

@@ -3,7 +3,9 @@ from syntax_analyzer.ast_nodes import ASTNode
 class Environment:
     def __init__(self):
         self.variables = {}
+        self.functions = {}
 
+    # --- Variables ---
     def set_var(self, name, value, type_name=None):
         self.variables[name] = {"value": value, "type": type_name}
 
@@ -19,6 +21,15 @@ class Environment:
             raise ValueError(f"[ERROR] Variable '{name}' not found.")
         return var["type"]
 
+    # --- Functions ---
+    def set_func(self, name, func_node):
+        self.functions[name] = func_node
+
+    def get_func(self, name):
+        func = self.functions.get(name)
+        if func is None:
+            raise ValueError(f"[ERROR] Function '{name}' not found.")
+        return func
 
 class Compiler:
     def __init__(self):
@@ -107,6 +118,32 @@ class Compiler:
 
         return cases
 
+    def call_function(self, func_name, args):
+        func_node = self.env.functions.get(func_name)
+        if func_node is None:
+            raise ValueError(f"[ERROR] Function '{func_name}' not found.")
+
+        params_node = func_node.children[1]  # func_parameters
+        body_node = func_node.children[2]    # function_statement
+        rebound_node = func_node.children[3] # rebound_statement
+
+        # Optionally, create a new environment if you want function-local variables
+        old_env = self.env
+        self.env = Environment()
+
+        # (Optional) bind parameters later if needed
+
+        # Execute the function body
+        self.eval(body_node)
+
+        # Execute rebound to get return value
+        rebound_value = self.eval(rebound_node.children[0]) if rebound_node else None
+
+        # Restore previous environment
+        self.env = old_env
+
+        return rebound_value
+    
     def eval(self, node):
         # --- Top level: PROGRAM node ---
         if node.name == "program":
@@ -844,7 +881,38 @@ class Compiler:
         elif node.name == "function_def":
             for child in node.children:
                 self.eval(child)
-                
+
+        elif node.name == "function_declared":
+            return self.eval(node.children[0])
+        
+        elif node.name == "feint_function":
+            func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
+            func_name = func_name_token.value   # Get the function name string
+            self.env.functions[func_name] = node    # Store the full function AST
+            return None
+
+        elif node.name == "func_parameters":
+            params = []
+            for child in node.children:
+                if hasattr(child, "value"):   # child is VAR_INIT token
+                    params.append(child.value)
+                else:
+                    # Could be param_end children
+                    params.extend(self.eval(child))
+            return params
+
+        elif node.name == "param_end":
+            params = []
+            for child in node.children:
+                if hasattr(child, "value"):  # VAR_INIT token
+                    params.append(child.value)
+                else:
+                    params.extend(self.eval(child))
+            return params
+
+        elif node.name == "function_statement":
+            return node.children   # return the list of statements (not evaluated yet)
+
         elif node.name == "team_block":
             for child in node.children:
                 self.eval(child)
@@ -901,6 +969,9 @@ class Compiler:
             else:
                 # Handle other statement types (not VAR_INIT + follow)
                 return self.eval(node.children[0])
+
+        elif node.name == "rebound_statement":
+            return self.eval(node.children[0])
 
         # --- ANNOUNCE_STATEMENT ---
         elif node.name == "announce_statement":
@@ -1004,6 +1075,34 @@ class Compiler:
             # print(f"[DEBUG] assign_operand evaluated to: {val}")
             return val
 
+        elif node.name == "function_call":
+            func_name = node.value
+
+            if node.children:
+                arguments_node = node.children[0]  # The 'arguments' ASTNode
+                args = []
+                for arg_node in arguments_node.children:  # loop through each 'arg'
+                    arg_val = self.eval(arg_node)
+                    args.append(arg_val)
+            else:
+                args = []
+
+            return self.call_function(func_name, args)
+
+
+        elif node.name == "arguments":
+            results = []
+            for child in node.children:
+                result = self.eval(child)
+                results.append(result)
+            return results
+
+        elif node.name == "arg":
+            if node.value is not None:
+                return self.env.get_var(node.value)  # it's a variable like @x
+            else:
+                return self.eval(node.children[0])   # it's a literal like 3, "hello", etc
+
         elif node.name == "expression":
             return self.eval(node.children[0])
 
@@ -1015,8 +1114,11 @@ class Compiler:
 
         elif node.name == "term":
             left = self.eval(node.children[0])  # factor
-            tail = node.children[1]             # term_tail
-            return self.eval_term_tail(left, tail)
+            term_tail = node.children[1]        # term_tail node
+            if not term_tail.children:
+                return left
+            else:
+                return self.eval_term_tail(left, term_tail)
 
         # -- Relational Expressions --
         elif node.name == "relational_expression":
@@ -1067,10 +1169,20 @@ class Compiler:
 
         # -- Terms and Factors --
         elif node.name == "term":
-            return self.eval(node.children[0])
+            left = self.eval(node.children[0])  # factor
+            term_tail = node.children[1]         # term_tail node
+            if not term_tail.children:
+                return left
+            else:
+                return self.eval_term_tail(left, term_tail)
 
         elif node.name == "factor":
-            return self.eval(node.children[0])
+            child = node.children[0]
+            
+            if child.name == "function_call":
+                return self.eval(child)
+            else:
+                return self.eval(child)
 
         # -- Parenthesis (grouped expressions) --
         elif node.name == "grouped_expression":
