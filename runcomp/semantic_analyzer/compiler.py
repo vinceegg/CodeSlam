@@ -171,30 +171,31 @@ class Compiler:
 
         # --- FEINT_DEC: list of declarations ---
         elif node.name == "feint_dec":
-            var_token = node.children[0]
-            var_name = var_token.value
-            init_value = self.eval(node.children[1])
-            self.env.set_var(var_name, init_value, type_name="Feint")
-            # print(f"[SET] {var_name} = {init_value} (Feint)")
+            first_var = node.children[0]  # First VAR_INIT
+            more = self.eval(node.children[1])  # more_feint
 
-        elif node.name == "feint_dec":
-            first_var = node.children[0]  # VAR_INIT
+            # Set first variable
             first_value = None
-            additional = []
-
-            if node.children[1].children:
-                # more_feint: [feint_init, feint_init_end]
-                first_value = self.eval(node.children[1].children[0])  # feint_init
-                additional = self.eval(node.children[1].children[1])   # feint_init_end
+            if more and more[0][1] is not None:
+                first_value = more[0][1]
 
             self.env.set_var(first_var.value, first_value, "Feint")
-            for var_name, value in additional:
+
+            # Set additional variables
+            for var_name, value in more[1:]:
+                if var_name is None:
+                    raise ValueError("[PARSE ERROR] Missing variable name for additional Feint.")
                 self.env.set_var(var_name, value, "Feint")
 
         elif node.name == "more_feint":
-            if node.children:
-                return self.eval(node.children[0]) 
-                
+            if not node.children:
+                return []
+
+            feint_init_value = self.eval(node.children[0])  # value or None
+            feint_init_end = self.eval(node.children[1])    # list of (name, value) pairs
+
+            return [(None, feint_init_value)] + feint_init_end
+
         elif node.name == "feint_init":
             if node.value is None:
                 return None  # uninitialized
