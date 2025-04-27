@@ -42,30 +42,12 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Wilt Chant @testLoop(@limit) {
-    Feint @i;
-
-    Forward(@i = 0; @i < @limit; @i++) {
-        Dribble(@i == 2) {
-            Announce("Timeout at i = " & @i);
-            Timeout;
-        }
-        Dribble(@i == 1) {
-            Announce("Resume at i = " & @i);
-            Resume;
-        }
-        Announce("i = " & @i);
-    }
-
-    Rebound @i;
+Dunk @sayHello() {
+    Announce("Hello World!");
 }
 
 Team() {
-    Feint @result;
-
-    @result = @testLoop(5);
-
-    Announce("Result after function: " & @result);
+    @sayHello();
 }
 
  '''

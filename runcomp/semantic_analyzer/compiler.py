@@ -128,7 +128,7 @@ class Compiler:
         
         param_node = func_node.children[1]  # func_parameters
         body_node = func_node.children[2]   # function_statement
-        rebound_node = func_node.children[3]  # rebound_statement
+        rebound_node = func_node.children[3] if expected_type != "Dunk" else None
 
         # --- Setup a new local environment ---
         old_env = self.env
@@ -146,8 +146,13 @@ class Compiler:
         # --- EVALUATE BODY ---
         self.eval(body_node)
         
-        # --- RETURN VALUE FROM REBOUND ---
-        rebound_value = self.eval(rebound_node) if rebound_node else None
+        # --- RETURN VALUE ---
+        # Dunk functions return nothing
+        if expected_type == "Dunk":
+                return None  
+            
+        # Otherwise handle rebound normally
+        rebound_value = self.eval(rebound_node)
         self.env = old_env  # Restore the caller environment
         
         # Type checking
@@ -908,6 +913,9 @@ class Compiler:
         elif node.name == "function_declared":
             return self.eval(node.children[0])
         
+        elif node.name == "dunk_func_declared":
+            return self.eval(node.children[0]) 
+        
         elif node.name == "feint_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
@@ -930,6 +938,12 @@ class Compiler:
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
             self.env.functions[func_name] = {"node": node, "type": "Stat"} # Store the full function AST and return type
+            return None
+
+        elif node.name == "dunk_function":
+            func_name_token = node.children[0]  # VAR_INIT token
+            func_name = func_name_token.value
+            self.env.functions[func_name] = {"node": node, "type": "Dunk"}  # store as type Dunk
             return None
                                 
         elif node.name == "func_parameters":
@@ -1004,7 +1018,10 @@ class Compiler:
 
                 # If follow_statement is function_call
                 elif follow_action.name == "function_call":
-                    return self.eval(follow_action)
+                    func_name = var_token.value
+                    args_node = follow_action.children[0] # The 'arguments' ASTNode
+                    args = self.eval(args_node)
+                    return self.call_function(func_name, args)
 
                 else:
                     raise ValueError(f"[EVAL ERROR] Unknown follow_statement type: {follow_action.name}")
