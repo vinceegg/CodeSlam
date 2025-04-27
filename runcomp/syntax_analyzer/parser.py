@@ -291,7 +291,7 @@ def floater_const_init(p):
     return ASTNode("floater_const_init", children=[p[0], p[1]])
 
 # Rule 55: floater_const → = floater_lit
-@pg.production("floater_const : ASSIGN floater_lit")
+@pg.production("floater_const : ASSIGN float_lits")
 def floater_const(p):
     return ASTNode("floater_const", value=p[1].value)
 

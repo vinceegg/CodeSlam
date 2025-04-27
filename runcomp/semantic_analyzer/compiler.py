@@ -387,7 +387,13 @@ class Compiler:
             return value, additional
                         
         elif node.name == "floater_const":
-            return float(node.value)  # <-- CAST to float
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return float(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid float value: {node.value}")
         
         elif node.name == "floater_const_end":
             if not node.children:
