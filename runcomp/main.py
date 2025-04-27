@@ -42,15 +42,20 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Wilt Feint @function(@arg) {
-    Announce("Wilt Feint!");
-    Rebound @arg + 2;
+Wilt Feint @function(@arg, @arg2, @arg3) {
+    Feint @return = 5;
+    @return += @arg;
+    Announce("Wilt Feint!" & @return);
+    Rebound @return;
 }
 Team() {
-    Feint @argument = 5, @func;
-    @func = @function(@argument);
+    Feint @argument = 5;
+    Feint @argu = 10;
+    Feint @funcs = 5;
+    Feint @func;
+    @func = @function(@argument, @argu, @funcs);
     
-    Announce(@func);
+    Announce("Team" & @func);
 }
 
  '''

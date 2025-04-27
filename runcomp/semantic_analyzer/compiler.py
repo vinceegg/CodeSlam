@@ -917,7 +917,9 @@ class Compiler:
             return params
 
         elif node.name == "function_statement":
-            return node.children   # return the list of statements (not evaluated yet)
+            for child in node.children:
+                self.eval(child)
+            return None
 
         elif node.name == "team_block":
             for child in node.children:
