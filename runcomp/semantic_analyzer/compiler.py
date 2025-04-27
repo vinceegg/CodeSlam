@@ -828,7 +828,8 @@ class Compiler:
         elif node.name == "team_statement":
             for stmt in node.children:
                 self.eval(stmt)
-
+                
+        # --- STATEMENT ---
         elif node.name == "statement":
             if len(node.children) == 2:
                 var_token = node.children[0]
@@ -870,7 +871,7 @@ class Compiler:
                 # Handle other statement types (not VAR_INIT + follow)
                 return self.eval(node.children[0])
 
-        # Double check formatting of the print statement: spaces
+        # --- ANNOUNCE_STATEMENT ---
         elif node.name == "announce_statement":
             outputs = self.eval(node.children[0])
             # Print without space in between for formatting consistency
@@ -903,7 +904,8 @@ class Compiler:
 
         elif node.name == "statement":
             return self.eval(node.children[0])
-                
+        
+        # --- ASSIGNMENT_EXPRESSION ---        
         elif node.name == "assignment_expression":
             var_token = node.children[0]
             array_access_node = node.children[1]
@@ -1051,10 +1053,22 @@ class Compiler:
         elif node.name == "array_access":
             if node.value is None:
                 raise ValueError("[EVAL ERROR] array_access node is missing .value (variable name)")
-            array = self.env.get_var(node.value)
+            
+            container = self.env.get_var(node.value)
             idx = self.eval(node.children[0])
-            return array[idx]
 
+            if isinstance(container, str):
+                if 0 <= idx < len(container):
+                    return container[idx]
+                else:
+                    return ""  # <-- return empty string if out of bounds
+            elif isinstance(container, list):
+                if 0 <= idx < len(container):
+                    return container[idx]
+                else:
+                    raise IndexError(f"[INDEX ERROR] Array index {idx} out of range")
+            else:
+                raise TypeError(f"[TYPE ERROR] Cannot index into {type(container).__name__}")
 
         elif node.name == "array_access_2d":
             array = self.env.get_var(node.value)

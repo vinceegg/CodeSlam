@@ -1307,3 +1307,7 @@ def loop_statement_follow(p):
 @pg.production("loop_statement : VAR_INIT follow_statement ")
 def loop_statement_follow(p):
     return ASTNode("loop_statement", children=[p[0], p[1]])
+
+@pg.production("loop_statement : timeout_statement")
+def loop_statement_follow(p):
+    return ASTNode("loop_statement", children=[p[0]])
