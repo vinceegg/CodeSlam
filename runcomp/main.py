@@ -42,7 +42,7 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Wilt Feint @testLoop(@limit) {
+Wilt Floater @testLoop(@limit) {
     Feint @i;
 
     Forward(@i = 0; @i < @limit; @i++) {

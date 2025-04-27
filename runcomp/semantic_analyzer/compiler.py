@@ -914,6 +914,12 @@ class Compiler:
             self.env.functions[func_name] = {"node": node, "type": "Feint"} # Store the full function AST and return type
             return None
 
+        elif node.name == "floater_function":
+            func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
+            func_name = func_name_token.value   # Get the function name string
+            self.env.functions[func_name] = {"node": node, "type": "Floater"} # Store the full function AST and return type
+            return None
+        
         elif node.name == "func_parameters":
             params = []
             for child in node.children:
