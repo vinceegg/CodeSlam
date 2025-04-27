@@ -42,9 +42,9 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Zone Feint @start[3] = {1, ~2, ~3};
+Zone Feint @start[2][3] = {{1, ~2, ~3}, {4, 5, 6}};
 Team() {
-    Announce(@start[0]);
+    Announce(@start[1][1]);
 }
 
  '''

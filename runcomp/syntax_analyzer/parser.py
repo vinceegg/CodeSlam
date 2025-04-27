@@ -131,8 +131,8 @@ def more_floater_full(p):
 def floater_init_empty(p):
     return ASTNode("floater_init", children=[])
 
-# Rule 23: floater_init → ASSIGN floater_lit
-@pg.production("floater_init : ASSIGN float_lits")
+# Rule 23: floater_init → ASSIGN floater_lits
+@pg.production("floater_init : ASSIGN floater_lits")
 def floater_init_assign(p):
     return ASTNode("floater_init", value=p[1].value)
 
@@ -142,15 +142,15 @@ def floater_lit(p):
     return ASTNode("floater_lit", value=p[0].value)
 
 # ADDED
-# Rule 24: float_lits → FLOATERLIT
-@pg.production("float_lits : FLOATERLIT")
+# Rule 24: floater_lits → FLOATERLIT
+@pg.production("floater_lits : FLOATERLIT")
 def floater_lit(p):
-    return ASTNode("float_lits", value=p[0].value)
+    return ASTNode("floater_lits", value=p[0].value)
 
-# Rule 24: float_lits → FLOATERLIT
-@pg.production("float_lits : NEGAFLOATER")
+# Rule 24: floater_lits → FLOATERLIT
+@pg.production("floater_lits : NEGAFLOATER")
 def floater_lit(p):
-    return ASTNode("float_lits", value=p[0].value)
+    return ASTNode("floater_lits", value=p[0].value)
 
 # Rule 25: floater_init_end → λ
 @pg.production("floater_init_end : ")
@@ -291,7 +291,7 @@ def floater_const_init(p):
     return ASTNode("floater_const_init", children=[p[0], p[1]])
 
 # Rule 55: floater_const → = floater_lit
-@pg.production("floater_const : ASSIGN float_lits")
+@pg.production("floater_const : ASSIGN floater_lits")
 def floater_const(p):
     return ASTNode("floater_const", value=p[1].value)
 
@@ -440,13 +440,13 @@ def floater_array_init_empty(p):
 def floater_array_init(p):
     return ASTNode("floater_array_init", children=[p[2]])
 
-# Rule 85: floater_row → floater_lit more_floater_lit
-@pg.production("floater_row : floater_lit more_floater_lit")
+# Rule 85: floater_row → floater_lits more_floater_lit
+@pg.production("floater_row : floater_lits more_floater_lit")
 def floater_row_inline(p):
     return ASTNode("floater_row", children=[p[0]] + p[1].children)
 
-# Rule 86: floater_row → { floater_lit more_floater_lit } 2D_floater_row
-@pg.production("floater_row : CODE_BLOCK_LEFT floater_lit more_floater_lit CODE_BLOCK_RIGHT 2D_floater_row")
+# Rule 86: floater_row → { floater_lits more_floater_lit } 2D_floater_row
+@pg.production("floater_row : CODE_BLOCK_LEFT floater_lits more_floater_lit CODE_BLOCK_RIGHT 2D_floater_row")
 def floater_row_nested(p):
     return ASTNode("floater_row", children=[p[1]] + p[2].children + p[4].children)
 
@@ -455,8 +455,8 @@ def floater_row_nested(p):
 def two_d_floater_row_empty(p):
     return ASTNode("2D_floater_row", children=[])
 
-# Rule 88: 2D_floater_row → , { floater_lit more_floater_lit } 2D_floater_row
-@pg.production("2D_floater_row : COMMA CODE_BLOCK_LEFT floater_lit more_floater_lit CODE_BLOCK_RIGHT 2D_floater_row")
+# Rule 88: 2D_floater_row → , { floater_lits more_floater_lit } 2D_floater_row
+@pg.production("2D_floater_row : COMMA CODE_BLOCK_LEFT floater_lits more_floater_lit CODE_BLOCK_RIGHT 2D_floater_row")
 def two_d_floater_row_recursive(p):
     return ASTNode("2D_floater_row", children=[p[2]] + p[3].children + p[5].children)
 
@@ -465,8 +465,8 @@ def two_d_floater_row_recursive(p):
 def more_floater_lit_empty(p):
     return ASTNode("more_floater_lit", children=[])
 
-# Rule 90: more_floater_lit → , floater_lit more_floater_lit
-@pg.production("more_floater_lit : COMMA floater_lit more_floater_lit")
+# Rule 90: more_floater_lit → , floater_lits more_floater_lit
+@pg.production("more_floater_lit : COMMA floater_lits more_floater_lit")
 def more_floater_lit_recursive(p):
     return ASTNode("more_floater_lit", children=[p[1]] + p[2].children)
 
