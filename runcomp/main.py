@@ -42,7 +42,7 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Wilt Floater @testLoop(@limit) {
+Wilt Chant @testLoop(@limit) {
     Feint @i;
 
     Forward(@i = 0; @i < @limit; @i++) {
@@ -57,7 +57,7 @@ Wilt Floater @testLoop(@limit) {
         Announce("i = " & @i);
     }
 
-    Rebound "chant";
+    Rebound @i;
 }
 
 Team() {
