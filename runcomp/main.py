@@ -42,15 +42,24 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Dunk @sayHello() {
-    Announce("Hello World!");
-}
-
 Team() {
-    Feint @tmp, @tmp2 = 0;
-    @sayHello();
-    Announce("Hello World!" & @tmp);
-    
+    Chant @letter;
+
+    Inbound("Enter a letter: ", @letter);
+
+    Dribble ((@letter == "A") OR (@letter == "a")) {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass ((@letter == "E") OR (@letter == "e")) {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass ((@letter == "I") OR (@letter == "i")) {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass ((@letter == "O") OR (@letter == "o")) {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Pass ((@letter == "U") OR (@letter == "u")) {
+        Announce("The letter " & @letter & " is a Vowel.");
+    } Shoot {
+        Announce("The letter " & @letter & " is NOT a Vowel.");
+    }
 }
 
  '''

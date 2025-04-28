@@ -1216,17 +1216,47 @@ class Compiler:
 
         # -- Logical Expressions --
         elif node.name == "logical_expression":
-            return self.eval(node.children[0])
+            left = self.eval(node.children[0])  # relational_expression
+
+            tail = node.children[1]
+            if not tail.children:
+                return left
+
+            op_node = tail
+            op_type = op_node.name
+
+            right = self.eval(op_node.children[0])  # relational_expression inside OR_OP / AND_OP
+            next_tail = op_node.children[1]
+
+            if op_type == "AND_OP":
+                result = left and right
+            elif op_type == "OR_OP":
+                result = left or right
+            else:
+                raise Exception(f"[EVAL ERROR] Unknown logical operator: {op_type}")
+
+            # Handle chaining if more logical_expression_tail
+            if next_tail.children:
+                # Build fake logical_expression to continue chaining
+                fake_logical_expr = ASTNode("logical_expression", children=[ASTNode("relational_expression", []), next_tail])
+                return self.eval(fake_logical_expr)
+            else:
+                return result
 
         elif node.name == "AND_OP":
-            return self.eval(node.children[0]) and self.eval(node.children[1])
+            left = self.eval(node.children[0])
+            right = self.eval(node.children[1])
+            return left and right
 
         elif node.name == "OR_OP":
-            return self.eval(node.children[0]) or self.eval(node.children[1])
+            left = self.eval(node.children[0])
+            right = self.eval(node.children[1])
+            return left or right
 
         elif node.name == "NOT_OP":
-            return not self.eval(node.children[0])
-
+            value = self.eval(node.children[0])
+            return not value
+        
         # -- Terms and Factors --
         elif node.name == "term":
             left = self.eval(node.children[0])  # factor
