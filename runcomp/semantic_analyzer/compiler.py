@@ -1117,6 +1117,9 @@ class Compiler:
                     if var_type == "Feint" and inferred_type == "Floater":
                         rhs = float(rhs)
                         inferred_type = "Floater"
+                    elif var_type == "Floater" and inferred_type == "Feint":
+                        rhs = float(rhs)
+                        inferred_type = "Floater"
                     elif inferred_type != var_type:
                         raise ValueError(f"[TYPE ERROR] Cannot assign value of type {inferred_type} to variable '{var_name}' of type {var_type}.")
 

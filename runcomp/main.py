@@ -43,19 +43,11 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team() {
-    Feint @n = 387, @rev, @digit, @temp, @i;
-
-    @rev = 0;
-    @temp = @n;
-
-    Forward (@i = 0; @temp != 0; @i++) {
-        @digit = @temp % 10;
-        @rev = (@rev * 10) + @digit;
-        @temp = @temp / 10;  
-                @temp = @temp - (@temp % 1); 
-    }
-
-    Announce("Reversed number: " & Feint(@rev));
+    Floater @test = 0.0;
+    Feint @num;
+    
+    @test = 1;
+    Announce(@test);
 }
 
  '''
