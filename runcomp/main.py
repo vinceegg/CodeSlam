@@ -43,10 +43,10 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team() {
-    Stat @str = Win;
-    Chant @num;
-    @num = Chant(@str);
-    Announce("Converted: " & @num);
+    Feint @x = 1;
+    Zone Feint @arr[10] = {1, 2, 3, 4, 5};
+    
+    Announce(@arr[@x]);
 }
 
  '''

@@ -1279,9 +1279,9 @@ def local_declaration_var(p):
     return ASTNode("local_declaration", children=[p[0]])
 
 # Rule 276: local_declaration → array_dec
-@pg.production("local_declaration : array_dec")
+@pg.production("local_declaration : ZONE array_dec")
 def local_declaration_array(p):
-    return ASTNode("local_declaration", children=[p[0]])
+    return ASTNode("local_declaration", children=[p[1]])
 
 # Rule 277: typecast_value → FEINTLIT
 @pg.production("typecast_value : FEINTLIT")
