@@ -1112,11 +1112,27 @@ class Compiler:
                 elif isinstance(rhs, str):
                     inferred_type = "Chant"
 
-                if inferred_type and inferred_type != var_type and not var_type.startswith("Const"):
-                    raise ValueError(f"[TYPE ERROR] Cannot assign value of type {inferred_type} to variable '{var_name}' of type {var_type}.")
+                # Allow implicit promotion Feint → Floater
+                if inferred_type and not var_type.startswith("Const"):
+                    if (var_type == "Floater" or var_type == "Feint") and (inferred_type == "Feint" or inferred_type == "Floater"):
+                        rhs = float(rhs)
+                        inferred_type = "Floater"  # Adjust type after promotion
+                    elif inferred_type != var_type:
+                        raise ValueError(f"[TYPE ERROR] Cannot assign value of type {inferred_type} to variable '{var_name}' of type {var_type}.")
 
+                # Get current value
                 current_val = self.env.get_var(var_name)
+
+                # Implicit promotion for in-place arithmetic (Feint + Floater, etc.)
+                if isinstance(current_val, float) and isinstance(rhs, int):
+                    rhs = float(rhs)
+                elif isinstance(current_val, int) and isinstance(rhs, float):
+                    current_val = float(current_val)
+
+                # Perform the operation
                 new_val = op_map[assign_op](current_val, rhs)
+
+                # Store the result back with the original variable type
                 self.env.set_var(var_name, new_val, var_type)
 
             # 1D Array Assignment

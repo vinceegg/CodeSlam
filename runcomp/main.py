@@ -43,28 +43,20 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team() {
-    Zone Chant @word[5];
-    Feint @length = 3, @i = 0, @j = 0, @k = 0;
+    Feint @n = 387, @rev, @digit, @temp, @i;
 
-    @word[0] = "x";
-    @word[1] = "y";
-    @word[2] = "z";
-    @word[3] = "";
+    @rev = 0;
+    @temp = @n;
 
-    Forward (@i = 0; @i < @length; @i++) {
-        Forward (@j = 0; @j < @length; @j++) {
-            Dribble (@i != @j) {
-                Forward (@k = 0; @k < @length; @k++) {
-                    Dribble ((@k != @i) AND (@k != @j)) {
-                        Announce(@word[@i] & @word[@j] & @word[@k] & "\n");
-                    }
-                }
-            }
-        }
+    Forward (@i = 0; @temp != 0; @i++) {
+        @digit = @temp % 10;
+        @rev = (@rev * 10) + @digit;
+        @temp = @temp / 10;  
+                @temp = @temp - (@temp % 1); 
     }
+
+    Announce("Reversed number: " & Feint(@rev));
 }
-
-
  '''
      # Build lexer and tokenize input
     lexer = build_lexer()
