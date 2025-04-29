@@ -1049,7 +1049,12 @@ class Compiler:
         elif node.name == "output":
             if node.children:
                 val = self.eval(node.children[0])
+                
+                # Handle boolean (Stat) result from evaluated expressions
+                if isinstance(val, bool):
+                    return "Win" if val else "Loss"
                 return str(val)
+                
             elif node.value:
                 if isinstance(node.value, str) and node.value.startswith("@"):
                     var_value = self.env.get_var(node.value)
@@ -1335,7 +1340,7 @@ class Compiler:
                     return str(value)
                 elif target_type == "STAT":
                     if isinstance(value, str):
-                        return value.lower() == "true"
+                        return value != ""  # <-- true if non-empty, false if empty
                     return bool(value)
                 else:
                     raise ValueError(f"[EVAL ERROR] Unknown cast target: {target_type}")
