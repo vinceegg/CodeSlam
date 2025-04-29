@@ -1100,6 +1100,21 @@ class Compiler:
                 if var_type in ["ConstFeint", "ConstFloater", "ConstChant", "ConstStat"]:
                     raise ValueError(f"[ERROR] Cannot reassign to constant variable '{var_name}' ({var_type}).")
 
+                # --- Type Compatibility Check ---
+                # rhs is the evaluated value, infer its type
+                inferred_type = None
+                if isinstance(rhs, bool):
+                    inferred_type = "Stat"
+                elif isinstance(rhs, int):
+                    inferred_type = "Feint"
+                elif isinstance(rhs, float):
+                    inferred_type = "Floater"
+                elif isinstance(rhs, str):
+                    inferred_type = "Chant"
+
+                if inferred_type and inferred_type != var_type and not var_type.startswith("Const"):
+                    raise ValueError(f"[TYPE ERROR] Cannot assign value of type {inferred_type} to variable '{var_name}' of type {var_type}.")
+
                 current_val = self.env.get_var(var_name)
                 new_val = op_map[assign_op](current_val, rhs)
                 self.env.set_var(var_name, new_val, var_type)

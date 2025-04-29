@@ -43,9 +43,9 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team() {
-    Chant @str = "";
+    Chant @str = "0";
     Feint @num;
-    @num = Stat(@str);
+    @num = Feint(@str);
     Announce("Converted: " & @num);
 }
 
