@@ -1790,16 +1790,14 @@ class Parser:
         expected_tokens = self.get_expected_tokens("assign_operand")
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("assign_operand", expected_tokens)
+        
         if self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
             self.parse_function_call()
         elif self.match_token_type(self.current_token, TokenType.STAT):
             self.parse_stat_value()
-        elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
-            self.parse_expression()
         else:
-            self.error_handler("assign_operand", expected_tokens)
-
-
+            self.parse_expression()
+        
     def parse_function_call(self) -> None:
         """<function_call> → (<arguments>) | λ"""
         self.current_nonterminal = "function_call"

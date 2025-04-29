@@ -359,7 +359,7 @@ FIRST_SETS = {
     # <assign_operand>
     'assign_operand': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
                   TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                  TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.WIN, TokenType.LOSS},
+                  TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
     
     # <function_call>
     'function_call': {TokenType.LEFT_PAREN},
