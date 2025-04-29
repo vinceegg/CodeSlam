@@ -57,6 +57,7 @@ Team() {
 
     Announce("Reversed number: " & Feint(@rev));
 }
+
  '''
      # Build lexer and tokenize input
     lexer = build_lexer()

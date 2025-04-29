@@ -1114,9 +1114,9 @@ class Compiler:
 
                 # Allow implicit promotion Feint → Floater
                 if inferred_type and not var_type.startswith("Const"):
-                    if (var_type == "Floater" or var_type == "Feint") and (inferred_type == "Feint" or inferred_type == "Floater"):
+                    if var_type == "Feint" and inferred_type == "Floater":
                         rhs = float(rhs)
-                        inferred_type = "Floater"  # Adjust type after promotion
+                        inferred_type = "Floater"
                     elif inferred_type != var_type:
                         raise ValueError(f"[TYPE ERROR] Cannot assign value of type {inferred_type} to variable '{var_name}' of type {var_type}.")
 
