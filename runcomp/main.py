@@ -42,11 +42,28 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Team() {
-    Feint @x = 1;
-    Zone Feint @arr[10] = {1, 2, 3, 4, 5};
+Wilt Feint @add(@x, @y){
+Feint @result;
+@result = @x + @y;
+
+Rebound @result;
+}
+
+Dunk @greet(@x){
+Announce(@x);
+}
+
+Team(){
+Zone Feint @array[5] = {1, 2, 3, 4, 5};    
+
+@array[0] = 10;
+
     
-    Announce(@arr[@x]);
+Announce(@add(3, 5) & "\n");
+@greet("Hello");
+Announce("\n" & @array[0] & "\n");
+Announce(@array[1] & "\n");
+
 }
 
  '''
