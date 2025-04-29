@@ -1321,6 +1321,37 @@ class Compiler:
                 # Otherwise it's a literal integer (e.g., 3)
                 return int(val)
             
+        elif node.name == "type_casting":
+            target_type = node.value  # Now guaranteed: FEINT, FLOATER, CHANT, STAT
+            value_node = node.children[0]
+            value = self.eval(value_node)
+
+            try:
+                if target_type == "FEINT":
+                    return int(float(value))
+                elif target_type == "FLOATER":
+                    return float(value)
+                elif target_type == "CHANT":
+                    return str(value)
+                elif target_type == "STAT":
+                    if isinstance(value, str):
+                        return value.lower() == "true"
+                    return bool(value)
+                else:
+                    raise ValueError(f"[EVAL ERROR] Unknown cast target: {target_type}")
+            except Exception as e:
+                raise ValueError(f"[TYPE ERROR] Failed to cast '{value}' to {target_type}: {e}")
+
+        elif node.name == "typecast_value":
+            if node.value:
+                if isinstance(node.value, str) and node.value.startswith("@"):
+                    return self.env.get_var(node.value)
+                return node.value
+            elif node.children:
+                return self.eval(node.children[0])
+            else:
+                raise ValueError("[EVAL ERROR] Invalid typecast_value")
+
 
         elif node.name == "inbound_statement":
             prompt = node.children[0].value.strip('"')

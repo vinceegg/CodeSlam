@@ -928,6 +928,10 @@ def factor_not(p):
 def factor_literal(p):
     return p[0]
 
+@pg.production("factor : type_casting")
+def factor_type_casting(p):
+    return p[0]  
+
 # VAR_INIT followed by a postfix (either array access or function call)
 @pg.production("factor : VAR_INIT postfix")
 def factor_var_with_postfix(p):
@@ -1011,34 +1015,32 @@ def array_access_tail_empty(p):
 #     return ASTNode("number", value=p[0].value)
 
 # Rule 178: number_type_cast → feint_type_casting
-@pg.production("number_type_cast : feint_type_casting")
-def number_type_cast_feint(p):
-    return ASTNode("number_type_cast", children=[p[0]])
+# @pg.production("number_type_cast : feint_type_casting")
+# def number_type_cast_feint(p):
+#     return ASTNode("number_type_cast", children=[p[0]])
 
-# Rule 179: number_type_cast → floater_type_casting
-@pg.production("number_type_cast : floater_type_casting")
-def number_type_cast_floater(p):
-    return ASTNode("number_type_cast", children=[p[0]])
+# # Rule 179: number_type_cast → floater_type_casting
+# @pg.production("number_type_cast : floater_type_casting")
+# def number_type_cast_floater(p):
+#     return ASTNode("number_type_cast", children=[p[0]])
 
 # Rule 180: feint_type_casting → FEINT ( typecast_value )
-@pg.production("feint_type_casting : FEINT LEFT_PAREN typecast_value RIGHT_PAREN")
-def feint_type_casting(p):
-    return ASTNode("feint_type_casting", children=[p[2]])
+@pg.production("type_casting : FEINT LEFT_PAREN typecast_value RIGHT_PAREN")
+def type_casting_feint(p):
+    return ASTNode("type_casting", value="FEINT", children=[p[2]])
 
-# Rule 181: floater_type_casting → FLOATER ( typecast_value )
-@pg.production("floater_type_casting : FLOATER LEFT_PAREN typecast_value RIGHT_PAREN")
-def floater_type_casting(p):
-    return ASTNode("floater_type_casting", children=[p[2]])
+@pg.production("type_casting : FLOATER LEFT_PAREN typecast_value RIGHT_PAREN")
+def type_casting_floater(p):
+    return ASTNode("type_casting", value="FLOATER", children=[p[2]])
 
-# Rule 182: chant_type_casting → CHANT ( typecast_value )
-@pg.production("chant_type_casting : CHANT LEFT_PAREN typecast_value RIGHT_PAREN")
-def chant_type_casting(p):
-    return ASTNode("chant_type_casting", children=[p[2]])
+@pg.production("type_casting : CHANT LEFT_PAREN typecast_value RIGHT_PAREN")
+def type_casting_chant(p):
+    return ASTNode("type_casting", value="CHANT", children=[p[2]])
 
-# Rule 183: stat_type_casting → STAT ( typecast_value )
-@pg.production("stat_type_casting : STAT LEFT_PAREN typecast_value RIGHT_PAREN")
-def stat_type_casting(p):
-    return ASTNode("stat_type_casting", children=[p[2]])
+@pg.production("type_casting : STAT LEFT_PAREN typecast_value RIGHT_PAREN")
+def type_casting_stat(p):
+    return ASTNode("type_casting", value="STAT", children=[p[2]])
+
 
 # Rule 223: assignment_expression → assign_operator assign_operand ;
 @pg.production("assignment_expression : VAR_INIT array_access assign_operator assign_operand SEMICOLON")
