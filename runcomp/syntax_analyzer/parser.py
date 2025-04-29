@@ -685,16 +685,6 @@ def follow_statement_decrement(p):
 def follow_statement_call(p):
     return ASTNode("follow_statement", children=[p[0]])
 
-# # Rule 134: follow_statement → array_manipulation
-# @pg.production("follow_statement : array_manipulation")
-# def follow_statement_array(p):
-#     return ASTNode("follow_statement", children=[p[0]])
-
-# # Rule 135: array_manipulation → [ element_index ] 2d_manipulation array_man
-# @pg.production("array_manipulation : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT 2d_manipulation array_man")
-# def array_manipulation(p):
-#     return ASTNode("array_manipulation", children=[p[1], p[3], p[4]])
-
 # Rule 136: element_index → feint_lit
 @pg.production("element_index : feint_lit")
 def element_index(p):
@@ -705,50 +695,10 @@ def element_index(p):
 def element_index(p):
     return ASTNode("element_index", value=p[0].value)
 
-# # Rule 137: 2d_manipulation → [ element_index ]
-# @pg.production("2d_manipulation : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT")
-# def two_d_manipulation(p):
-#     return ASTNode("2d_manipulation", children=[p[1]])
-
-# # Rule 138: 2d_manipulation → λ
-# @pg.production("2d_manipulation : ")
-# def two_d_manipulation_empty(p):
-#     return ASTNode("2d_manipulation", children=[])
-
-# # Rule 139: array_man → = array_elem
-# @pg.production("array_man : ASSIGN array_elem")
-# def array_man(p):
-#     return ASTNode("array_man", children=[p[1]])
-
-# # Rule 140: array_man → λ
-# @pg.production("array_man : ")
-# def array_man_empty(p):
-#     return ASTNode("array_man", children=[])
-
-# # Rule 141: array_elem → feint_lit
-# @pg.production("array_elem : expression")
-# def array_elem_feint(p):
-#     return ASTNode("array_elem", children=[p[0]])
-
 # Rule 144: rebound_statement → REBOUND rebound_value ;
 @pg.production("rebound_statement : REBOUND expression SEMICOLON")
 def rebound_statement(p):
     return ASTNode("rebound_statement", children=[p[1]])
-
-# # Rule 145: rebound_value → literal
-# @pg.production("rebound_value : literal")
-# def rebound_value_literal(p):
-#     return ASTNode("rebound_value", children=[p[0]])
-
-# # Rule 146: rebound_value → VAR_INIT
-# @pg.production("rebound_value : VAR_INIT")
-# def rebound_value_identifier(p):
-#     return ASTNode("rebound_value", value=p[0].value)
-
-# # Rule 147: rebound_value → expression
-# @pg.production("rebound_value : expression")
-# def rebound_value_expression(p):
-#     return ASTNode("rebound_value", children=[p[0]])
 
 # Rule 148: announce_statement → ANNOUNCE ( outputs ) ;
 @pg.production("announce_statement : ANNOUNCE LEFT_PAREN outputs RIGHT_PAREN SEMICOLON")
@@ -987,42 +937,6 @@ def array_access_tail_2d(p):
 @pg.production("array_access_tail :")
 def array_access_tail_empty(p):
     return ASTNode("array_access_tail_empty")
-
-
-# # Rule 173: number → feint_lit
-# @pg.production("number : feint_lit")
-# def number_feint(p):
-#     return ASTNode("number", value=p[0].value)
-
-# # Rule 174: number → floater_lit
-# @pg.production("number : floater_lit")
-# def number_floater(p):
-#     return ASTNode("number", value=p[0].value)
-
-# # Rule 175: number → VAR_INIT
-# @pg.production("number : VAR_INIT")
-# def number_var(p):
-#     return ASTNode("number", value=p[0].value)
-
-# # Rule 176: number → nega_feint_lit
-# @pg.production("number : NEGAFEINT")
-# def number_nega_feint(p):
-#     return ASTNode("number", value=p[0].value)
-
-# # Rule 177: number → nega_floater_lit
-# @pg.production("number : nega_floater_lit")
-# def number_nega_floater(p):
-#     return ASTNode("number", value=p[0].value)
-
-# Rule 178: number_type_cast → feint_type_casting
-# @pg.production("number_type_cast : feint_type_casting")
-# def number_type_cast_feint(p):
-#     return ASTNode("number_type_cast", children=[p[0]])
-
-# # Rule 179: number_type_cast → floater_type_casting
-# @pg.production("number_type_cast : floater_type_casting")
-# def number_type_cast_floater(p):
-#     return ASTNode("number_type_cast", children=[p[0]])
 
 # Rule 180: feint_type_casting → FEINT ( typecast_value )
 @pg.production("type_casting : FEINT LEFT_PAREN typecast_value RIGHT_PAREN")
