@@ -765,106 +765,90 @@ def nega_feint_lit(p):
 def nega_floater_lit(p):
     return ASTNode("nega_floater_lit", value=p[0].value)
 
-# ADDED
+# ADDED EXPRESSIONS
 @pg.production("expression : logical_expression")
 def expression_logical(p):
     return ASTNode("expression", children=[p[0]])
 
-# Rule 169: logical_expression → relational_expression logical_expression_tail
-@pg.production("logical_expression : relational_expression logical_expression_tail")
+# Rule 169: logical_expression → relational_expression more_logical
+@pg.production("logical_expression : relational_expression more_logical")
 def logical_expression(p):
     return ASTNode("logical_expression", children=[p[0], p[1]])
 
-# Rule 170: logical_expression_tail → AND_OP relational_expression logical_expression_tail
-@pg.production("logical_expression_tail : AND_OP relational_expression logical_expression_tail")
+# Rule 170: more_logical → AND_OP relational_expression more_logical
+@pg.production("more_logical : AND_OP relational_expression more_logical")
 def logical_expression_tail_and(p):
     return ASTNode("AND_OP", children=[p[1], p[2]])
 
-# Rule 171: logical_expression_tail → OR_OP relational_expression logical_expression_tail
-@pg.production("logical_expression_tail : OR_OP relational_expression logical_expression_tail")
+# Rule 171: more_logical → OR_OP relational_expression more_logical
+@pg.production("more_logical : OR_OP relational_expression more_logical")
 def logical_expression_tail_or(p):
     return ASTNode("OR_OP", children=[p[1], p[2]])
 
-# Rule 172: logical_expression_tail → (empty)
-@pg.production("logical_expression_tail :")
+# Rule 172: more_logical → (empty)
+@pg.production("more_logical :")
 def logical_expression_tail_empty(p):
-    return ASTNode("logical_expression_tail")  # no children -> end of chain
+    return ASTNode("more_logical")  # no children -> end of chain
 
-# Rule 173: relational_expression → arithmetic_expression relational_expression_tail
-@pg.production("relational_expression : arithmetic_expression relational_expression_tail")
+# Rule 173: relational_expression → arithmetic_expression more_relational
+@pg.production("relational_expression : arithmetic_expression more_relational")
 def relational_expression(p):
     return ASTNode("relational_expression", children=[p[0], p[1]])
 
-# Rule 174+: relational_expression_tail → EQUAL/NOT_EQUAL/etc
+# Rule 174+: more_relational → EQUAL/NOT_EQUAL/etc
 
-@pg.production("relational_expression_tail : EQUAL arithmetic_expression relational_expression_tail")
+@pg.production("more_relational : EQUAL arithmetic_expression more_relational")
 def relational_expression_tail_eq(p):
     return ASTNode("EQUAL", children=[p[1], p[2]])
 
-@pg.production("relational_expression_tail : NOT_EQUAL arithmetic_expression relational_expression_tail")
+@pg.production("more_relational : NOT_EQUAL arithmetic_expression more_relational")
 def relational_expression_tail_neq(p):
     return ASTNode("NOT_EQUAL", children=[p[1], p[2]])
 
-@pg.production("relational_expression_tail : LESS_THAN arithmetic_expression relational_expression_tail")
+@pg.production("more_relational : LESS_THAN arithmetic_expression more_relational")
 def relational_expression_tail_lt(p):
     return ASTNode("LESS_THAN", children=[p[1], p[2]])
 
-@pg.production("relational_expression_tail : GREATER_THAN arithmetic_expression relational_expression_tail")
+@pg.production("more_relational : GREATER_THAN arithmetic_expression more_relational")
 def relational_expression_tail_gt(p):
     return ASTNode("GREATER_THAN", children=[p[1], p[2]])
 
-@pg.production("relational_expression_tail : LESS_EQUAL arithmetic_expression relational_expression_tail")
+@pg.production("more_relational : LESS_EQUAL arithmetic_expression more_relational")
 def relational_expression_tail_le(p):
     return ASTNode("LESS_EQUAL", children=[p[1], p[2]])
 
-@pg.production("relational_expression_tail : GREATER_EQUAL arithmetic_expression relational_expression_tail")
+@pg.production("more_relational : GREATER_EQUAL arithmetic_expression more_relational")
 def relational_expression_tail_ge(p):
     return ASTNode("GREATER_EQUAL", children=[p[1], p[2]])
 
-# Rule: relational_expression_tail → (empty)
-@pg.production("relational_expression_tail :")
+# Rule: more_relational → (empty)
+@pg.production("more_relational :")
 def relational_expression_tail_empty(p):
-    return ASTNode("relational_expression_tail")  # no children -> end
+    return ASTNode("more_relational")  # no children -> end
 
-# Rule 180: arithmetic_expression → term arithmetic_expression_tail
-@pg.production("arithmetic_expression : term arithmetic_expression_tail")
+# Rule 180: arithmetic_expression → term more_term
+@pg.production("arithmetic_expression : term more_term")
 def arithmetic_expression(p):
     return ASTNode("arithmetic_expression", children=[p[0], p[1]])
 
-# Rule 181+: arithmetic_expression_tail
-@pg.production("arithmetic_expression_tail : ADD term arithmetic_expression_tail")
+# Rule 181+: more_term
+@pg.production("more_term : ADD term more_term")
 def arithmetic_expression_tail_add(p):
     return ASTNode("ADD", children=[p[1], p[2]])
 
-@pg.production("arithmetic_expression_tail : SUB term arithmetic_expression_tail")
+@pg.production("more_term : SUB term more_term")
 def arithmetic_expression_tail_sub(p):
     return ASTNode("SUB", children=[p[1], p[2]])
 
-# Rule: arithmetic_expression_tail → (empty)
-@pg.production("arithmetic_expression_tail :")
+# Rule: more_term → (empty)
+@pg.production("more_term :")
 def arithmetic_expression_tail_empty(p):
-    return ASTNode("arithmetic_expression_tail")  # no children -> end
+    return ASTNode("more_term")  # no children -> end
 
-# Rule 184: term → factor term_tail
-@pg.production("term : factor term_tail")
+# Rule 184: term → factor more_factor
+@pg.production("term : factor more_factor")
 def term(p):
     return ASTNode("term", children=[p[0], p[1]])
-
-@pg.production("term_tail : MUL factor term_tail")
-def term_tail_mul(p):
-    return ASTNode("MUL", children=[p[1], p[2]])
-
-@pg.production("term_tail : DIV factor term_tail")
-def term_tail_div(p):
-    return ASTNode("DIV", children=[p[1], p[2]])
-
-@pg.production("term_tail : MOD factor term_tail")
-def term_tail_mod(p):
-    return ASTNode("MOD", children=[p[1], p[2]])
-
-@pg.production("term_tail :")
-def term_tail_empty(p):
-    return ASTNode("term_tail")  # no children
 
 @pg.production("factor : LEFT_PAREN expression RIGHT_PAREN")
 def factor_group(p):
@@ -917,7 +901,7 @@ def postfix_empty(p):
 def array_access_empty(p):
     return ASTNode("no_array_access")
 
-@pg.production("array_access : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT array_access_tail")
+@pg.production("array_access : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT more_array_access")
 def array_access_1d_or_2d(p):
     first_index = p[1]
     tail = p[3]
@@ -929,14 +913,30 @@ def array_access_1d_or_2d(p):
         return ASTNode("array_access", children=[first_index])
 
 # If there is a second [ expr ]
-@pg.production("array_access_tail : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT")
+@pg.production("more_array_access : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT")
 def array_access_tail_2d(p):
     return ASTNode("array_access_tail_2d", children=[p[1]])
 
 # If no second [ expr ]
-@pg.production("array_access_tail :")
+@pg.production("more_array_access :")
 def array_access_tail_empty(p):
     return ASTNode("array_access_tail_empty")
+
+@pg.production("more_factor : MUL factor more_factor")
+def term_tail_mul(p):
+    return ASTNode("MUL", children=[p[1], p[2]])
+
+@pg.production("more_factor : DIV factor more_factor")
+def term_tail_div(p):
+    return ASTNode("DIV", children=[p[1], p[2]])
+
+@pg.production("more_factor : MOD factor more_factor")
+def term_tail_mod(p):
+    return ASTNode("MOD", children=[p[1], p[2]])
+
+@pg.production("more_factor :")
+def term_tail_empty(p):
+    return ASTNode("more_factor")  # no children
 
 # Rule 180: feint_type_casting → FEINT ( typecast_value )
 @pg.production("type_casting : FEINT LEFT_PAREN typecast_value RIGHT_PAREN")
