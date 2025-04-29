@@ -1346,6 +1346,12 @@ class Compiler:
             value_node = node.children[0]
             value = self.eval(value_node)
 
+            # Convert 'Win'/'Loss' string (only for stat conversion)
+            if value == "Win":
+                value = True
+            elif value == "Loss":
+                value = False
+            
             try:
                 if target_type == "FEINT":
                     return int(float(value))
