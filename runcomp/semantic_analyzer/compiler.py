@@ -1358,6 +1358,11 @@ class Compiler:
                 elif target_type == "FLOATER":
                     return float(value)
                 elif target_type == "CHANT":
+                    # Handle stat to chant properly (Win/Loss)
+                    if isinstance(value, bool):
+                        return "Win" if value else "Loss"
+                    if isinstance(value, str):
+                        return value
                     return str(value)
                 elif target_type == "STAT":
                     if isinstance(value, str):
