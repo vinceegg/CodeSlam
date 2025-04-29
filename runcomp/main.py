@@ -42,29 +42,28 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Wilt Feint @add(@x, @y){
-Feint @result;
-@result = @x + @y;
+Team() {
+    Zone Chant @word[5];
+    Feint @length = 3, @i = 0, @j = 0, @k = 0;
 
-Rebound @result;
+    @word[0] = "x";
+    @word[1] = "y";
+    @word[2] = "z";
+    @word[3] = "";
+
+    Forward (@i = 0; @i < @length; @i++) {
+        Forward (@j = 0; @j < @length; @j++) {
+            Dribble (@i != @j) {
+                Forward (@k = 0; @k < @length; @k++) {
+                    Dribble ((@k != @i) AND (@k != @j)) {
+                        Announce(@word[@i] & @word[@j] & @word[@k] & "\n");
+                    }
+                }
+            }
+        }
+    }
 }
 
-Dunk @greet(@x){
-Announce(@x);
-}
-
-Team(){
-Zone Feint @array[5] = {1, 2, 3, 4, 5};    
-
-@array[0] = 10;
-
-    
-Announce(@add(3, 5) & "\n");
-@greet("Hello");
-Announce("\n" & @array[0] & "\n");
-Announce(@array[1] & "\n");
-
-}
 
  '''
      # Build lexer and tokenize input

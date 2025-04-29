@@ -1250,6 +1250,7 @@ class Parser:
             self.parse_run_play_statement()
         elif self.match_token_type(self.current_token, TokenType.VAR_INIT):
             self.parse_assignment_expression()
+            self.expect(TokenType.SEMICOLON)
         else:
             self.error_handler("statement", expected_tokens)
     
@@ -1265,12 +1266,15 @@ class Parser:
         # Parse variable identifier
         self.expect(TokenType.VAR_INIT)
         # Parse array access if present
+        if self.current_token and self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
+            self.parse_function_call()
+            return
         self.parse_array_access()
         # Parse assignment operator
         self.parse_assign_operator()
         # Parse assignment operand
         self.parse_assign_operand()
-        self.expect(TokenType.SEMICOLON)
+        
         
     def parse_assign_operator(self) -> None:
         """<assign_operator> → = | += | -= | *= | /= | %= """
@@ -1295,50 +1299,6 @@ class Parser:
         else:
             self.error_handler("assign_operator", expected_tokens)
         
-        
-    # def parse_follow_statement(self) -> None:
-    #     """<follow_statement> → <increment> | <decrement> | <function_call> | = <assign_operand> |
-    #                         += <assign_operand> | -= <assign_operand> | *= <assign_operand> |
-    #                         /= <assign_operand> | %= <assign_operand> |
-    #                         [<element_index>] <2d_manipulation> <array_man>"""
-    #     self.current_nonterminal = "follow_statement"
-    #     expected_tokens = self.get_expected_tokens("follow_statement")
-        
-    #     if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-    #         self.error_handler("follow_statement", expected_tokens)
-        
-    #     if self.match_token_type(self.current_token, TokenType.INCREMENT):
-    #         self.parse_increment()
-    #     elif self.match_token_type(self.current_token, TokenType.DECREMENT):
-    #         self.parse_decrement()
-    #     elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-    #         self.parse_function_call()
-    #     elif self.match_token_type(self.current_token, TokenType.ASSIGN):
-    #         self.expect(TokenType.ASSIGN)
-    #         self.parse_assign_operand()
-    #     elif self.match_token_type(self.current_token, TokenType.ADD_ASSIGN):
-    #         self.expect(TokenType.ADD_ASSIGN)
-    #         self.parse_assign_operand()
-    #     elif self.match_token_type(self.current_token, TokenType.SUB_ASSIGN):
-    #         self.expect(TokenType.SUB_ASSIGN)
-    #         self.parse_assign_operand()
-    #     elif self.match_token_type(self.current_token, TokenType.MUL_ASSIGN):
-    #         self.expect(TokenType.MUL_ASSIGN)
-    #         self.parse_assign_operand()
-    #     elif self.match_token_type(self.current_token, TokenType.DIV_ASSIGN):
-    #         self.expect(TokenType.DIV_ASSIGN)
-    #         self.parse_assign_operand()
-    #     elif self.match_token_type(self.current_token, TokenType.MOD_ASSIGN):
-    #         self.expect(TokenType.MOD_ASSIGN)
-    #         self.parse_assign_operand()
-    #     elif self.match_token_type(self.current_token, TokenType.ARRAY_INDEX_LEFT):
-    #         self.expect(TokenType.ARRAY_INDEX_LEFT)
-    #         self.parse_element_index()
-    #         self.expect(TokenType.ARRAY_INDEX_RIGHT)
-    #         self.parse_2d_manipulation()
-    #         self.parse_array_man()
-    #     else:
-    #         self.error_handler("follow_statement", expected_tokens)
 
     def parse_element_index(self) -> None:
         """<element_index> → @identifier | Feint Literal"""
@@ -1607,7 +1567,7 @@ class Parser:
         self.parse_more_factor()  # Recursive call
 
     def parse_factor(self) -> None:
-        """<factor> → <literal> | @identifier <postfix>; | (<expression>) | NOT <factor> | <type_casting>"""
+        """<factor> → <literal> | @identifier <postfix> | (<expression>) | NOT <factor> | <type_casting>"""
         self.current_nonterminal = "factor"
         expected_tokens = self.get_expected_tokens("factor")
         
@@ -1785,18 +1745,13 @@ class Parser:
         self.expect(TokenType.RIGHT_PAREN)
 
     def parse_assign_operand(self) -> None:
-        """<assign_operand> → <expression> | <function_call> | <stat_value>"""
+        """<assign_operand> → <expression>"""
         self.current_nonterminal = "assign_operand"
         expected_tokens = self.get_expected_tokens("assign_operand")
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("assign_operand", expected_tokens)
         
-        if self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
-            self.parse_function_call()
-        elif self.match_token_type(self.current_token, TokenType.STAT):
-            self.parse_stat_value()
-        else:
-            self.parse_expression()
+        self.parse_expression()
         
     def parse_function_call(self) -> None:
         """<function_call> → (<arguments>) | λ"""

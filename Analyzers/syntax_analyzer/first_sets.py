@@ -459,9 +459,7 @@ FIRST_SETS = {
      'type_casting': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
      
     # <postfix>
-    'postfix': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
-                TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+    'postfix': {TokenType.LEFT_PAREN, TokenType.ARRAY_INDEX_LEFT},
     
     # assignment_expression
         'assignment_expression': {TokenType.VAR_INIT},
@@ -469,5 +467,8 @@ FIRST_SETS = {
     # assign_operator
         'assign_operator': {TokenType.ASSIGN, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN, 
                            TokenType.MUL_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN},
+
+    # <array_access>
+        'array_access': {TokenType.ARRAY_INDEX_LEFT},
 
 }
