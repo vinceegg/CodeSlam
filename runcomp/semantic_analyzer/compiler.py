@@ -1355,7 +1355,7 @@ class Compiler:
                     return str(value)
                 elif target_type == "STAT":
                     if isinstance(value, str):
-                        return value != ""  # <-- true if non-empty, false if empty
+                        return value != "" 
                     return bool(value)
                 else:
                     raise ValueError(f"[EVAL ERROR] Unknown cast target: {target_type}")
