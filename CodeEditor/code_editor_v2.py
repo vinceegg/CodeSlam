@@ -426,6 +426,17 @@ class App(customtkinter.CTk):
         )
         self.sideBtnSemantic.grid(row=3, column=0, padx=20, pady=10)
         
+        self.sideBtnRunComp = customtkinter.CTkButton(
+            self.sidebar_frame,
+            text="Execute",
+            command=self.sidebar_button_runcomp,
+            font=button_font,
+            fg_color="#366BA3" if customtkinter.get_appearance_mode() == "Light" else "#2B2B2B",  # Light/Dark background when disabled
+            hover_color="#008000",  # Lighter blue on hover when enabled
+            corner_radius=6
+        )
+        self.sideBtnRunComp.grid(row=4, column=0, padx=20, pady=10)
+        
         # create sidebar widgets
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
         self.appearance_mode_label.grid(row=5, column=0, padx=20, pady=(10, 0))
@@ -711,6 +722,54 @@ class App(customtkinter.CTk):
             )
 
     def sidebar_button_semantic(self):
+        """Run semantic analysis using the runner compiler"""
+        self.clear_terminal_output()
+        self.editor_frame.clear_error_highlights()
+        
+        # Get code from editor
+        code = self.codebox.get("1.0", "end-1c")
+        
+        try:
+            from runcomp.main import run_compiler
+            
+            # Define a custom input function that uses our command input box
+            def get_terminal_input(prompt):
+                self.terminal_output.configure(state="normal")
+                # Show the prompt in terminal
+                self.terminal_output.insert(END, prompt)
+                self.terminal_output.see(END)
+                self.terminal_output.configure(state="disabled")
+                
+                # Reset input flags
+                self.input_processed.set(False)
+                self.waiting_for_input = True
+                
+                # Enable and focus the input box
+                self.command_input.configure(state="normal")
+                self.command_input.focus_set()
+                
+                # Wait for input to be processed
+                self.wait_variable(self.input_processed)
+                
+                return self.last_input
+            
+            # Run the compiler with our custom input function
+            output = run_compiler(code, input_func=get_terminal_input)
+            
+            # Display the output directly in the terminal
+            if output:
+                self.terminal_output.configure(state="normal")
+                # Process the output to handle escape sequences
+                processed_output = bytes(output, "utf-8").decode("unicode_escape")
+                self.terminal_output.insert(END, processed_output)
+                self.terminal_output.see(END)
+                self.terminal_output.configure(state="disabled")
+                    
+        except ImportError as e:
+            self.append_terminal_output("Error importing runcomp compiler:", text_color="red")
+            self.append_terminal_output(str(e), text_color="red")
+            
+    def sidebar_button_runcomp(self):
         """Run semantic analysis using the runner compiler"""
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
