@@ -49,7 +49,6 @@ class Compiler:
         op = tail_node.name
         right = self.eval(tail_node.children[0])  # next term
         next_tail = tail_node.children[1]         # next tail
-
         if op == "ADD":
             result = left + right
         elif op == "SUB":
@@ -1053,7 +1052,13 @@ class Compiler:
                 # Handle boolean (Stat) result from evaluated expressions
                 if isinstance(val, bool):
                     return "Win" if val else "Loss"
+                
+                if isinstance(val, int) or isinstance(val, float):
+                    if val < 0:
+                        val = str(val).replace("-", "~")
                 return str(val)
+            
+
                 
             elif node.value:
                 if isinstance(node.value, str) and node.value.startswith("@"):
@@ -1110,6 +1115,7 @@ class Compiler:
                 elif isinstance(rhs, float):
                     inferred_type = "Floater"
                 elif isinstance(rhs, str):
+                    print(f"[DEBUG] Evaluating chant: {rhs}")
                     inferred_type = "Chant"
 
                 # Allow implicit promotion Feint → Floater
@@ -1635,7 +1641,11 @@ class Compiler:
             # Handle string literal (CHANTLIT)
             if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
                 return val.strip('"')
-
+            
+            if isinstance(val, str) and val.startswith('~'):
+                val = val[1:]  # Translate ~ to -
+                return -int(val)            
+            
             # Handle booleans WIN and LOSS
             if val == "WIN":
                 return True

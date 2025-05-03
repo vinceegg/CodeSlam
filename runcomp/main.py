@@ -46,11 +46,25 @@ Team() {
     Floater @test = 0.0;
     Feint @num;
     
-    @test = 1;
-    Announce(@test);
+    Dribble(@n <= 0){
+    Announce("Invalid Input: positive integers only");
+    Timeout;
+    }
+
+    @sum = 0;
+    @temp = @number;
+
+    Forward (@i = 0; @temp != 0; @i++) {
+        @digit = @temp % 10;
+        @sum = @sum + @digit;
+        @temp = (@temp - (@temp % 10)) / 10; 
+    }
+
+    Announce("Sum of digits in " & @number & " is: " & Feint(@sum));
 }
 
  '''
+ 
      # Build lexer and tokenize input
     lexer = build_lexer()
     tokens = lexer.lex(code)
