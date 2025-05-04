@@ -770,52 +770,32 @@ class App(customtkinter.CTk):
             self.append_terminal_output(str(e), text_color="red")
             
     def sidebar_button_runcomp(self):
-        """Run semantic analysis using the runner compiler"""
+        """
+        Run full compiler execution pipeline:
+        1. Run lexical analysis
+        2. If no lexical errors, run syntax analysis
+        3. If no syntax errors, run semantic analysis/execution
+        """
+        # Clear terminal and error highlights
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
         
-        # Get code from editor
-        code = self.codebox.get("1.0", "end-1c")
+        # Step 1: Run lexical analysis
+        self.sidebar_button_lexical()
         
-        try:
-            from runcomp.main import run_compiler
-            
-            # Define a custom input function that uses our command input box
-            def get_terminal_input(prompt):
-                self.terminal_output.configure(state="normal")
-                # Show the prompt in terminal
-                self.terminal_output.insert(END, prompt)
-                self.terminal_output.see(END)
-                self.terminal_output.configure(state="disabled")
-                
-                # Reset input flags
-                self.input_processed.set(False)
-                self.waiting_for_input = True
-                
-                # Enable and focus the input box
-                self.command_input.configure(state="normal")
-                self.command_input.focus_set()
-                
-                # Wait for input to be processed
-                self.wait_variable(self.input_processed)
-                
-                return self.last_input
-            
-            # Run the compiler with our custom input function
-            output = run_compiler(code, input_func=get_terminal_input)
-            
-            # Display the output directly in the terminal
-            if output:
-                self.terminal_output.configure(state="normal")
-                # Process the output to handle escape sequences
-                processed_output = bytes(output, "utf-8").decode("unicode_escape")
-                self.terminal_output.insert(END, processed_output)
-                self.terminal_output.see(END)
-                self.terminal_output.configure(state="disabled")
-                    
-        except ImportError as e:
-            self.append_terminal_output("Error importing runcomp compiler:", text_color="red")
-            self.append_terminal_output(str(e), text_color="red")
+        # Check if lexical analysis was successful by inspecting the syntax button state
+        if self.sideBtnSyntax.cget("state") == "disabled":
+            return
+        
+        # Step 2: Run syntax analysis
+        self.sidebar_button_syntax()
+        
+        # Check if syntax analysis was successful by inspecting the semantic button state
+        if self.sideBtnSemantic.cget("state") == "disabled":
+            return
+        
+        # Step 3: Run semantic analysis and execution
+        self.sidebar_button_semantic()
 
     def process_command_input(self, event):
         """Process input from the command input box."""
