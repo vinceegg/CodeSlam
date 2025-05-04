@@ -650,7 +650,7 @@ class Compiler:
         # --- FLOATER_DEC: list of declarations ---
         elif node.name == "floater_array":
             var_token = node.children[0]   # VAR_INIT
-            first_dimension = int(node.children[1].value)  # feint_lit (used as dimension)
+            first_dimension = self.eval(node.children[1])  # feint_lit (used as dimension)
             second_dimension_node = node.children[2]       # 2D_array
             initializer = node.children[3]                 # floater_array_init
 
@@ -659,7 +659,7 @@ class Compiler:
 
             # Check if second dimension is provided
             if second_dimension_node.children:
-                second_dimension = int(second_dimension_node.children[0].value)
+                second_dimension = self.eval(second_dimension_node.children[0])
 
             if initializer.children:
                 data = self.eval(initializer)  # should return flat list of floaters
@@ -741,7 +741,7 @@ class Compiler:
         # --- CHANT_DEC: list of declarations ---
         elif node.name == "chant_array":
             var_token = node.children[0]   # VAR_INIT
-            first_dimension = int(node.children[1].value)  # feint_lit (used as dimension)
+            first_dimension = self.eval(node.children[1])  # feint_lit (used as dimension)
             second_dimension_node = node.children[2]       # 2D_array
             initializer = node.children[3]                 # chant_array_init
 
@@ -750,7 +750,7 @@ class Compiler:
 
             # Check if second dimension is provided
             if second_dimension_node.children:
-                second_dimension = int(second_dimension_node.children[0].value)
+                second_dimension = self.eval(second_dimension_node.children[0])
 
             if initializer.children:
                 data = self.eval(initializer)  # should return flat list of chants (strings)
