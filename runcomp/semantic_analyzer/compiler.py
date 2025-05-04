@@ -555,7 +555,7 @@ class Compiler:
         # --- FEINT_DEC: list of declarations ---
         elif node.name == "feint_array":
             var_token = node.children[0]
-            first_dimension = int(node.children[1].value)
+            first_dimension = self.eval(node.children[1])  
             second_dimension_node = node.children[2]
             initializer = node.children[3]
 
@@ -563,7 +563,7 @@ class Compiler:
             second_dimension = None
 
             if second_dimension_node.children:
-                second_dimension = int(second_dimension_node.children[0].value)
+                second_dimension = self.eval(second_dimension_node.children[0])
 
             if initializer.children:
                 data = self.eval(initializer)
@@ -571,7 +571,7 @@ class Compiler:
                 if second_dimension is None:
                     if not isinstance(data, list):
                         raise ValueError("[TYPE ERROR] Expected list for 1D array initializer.")
-                    print(f"[DEBUG] Storing 1D array {var_name}: {data}")
+                    # print(f"[DEBUG] Storing 1D array {var_name}: {data}")
                     self.env.set_var(var_name, data, type_name="FeintArray")
                 else:
                     if not isinstance(data, list):
@@ -596,7 +596,7 @@ class Compiler:
         elif node.name == "2D_array":
             if not node.children:
                 return None
-            return int(node.children[0].value)  # Make sure it returns int not node
+            return node.children[0]  # Make sure it returns int not node
 
 
         elif node.name == "feint_array_init":

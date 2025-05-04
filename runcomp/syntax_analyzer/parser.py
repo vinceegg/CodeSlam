@@ -370,8 +370,8 @@ def array_dec_floater(p):
 def array_dec_chant(p):
     return ASTNode("array_dec", children=[p[0]])
 
-# Rule 71: feint_array → FEINT VAR_INIT [ feint_lit ] 2D_array feint_array_init ;
-@pg.production("feint_array : FEINT VAR_INIT ARRAY_INDEX_LEFT feint_lit ARRAY_INDEX_RIGHT 2D_array feint_array_init SEMICOLON")
+# Rule 71: feint_array → FEINT VAR_INIT [ element_index ] 2D_array feint_array_init ;
+@pg.production("feint_array : FEINT VAR_INIT ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT 2D_array feint_array_init SEMICOLON")
 def feint_array(p):
     return ASTNode("feint_array", children=[p[1], p[3], p[5], p[6]])
 
@@ -381,7 +381,7 @@ def two_d_array_empty(p):
     return ASTNode("2D_array", children=[])
 
 # Rule 73: 2D_array → [ feint_lit ]
-@pg.production("2D_array : ARRAY_INDEX_LEFT feint_lit ARRAY_INDEX_RIGHT")
+@pg.production("2D_array : ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT")
 def two_d_array(p):
     return ASTNode("2D_array", children=[p[1]])
 

@@ -42,26 +42,13 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Team() {
-    Floater @test = 0.0;
-    Feint @num;
-    
-    Dribble(@n <= 0){
-    Announce("Invalid Input: positive integers only");
-    Timeout;
-    }
+Feint @array_size = 3;
 
-    @sum = 0;
-    @temp = @number;
+Zone Feint @array[@array_size][@array_size];
 
-    Forward (@i = 0; @temp != 0; @i++) {
-        @digit = @temp % 10;
-        @sum = @sum + @digit;
-        @temp = (@temp - (@temp % 10)) / 10; 
-    }
-
-    Announce("Sum of digits in " & @number & " is: " & Feint(@sum));
+Team (){
 }
+
 
  '''
  
