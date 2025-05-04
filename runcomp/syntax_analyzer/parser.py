@@ -425,8 +425,8 @@ def more_feint_lit_empty(p):
 def more_feint_lit_recursive(p):
     return ASTNode("more_feint_lit", children=[p[1]] + p[2].children)
 
-# Rule 82: floater_array → FLOATER VAR_INIT [ feint_lit ] 2D_array floater_array_init ;
-@pg.production("floater_array : FLOATER VAR_INIT ARRAY_INDEX_LEFT feint_lit ARRAY_INDEX_RIGHT 2D_array floater_array_init SEMICOLON")
+# Rule 82: floater_array → FLOATER VAR_INIT [ element_index ] 2D_array floater_array_init ;
+@pg.production("floater_array : FLOATER VAR_INIT ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT 2D_array floater_array_init SEMICOLON")
 def floater_array(p):
     return ASTNode("floater_array", children=[p[1], p[3], p[5], p[6]])
 
@@ -470,8 +470,8 @@ def more_floater_lit_empty(p):
 def more_floater_lit_recursive(p):
     return ASTNode("more_floater_lit", children=[p[1]] + p[2].children)
 
-# Rule 91: chant_array → CHANT VAR_INIT [ feint_lit ] 2D_array chant_array_init ;
-@pg.production("chant_array : CHANT VAR_INIT ARRAY_INDEX_LEFT feint_lit ARRAY_INDEX_RIGHT 2D_array chant_array_init SEMICOLON")
+# Rule 91: chant_array → CHANT VAR_INIT [ element_index ] 2D_array chant_array_init ;
+@pg.production("chant_array : CHANT VAR_INIT ARRAY_INDEX_LEFT element_index ARRAY_INDEX_RIGHT 2D_array chant_array_init SEMICOLON")
 def chant_array(p):
     return ASTNode("chant_array", children=[p[1], p[3], p[5], p[6]])
 
