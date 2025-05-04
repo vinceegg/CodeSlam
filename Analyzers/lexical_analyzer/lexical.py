@@ -2678,6 +2678,19 @@ class Lexer:
         return True, Token(TokenType.VAR_INIT.value, input_str)
     
     # STARTING STATE
+    # def state241(self):
+    #     input_str = ""
+    #     input_str += self.current_char  
+    #     self.advance()
+
+    #     if self.current_char in num:
+    #         return self.state242(input_str)
+    #     elif self.current_char == ".":
+    #         return self.state268(input_str)
+    #     else:
+    #         return False, input_str
+    
+    # STARTING STATE
     def state241(self):
         input_str = ""
         input_str += self.current_char  
@@ -2687,6 +2700,15 @@ class Lexer:
             return self.state242(input_str)
         elif self.current_char == ".":
             return self.state268(input_str)
+        elif self.current_char == "@":
+            # Handle ~@ case by passing to the identifier handler
+            input_str += self.current_char
+            self.advance()
+            # Check for lowercase letter after @ (same as in state200)
+            if self.current_char is not None and self.current_char.isalpha() and self.current_char.islower():
+                return self.state201(input_str)
+            else:
+                return False, input_str
         else:
             return False, input_str
 
@@ -3219,4 +3241,3 @@ def run(text):
 # tokens, errors = run(text)
 # print(tokens)
 # print(errors)
-

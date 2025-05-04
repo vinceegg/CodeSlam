@@ -177,6 +177,8 @@ FIRST_SETS = {
     
     # <more_chant_lit>
     'more_chant_lit': {TokenType.COMMA, },
+
+    'array_size': {TokenType.VAR_INIT, TokenType.FEINTLIT},
     
     # <function_def>
     'function_def': {TokenType.WILT, TokenType.DUNK, },
@@ -209,7 +211,7 @@ FIRST_SETS = {
     'param_end': {TokenType.COMMA, },
     
     # <function_statement>
-    'function_statement': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT,TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, 
+    'function_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, 
                            TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT},
     
     # <team_statement>
@@ -217,7 +219,7 @@ FIRST_SETS = {
                            TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT},
     
     # <statement>
-    'statement': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, 
+    'statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, 
                            TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT},
     
     # <announce_statement>
@@ -272,11 +274,6 @@ FIRST_SETS = {
     'outputs': {TokenType.VAR_INIT, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
             TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.LEFT_PAREN, 
             TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
-    
-    # <output>
-        'output': {TokenType.VAR_INIT, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT,
-                TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.LEFT_PAREN,
-                TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
     
     # <other_outputs>
     'other_outputs': {TokenType.CHANT_CONCAT},
@@ -342,7 +339,7 @@ FIRST_SETS = {
                            TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <number_type_cast>
-    'number_type_cast': {TokenType.FEINT, TokenType.FLOATER},
+    'type_casting': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <feint_type_casting>
     'feint_type_casting': {TokenType.FEINT},
@@ -358,8 +355,8 @@ FIRST_SETS = {
     
     # <assign_operand>
     'assign_operand': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
-                  TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                  TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+                      TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
+                      TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
     
     # <function_call>
     'function_call': {TokenType.LEFT_PAREN},
@@ -453,22 +450,8 @@ FIRST_SETS = {
     # <typecast_value>
     'typecast_value': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT, TokenType.WIN, 
                       TokenType.LOSS, TokenType.VAR_INIT},
-    
-    # ADDED FOR TYPE CASTING AND POSTFIXING
-    # <type_casting>
-     'type_casting': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
-     
-    # <postfix>
-    'postfix': {TokenType.LEFT_PAREN, TokenType.ARRAY_INDEX_LEFT},
-    
-    # assignment_expression
-        'assignment_expression': {TokenType.VAR_INIT},
-        
-    # assign_operator
-        'assign_operator': {TokenType.ASSIGN, TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN, 
-                           TokenType.MUL_ASSIGN, TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN},
 
-    # <array_access>
-        'array_access': {TokenType.ARRAY_INDEX_LEFT},
+    # <typecast_value>
+    'follow_factor': {TokenType.LEFT_PAREN, TokenType.ARRAY_INDEX_LEFT}
 
 }
