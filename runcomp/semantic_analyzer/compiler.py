@@ -1115,7 +1115,7 @@ class Compiler:
                 elif isinstance(rhs, float):
                     inferred_type = "Floater"
                 elif isinstance(rhs, str):
-                    print(f"[DEBUG] Evaluating chant: {rhs}")
+                    # print(f"[DEBUG] Evaluating chant: {rhs}")
                     inferred_type = "Chant"
 
                 # Allow implicit promotion Feint → Floater
