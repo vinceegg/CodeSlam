@@ -1,0 +1,1668 @@
+from syntax_analyzer.ast_nodes import ASTNode
+
+class Environment:
+    def __init__(self):
+        self.variables = {}
+        self.functions = {}
+
+    # --- Variables ---
+    def set_var(self, name, value, type_name=None):
+        self.variables[name] = {"value": value, "type": type_name}
+
+    def get_var(self, name):
+        var = self.variables.get(name)
+        if var is None:
+            raise ValueError(f"[ERROR] Variable '{name}' not found.")
+        return var["value"]
+
+    def get_type(self, name):
+        var = self.variables.get(name)
+        if var is None:
+            raise ValueError(f"[ERROR] Variable '{name}' not found.")
+        return var["type"]
+
+    # --- Functions ---
+    def set_func(self, name, func_node):
+        self.functions[name] = func_node
+
+    def get_func(self, name):
+        func = self.functions.get(name)
+        if func is None:
+            raise ValueError(f"[ERROR] Function '{name}' not found.")
+        return func
+
+class Compiler:
+    def __init__(self):
+        self.env = Environment()
+        self.input_func = None  # Default to None, will use built-in input() if not set
+
+
+    def eval(self, node):
+        # ---  PROGRAM node ---
+        if node.name == "program":
+            for child in node.children:
+                self.eval(child)
+
+        # --- GLOBAL_DECL: list of declarations ---
+        elif node.name == "global_decl":
+            for child in node.children:
+                self.eval(child)
+
+        # --- GLOBAL_DECLARATION: either a variable or constant ---
+        elif node.name == "global_declaration":
+            return self.eval(node.children[0])
+
+        # --- VARIABLE_DEC: list of declarations ---
+        elif node.name == "variable_dec":
+            return self.eval(node.children[0])
+
+        # --- FEINT_DEC: list of declarations ---
+        elif node.name == "feint_dec":
+            first_var = node.children[0]  # First VAR_INIT
+            more = self.eval(node.children[1])  # more_feint
+
+            # Set first variable
+            first_value = None
+            if more and more[0][1] is not None:
+                first_value = more[0][1]
+
+            self.env.set_var(first_var.value, first_value, "Feint")
+
+            # Set additional variables
+            for var_name, value in more[1:]:
+                if var_name is None:
+                    raise ValueError("[PARSE ERROR] Missing variable name for additional Feint.")
+                self.env.set_var(var_name, value, "Feint")
+
+        elif node.name == "more_feint":
+            if not node.children:
+                return []
+
+            feint_init_value = self.eval(node.children[0])  # value or None
+            feint_init_end = self.eval(node.children[1])    # list of (name, value) pairs
+
+            return [(None, feint_init_value)] + feint_init_end
+
+        elif node.name == "feint_init":
+            if node.value is None:
+                return None  # uninitialized
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return int(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid feint value: {node.value}")
+        
+        elif node.name == "feint_init_end":
+            if not node.children:
+                return []
+
+            var_token = node.children[0]  # VAR_INIT
+            var_name = var_token.value
+            more = node.children[1]       # more_feint
+
+            value = None
+            if more.children:
+                value = self.eval(more.children[0])  # feint_init
+                nested = self.eval(more.children[1])  # feint_init_end
+            else:
+                nested = []
+
+            return [(var_name, value)] + nested
+
+        # --- FLOAT_DEC: list of declarations ---
+        elif node.name == "floater_dec":
+            first_var = node.children[0]  # VAR_INIT
+            init_val = self.eval(node.children[1])  # more_floater
+
+            all_vars = [(first_var.value, init_val)]
+            additional = getattr(node.children[1], "additional_vars", [])
+            all_vars += additional
+
+            for var_name, val in all_vars:
+                self.env.set_var(var_name, val, type_name="Floater")
+
+            
+        elif node.name == "more_floater":
+            if not node.children:
+                return None
+
+            init_val = self.eval(node.children[0])  # floater_init
+            rest = self.eval(node.children[1])      # floater_init_end
+
+            # If no trailing variables
+            if rest is None:
+                return init_val
+
+            node.additional_vars = rest
+            return init_val
+
+                    
+        elif node.name == "floater_init":
+            if node.value is None:
+                return None # Uninitialized
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return float(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid floater value: {node.value}")
+
+        elif node.name == "floater_init_end":
+            if not node.children:
+                return []
+
+            var_token = node.children[0]  # VAR_INIT
+            var_name = var_token.value
+            more_floater = node.children[1]
+
+            # Evaluate the right-hand side of this variable (if initialized or not)
+            val = self.eval(more_floater)
+            rest = getattr(more_floater, "additional_vars", [])
+
+            result = [(var_name, val)] + rest
+            node.additional_vars = result
+            return result
+
+        # --- CHANT_DEC: list of declarations ---
+        elif node.name == "chant_dec":
+            first_var = node.children[0]  # VAR_INIT
+            init_val = self.eval(node.children[1])  # more_chant
+
+            all_vars = [(first_var.value, init_val)]
+            additional = getattr(node.children[1], "additional_vars", [])
+            all_vars += additional
+
+            for var_name, val in all_vars:
+                self.env.set_var(var_name, val, type_name="Chant")
+        
+        elif node.name == "more_chant":
+            if not node.children:
+                return None
+
+            init_val = self.eval(node.children[0])  # chant_init
+            rest = self.eval(node.children[1])      # chant_init_end
+
+            if rest is None:
+                return init_val
+
+            node.additional_vars = rest
+            return init_val
+
+        elif node.name == "chant_init":
+            if node.value is None:
+                return None
+            return str(node.value).strip('"')
+
+        elif node.name == "chant_init_end":
+            if not node.children:
+                return []
+
+            var_token = node.children[0]  # VAR_INIT
+            var_name = var_token.value
+            more_chant = node.children[1]
+
+            val = self.eval(more_chant)
+            rest = getattr(more_chant, "additional_vars", [])
+
+            result = [(var_name, val)] + rest
+            node.additional_vars = result
+            return result
+ 
+        # --- CHANT_DEC: list of declarations ---
+        elif node.name == "stat_dec":
+            first_var = node.children[0]  # VAR_INIT
+            init_val = self.eval(node.children[1])  # more_stat
+
+            all_vars = [(first_var.value, init_val)]
+            additional = getattr(node.children[1], "additional_vars", [])
+            all_vars += additional
+
+            for var_name, val in all_vars:
+                self.env.set_var(var_name, val, type_name="Stat")
+
+        elif node.name == "stat_init":
+            return node.value
+        
+        elif node.name == "more_stat":
+            if not node.children:
+                return None  # Uninitialized
+            init_val = self.eval(node.children[0])  # stat_init
+            rest = self.eval(node.children[1])      # stat_init_end
+
+            if rest is None:
+                return init_val
+
+            node.additional_vars = rest
+            return init_val
+        
+        elif node.name == "stat_init_end":
+            if not node.children:
+                return []
+
+            var_token = node.children[0]  # VAR_INIT
+            var_name = var_token.value
+            more_stat = node.children[1]
+
+            val = self.eval(more_stat)
+            rest = getattr(more_stat, "additional_vars", [])
+
+            result = [(var_name, val)] + rest
+            node.additional_vars = result
+            return result
+
+        # --- CONSTANT DECLARATION ---
+        elif node.name == "const_dec":
+            return self.eval(node.children[0])
+
+        # --- FEINT_CONST: list of declarations ---
+        elif node.name == "const_feint":
+            var_token = node.children[0]   # VAR_INIT
+            init_node = node.children[1]   # feint_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            # Set the first variable
+            self.env.set_var(var_name, value, type_name="ConstFeint")
+
+            # Set any additional variables
+            for name, val in additional_constants:
+                self.env.set_var(name, val, type_name="ConstFeint")
+
+        elif node.name == "feint_const_init":
+            value = self.eval(node.children[0])  # feint_const
+            additional = self.eval(node.children[1])  # feint_const_end
+            return value, additional
+
+        elif node.name == "feint_const":
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return int(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid feint value: {node.value}")
+
+        elif node.name == "feint_const_end":
+            if not node.children:
+                return []  # No additional variables
+            var_token = node.children[0]  # VAR_INIT
+            init_node = node.children[1]  # feint_const_init
+
+            var_name = var_token.value
+            value, additional = self.eval(init_node)
+
+            return [(var_name, value)] + additional
+
+        # --- FLOATER_CONST: list of declarations ---
+        elif node.name == "const_floater":
+            var_token = node.children[0]   # VAR_INIT
+            init_node = node.children[1]   # floater_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            # Set the first variable
+            self.env.set_var(var_name, value, type_name="ConstFloater")
+
+            # Set any additional variables
+            for name, val in additional_constants:
+                self.env.set_var(name, val, type_name="ConstFloater")
+                
+        elif node.name == "floater_const_init":
+            value = self.eval(node.children[0])  # floater_const
+            additional = self.eval(node.children[1])  # floater_const_end
+            return value, additional
+                        
+        elif node.name == "floater_const":
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return float(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid float value: {node.value}")
+        
+        elif node.name == "floater_const_end":
+            if not node.children:
+                return []  # No additional variables
+            var_token = node.children[0]  # VAR_INIT
+            init_node = node.children[1]  # floater_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            return [(var_name, value)] + additional_constants
+
+        # --- CHANT_CONST: list of declarations ---
+        elif node.name == "const_chant":
+            var_token = node.children[0]   # VAR_INIT
+            init_node = node.children[1]   # chant_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            # Set the first variable
+            self.env.set_var(var_name, value, type_name="ConstChant")
+
+            # Set any additional variables
+            for name, val in additional_constants:
+                self.env.set_var(name, val, type_name="ConstChant")
+                
+        elif node.name == "chant_const_init":
+            value = self.eval(node.children[0])  # chant_const
+            additional = self.eval(node.children[1])  # chant_const_end
+            return value, additional
+
+        elif node.name == "chant_const":
+            return str(node.value).strip('"')  # <-- REMOVE surrounding quotes if needed
+
+        elif node.name == "chant_const_end":
+            if not node.children:
+                return []  # No additional variables
+            var_token = node.children[0]  # VAR_INIT
+            init_node = node.children[1]  # chant_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            return [(var_name, value)] + additional_constants
+
+        # --- STAT_CONST: list of declarations ---
+        elif node.name == "const_stat":
+            var_token = node.children[0]   # VAR_INIT
+            init_node = node.children[1]   # stat_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            # Set the first variable
+            self.env.set_var(var_name, value, type_name="ConstStat")
+
+            # Set any additional variables
+            for name, val in additional_constants:
+                self.env.set_var(name, val, type_name="ConstStat")
+                
+        elif node.name == "stat_const_init":
+            value = self.eval(node.children[0])  # stat_const
+            additional = self.eval(node.children[1])  # stat_const_end
+            return value, additional
+
+        elif node.name == "stat_const":
+            return self.eval(node.children[0])  # Evaluate the stat_value
+
+        elif node.name == "stat_value":
+            if node.value == "Win":
+                return True
+            elif node.value == "Loss":
+                return False
+            else:
+                raise ValueError(f"[TYPE ERROR] Invalid boolean literal: {node.value}")
+
+        elif node.name == "stat_const_end":
+            if not node.children:
+                return []  # No additional variables
+            var_token = node.children[0]  # VAR_INIT
+            init_node = node.children[1]  # stat_const_init
+
+            var_name = var_token.value
+            value, additional_constants = self.eval(init_node)
+
+            return [(var_name, value)] + additional_constants
+
+        # --- ARRAY_DEC: list of declarations ---
+        elif node.name == "array_dec":
+            return self.eval(node.children[0]) 
+
+        # --- FEINT_DEC: list of declarations ---
+        elif node.name == "feint_array":
+            var_token = node.children[0]
+            first_dimension = self.eval(node.children[1])  
+            second_dimension_node = node.children[2]
+            initializer = node.children[3]
+
+            var_name = var_token.value
+            second_dimension = None
+
+            if second_dimension_node.children:
+                second_dimension = self.eval(second_dimension_node.children[0])
+
+            if initializer.children:
+                data = self.eval(initializer)
+
+                if second_dimension is None:
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 1D array initializer.")
+                    # print(f"[DEBUG] Storing 1D array {var_name}: {data}")
+                    self.env.set_var(var_name, data, type_name="FeintArray")
+                else:
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 2D array initializer.")
+                    
+                    total_elements = first_dimension * second_dimension
+                    if len(data) != total_elements:
+                        raise ValueError(f"[TYPE ERROR] Array initializer size mismatch: expected {total_elements}, got {len(data)}")
+
+                    reshaped = []
+                    for i in range(first_dimension):
+                        row = data[i * second_dimension : (i + 1) * second_dimension]
+                        reshaped.append(row)
+
+                    self.env.set_var(var_name, reshaped, type_name="FeintArray2D")
+            else:
+                if second_dimension is None:
+                    self.env.set_var(var_name, [0]*first_dimension, type_name="FeintArray")
+                else:
+                    self.env.set_var(var_name, [[0]*second_dimension for _ in range(first_dimension)], type_name="FeintArray2D")
+
+        elif node.name == "2D_array":
+            if not node.children:
+                return None
+            return node.children[0]  # Make sure it returns int not node
+
+
+        elif node.name == "feint_array_init":
+            if node.children:
+                return self.eval(node.children[0])  # eval feint_row
+            else:
+                return []
+
+        elif node.name == "feint_row":
+            values = []
+            for child in node.children:
+                val = self.eval(child)
+
+                if isinstance(val, list):
+                    # If child is already a list (e.g., {1,2,3}), flatten it
+                    values.extend(val)
+                else:
+                    values.append(val)
+            return values
+
+        elif node.name == "2D_feint_row":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                if isinstance(val, list):
+                    evaluated.extend(val)  # Flatten again
+                else:
+                    evaluated.append(val)
+            return evaluated
+
+        elif node.name == "more_feint_lit":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                evaluated.append(val)
+            return evaluated
+
+        elif node.name == "feint_lits":
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return int(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid feint value: {node.value}")
+
+        # --- FLOATER_DEC: list of declarations ---
+        elif node.name == "floater_array":
+            var_token = node.children[0]   # VAR_INIT
+            first_dimension = self.eval(node.children[1])  # feint_lit (used as dimension)
+            second_dimension_node = node.children[2]       # 2D_array
+            initializer = node.children[3]                 # floater_array_init
+
+            var_name = var_token.value
+            second_dimension = None
+
+            # Check if second dimension is provided
+            if second_dimension_node.children:
+                second_dimension = self.eval(second_dimension_node.children[0])
+
+            if initializer.children:
+                data = self.eval(initializer)  # should return flat list of floaters
+
+                if second_dimension is None:
+                    # 1D Floater Array
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 1D floater array initializer.")
+                    self.env.set_var(var_name, data, type_name="FloaterArray")
+                else:
+                    # 2D Floater Array
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 2D floater array initializer.")
+
+                    total_elements = first_dimension * second_dimension
+                    if len(data) != total_elements:
+                        raise ValueError(f"[TYPE ERROR] Floater array initializer size mismatch: expected {total_elements}, got {len(data)}")
+
+                    reshaped = []
+                    for i in range(first_dimension):
+                        row = data[i * second_dimension : (i + 1) * second_dimension]
+                        reshaped.append(row)
+
+                    self.env.set_var(var_name, reshaped, type_name="FloaterArray2D")
+            else:
+                # No initializer provided
+                if second_dimension is None:
+                    self.env.set_var(var_name, [0.0] * first_dimension, type_name="FloaterArray")
+                else:
+                    self.env.set_var(var_name, [[0.0] * second_dimension for _ in range(first_dimension)], type_name="FloaterArray2D")
+
+        elif node.name == "floater_array_init":
+            if node.children:
+                return self.eval(node.children[0])  # evaluate floater_row
+            else:
+                return []
+
+        elif node.name == "floater_row":
+            values = []
+            for child in node.children:
+                val = self.eval(child)
+
+                if isinstance(val, list):
+                    values.extend(val)  # flatten nested list
+                else:
+                    values.append(val)
+            return values
+
+        elif node.name == "2D_floater_row":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                if isinstance(val, list):
+                    evaluated.extend(val)
+                else:
+                    evaluated.append(val)
+            return evaluated
+
+        elif node.name == "more_floater_lit":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                evaluated.append(val)
+            return evaluated
+
+        elif node.name == "floater_lits":
+            try:
+                value = node.value
+                if isinstance(value, str) and value.startswith('~'):
+                    value = '-' + value[1:]  # Translate ~ to -
+                return float(value)
+            except Exception:
+                raise ValueError(f"[TYPE ERROR] Invalid floater value: {node.value}")
+
+        # --- CHANT_DEC: list of declarations ---
+        elif node.name == "chant_array":
+            var_token = node.children[0]   # VAR_INIT
+            first_dimension = self.eval(node.children[1])  # feint_lit (used as dimension)
+            second_dimension_node = node.children[2]       # 2D_array
+            initializer = node.children[3]                 # chant_array_init
+
+            var_name = var_token.value
+            second_dimension = None
+
+            # Check if second dimension is provided
+            if second_dimension_node.children:
+                second_dimension = self.eval(second_dimension_node.children[0])
+
+            if initializer.children:
+                data = self.eval(initializer)  # should return flat list of chants (strings)
+
+                if second_dimension is None:
+                    # 1D Chant Array
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 1D chant array initializer.")
+                    self.env.set_var(var_name, data, type_name="ChantArray")
+                else:
+                    # 2D Chant Array
+                    if not isinstance(data, list):
+                        raise ValueError("[TYPE ERROR] Expected list for 2D chant array initializer.")
+
+                    total_elements = first_dimension * second_dimension
+                    if len(data) != total_elements:
+                        raise ValueError(f"[TYPE ERROR] Chant array initializer size mismatch: expected {total_elements}, got {len(data)}")
+
+                    reshaped = []
+                    for i in range(first_dimension):
+                        row = data[i * second_dimension : (i + 1) * second_dimension]
+                        reshaped.append(row)
+
+                    self.env.set_var(var_name, reshaped, type_name="ChantArray2D")
+            else:
+                # No initializer provided
+                if second_dimension is None:
+                    self.env.set_var(var_name, [""] * first_dimension, type_name="ChantArray")
+                else:
+                    self.env.set_var(var_name, [[""] * second_dimension for _ in range(first_dimension)], type_name="ChantArray2D")
+
+        elif node.name == "chant_array_init":
+            if node.children:
+                return self.eval(node.children[0])  # evaluate chant_row
+            else:
+                return []
+            
+        elif node.name == "chant_row":
+            values = []
+            for child in node.children:
+                val = self.eval(child)
+
+                if isinstance(val, list):
+                    values.extend(val)  # flatten nested list
+                else:
+                    values.append(val)
+            return values
+
+        elif node.name == "2D_chant_row":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                if isinstance(val, list):
+                    evaluated.extend(val)
+                else:
+                    evaluated.append(val)
+            return evaluated
+
+        elif node.name == "more_chant_lit":
+            if not node.children:
+                return []
+            evaluated = []
+            for child in node.children:
+                val = self.eval(child)
+                evaluated.append(val)
+            return evaluated
+
+        elif node.name == "chant_lit":
+            val = node.value
+            if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
+                return val[1:-1]  # Remove the surrounding quotes
+            return str(val)
+
+        # --- STAT_DEC: list of declarations ---
+        # elif node.name == "stat_array":
+        #     var_token = node.children[0]   # VAR_INIT
+        #     first_dimension = int(node.children[1].value)  # feint_lit (used as dimension)
+        #     second_dimension_node = node.children[2]       # 2D_array
+        #     initializer = node.children[3]                 # stat_array_init
+
+        #     var_name = var_token.value
+        #     second_dimension = None
+
+        #     if second_dimension_node.children:
+        #         second_dimension = int(second_dimension_node.children[0].value)
+
+        #     if initializer.children:
+        #         data = self.eval(initializer)  # should return flat list of True/False
+
+        #         if second_dimension is None:
+        #             # 1D Stat Array
+        #             if not isinstance(data, list):
+        #                 raise ValueError("[TYPE ERROR] Expected list for 1D stat array initializer.")
+        #             self.env.set_var(var_name, data, type_name="StatArray")
+        #         else:
+        #             # 2D Stat Array
+        #             if not isinstance(data, list):
+        #                 raise ValueError("[TYPE ERROR] Expected list for 2D stat array initializer.")
+
+        #             total_elements = first_dimension * second_dimension
+        #             if len(data) != total_elements:
+        #                 raise ValueError(f"[TYPE ERROR] Stat array initializer size mismatch: expected {total_elements}, got {len(data)}")
+
+        #             reshaped = []
+        #             for i in range(first_dimension):
+        #                 row = data[i * second_dimension : (i + 1) * second_dimension]
+        #                 reshaped.append(row)
+
+        #             self.env.set_var(var_name, reshaped, type_name="StatArray2D")
+        #     else:
+        #         # No initializer provided
+        #         if second_dimension is None:
+        #             self.env.set_var(var_name, [False] * first_dimension, type_name="StatArray")
+        #         else:
+        #             self.env.set_var(var_name, [[False] * second_dimension for _ in range(first_dimension)], type_name="StatArray2D")
+
+        # elif node.name == "stat_array_init":
+        #     if node.children:
+        #         return self.eval(node.children[0])  # evaluate stat_row
+        #     else:
+        #         return []
+
+        # elif node.name == "stat_row":
+        #     values = []
+        #     for child in node.children:
+        #         val = self.eval(child)
+
+        #         if isinstance(val, list):
+        #             values.extend(val)  # flatten nested list
+        #         else:
+        #             values.append(val)
+        #     return values
+
+        # elif node.name == "2D_stat_row":
+        #     if not node.children:
+        #         return []
+        #     evaluated = []
+        #     for child in node.children:
+        #         val = self.eval(child)
+        #         if isinstance(val, list):
+        #             evaluated.extend(val)
+        #         else:
+        #             evaluated.append(val)
+        #     return evaluated
+                
+        # elif node.name == "more_stat_value":
+        #     if not node.children:
+        #         return []
+        #     evaluated = []
+        #     for child in node.children:
+        #         val = self.eval(child)
+        #         evaluated.append(val)
+        #     return evaluated
+
+        elif node.name == "function_def":
+            for child in node.children:
+                self.eval(child)
+
+        elif node.name == "function_declared":
+            return self.eval(node.children[0])
+        
+        elif node.name == "dunk_func_declared":
+            return self.eval(node.children[0]) 
+        
+        elif node.name == "feint_function":
+            func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
+            func_name = func_name_token.value   # Get the function name string
+            self.env.functions[func_name] = {"node": node, "type": "Feint"} # Store the full function AST and return type
+            return None
+
+        elif node.name == "floater_function":
+            func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
+            func_name = func_name_token.value   # Get the function name string
+            self.env.functions[func_name] = {"node": node, "type": "Floater"} # Store the full function AST and return type
+            return None
+        
+        elif node.name == "chant_function":
+            func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
+            func_name = func_name_token.value   # Get the function name string
+            self.env.functions[func_name] = {"node": node, "type": "Chant"} # Store the full function AST and return type
+            return None
+
+        elif node.name == "stat_function":
+            func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
+            func_name = func_name_token.value   # Get the function name string
+            self.env.functions[func_name] = {"node": node, "type": "Stat"} # Store the full function AST and return type
+            return None
+
+        elif node.name == "dunk_function":
+            func_name_token = node.children[0]  # VAR_INIT token
+            func_name = func_name_token.value
+            self.env.functions[func_name] = {"node": node, "type": "Dunk"}  # store as type Dunk
+            return None
+                                
+        elif node.name == "func_parameters":
+            params = []
+            for child in node.children:
+                if hasattr(child, "value"):   # child is VAR_INIT token
+                    params.append(child.value)
+                else:
+                    # Could be param_end children
+                    params.extend(self.eval(child))
+            return params
+
+        elif node.name == "param_end":
+            params = []
+            for child in node.children:
+                if hasattr(child, "value"):  # VAR_INIT token
+                    params.append(child.value)
+                else:
+                    params.extend(self.eval(child))
+            return params
+
+        elif node.name == "function_statement":
+            return node
+
+        elif node.name == "team_block":
+            for child in node.children:
+                self.eval(child)
+
+        elif node.name == "local_decl":
+            for child in node.children:
+                self.eval(child)
+
+        elif node.name == "local_declaration":
+            return self.eval(node.children[0])
+        
+        elif node.name == "team_statement":
+            for stmt in node.children:
+                self.eval(stmt)
+                
+        # --- STATEMENT ---
+        elif node.name == "statement":
+            if len(node.children) == 2:
+                var_token = node.children[0]
+                follow = node.children[1]
+
+                # If follow_statement is increment or decrement
+                follow_action = follow.children[0]
+
+                if follow_action.name in ["increment", "decrement"]:
+                    var_name = var_token.value
+                    var_type = self.env.get_type(var_name)
+
+                    if var_type is None:
+                        raise ValueError(f"[ERROR] Variable '{var_name}' not declared.")
+
+                    if var_type not in ["Feint", "Floater"]:
+                        raise ValueError(f"[TYPE ERROR] Cannot apply increment/decrement on non-numeric type '{var_type}'.")
+
+                    value = self.env.get_var(var_name)
+
+                    if follow_action.name == "increment":
+                        value += 1
+                    elif follow_action.name == "decrement":
+                        value -= 1
+                    else:
+                        raise ValueError(f"[EVAL ERROR] Unknown follow_statement action.")
+
+                    self.env.set_var(var_name, value, var_type)
+                    return value
+
+                # If follow_statement is function_call
+                elif follow_action.name == "function_call":
+                    func_name = var_token.value
+                    args_node = follow_action.children[0] # The 'arguments' ASTNode
+                    args = self.eval(args_node)
+                    return self.call_function(func_name, args)
+
+                else:
+                    raise ValueError(f"[EVAL ERROR] Unknown follow_statement type: {follow_action.name}")
+
+            else:
+                # Handle other statement types (not VAR_INIT + follow)
+                return self.eval(node.children[0])
+
+        elif node.name == "rebound_statement":
+            return self.eval(node.children[0])
+
+        # --- ANNOUNCE_STATEMENT ---
+        elif node.name == "announce_statement":
+            outputs = self.eval(node.children[0])
+            # Print without space in between for formatting consistency
+            print("".join(outputs), end="")
+
+        elif node.name == "outputs":
+            results = []
+            for child in node.children:
+                val = self.eval(child)
+                results.append(val)
+            return results
+
+        elif node.name == "output":
+            if node.children:
+                val = self.eval(node.children[0])
+                
+                # Handle boolean (Stat) result from evaluated expressions
+                if isinstance(val, bool):
+                    return "Win" if val else "Loss"
+                
+                if isinstance(val, int) or isinstance(val, float):
+                    if val < 0:
+                        val = str(val).replace("-", "~")
+                return str(val)
+            
+
+                
+            elif node.value:
+                if isinstance(node.value, str) and node.value.startswith("@"):
+                    var_value = self.env.get_var(node.value)
+                    var_type = self.env.get_type(node.value)
+                    
+                    if var_type in ["Stat", "ConstStat"]:
+                        return "Win" if var_value else "Loss"
+                    else:
+                        return str(var_value)
+                else:
+                    return str(node.value.strip('"'))
+            else:
+                return "[EMPTY OUTPUT]"
+
+        elif node.name == "statement":
+            return self.eval(node.children[0])
+        
+        # --- ASSIGNMENT_EXPRESSION ---        
+        elif node.name == "assignment_expression":
+            var_token = node.children[0]
+            array_access_node = node.children[1]
+            assign_op = node.children[2].value 
+            rhs = self.eval(node.children[3])
+
+            var_name = var_token.value
+            var_type = self.env.get_type(var_name)
+
+            # Define operator behavior
+            op_map = {
+                '=':  lambda old, new: new,
+                '+=': lambda old, new: old + new,
+                '-=': lambda old, new: old - new,
+                '*=': lambda old, new: old * new,
+                '/=': lambda old, new: old / new,
+                '%=': lambda old, new: old % new,
+            }
+
+            if assign_op not in op_map:
+                raise ValueError(f"[EVAL ERROR] Unknown assignment operator: {assign_op}")
+
+            if array_access_node.name == "no_array_access":
+                # ---PREVENT CONSTANT REASSIGNMENT ---
+                if var_type in ["ConstFeint", "ConstFloater", "ConstChant", "ConstStat"]:
+                    raise ValueError(f"[ERROR] Cannot reassign to constant variable '{var_name}' ({var_type}).")
+
+                # --- Type Compatibility Check ---
+                # rhs is the evaluated value, infer its type
+                inferred_type = None
+                if isinstance(rhs, bool):
+                    inferred_type = "Stat"
+                elif isinstance(rhs, int):
+                    inferred_type = "Feint"
+                elif isinstance(rhs, float):
+                    inferred_type = "Floater"
+                elif isinstance(rhs, str):
+                    # print(f"[DEBUG] Evaluating chant: {rhs}")
+                    inferred_type = "Chant"
+
+                # Allow implicit promotion Feint → Floater
+                if inferred_type and not var_type.startswith("Const"):
+                    if var_type == "Feint" and inferred_type == "Floater":
+                        rhs = float(rhs)
+                        inferred_type = "Floater"
+                    elif var_type == "Floater" and inferred_type == "Feint":
+                        rhs = float(rhs)
+                        inferred_type = "Floater"
+                    elif inferred_type != var_type:
+                        raise ValueError(f"[TYPE ERROR] Cannot assign value of type {inferred_type} to variable '{var_name}' of type {var_type}.")
+
+                # Get current value
+                current_val = self.env.get_var(var_name)
+
+                # Implicit promotion for in-place arithmetic (Feint + Floater, etc.)
+                if isinstance(current_val, float) and isinstance(rhs, int):
+                    rhs = float(rhs)
+                elif isinstance(current_val, int) and isinstance(rhs, float):
+                    current_val = float(current_val)
+
+                # Perform the operation
+                new_val = op_map[assign_op](current_val, rhs)
+
+                # Store the result back with the original variable type
+                self.env.set_var(var_name, new_val, var_type)
+
+            # 1D Array Assignment
+            elif array_access_node.name == "array_access":
+                array = self.env.get_var(var_name)
+                idx = self.eval(array_access_node.children[0])
+
+                current_val = array[idx]
+                new_val = op_map[assign_op](current_val, rhs)
+                array[idx] = new_val
+                self.env.set_var(var_name, array)
+
+            # 2D Array Assignment
+            elif array_access_node.name == "array_access_2d":
+                array = self.env.get_var(var_name)
+                row_idx = self.eval(array_access_node.children[0])
+                col_idx = self.eval(array_access_node.children[1])
+
+                current_val = array[row_idx][col_idx]
+                new_val = op_map[assign_op](current_val, rhs)
+                array[row_idx][col_idx] = new_val
+                self.env.set_var(var_name, array)
+
+            else:
+                raise ValueError(f"[EVAL ERROR] Unexpected array access node: {array_access_node.name}")
+
+            return rhs
+
+
+        elif node.name == "follow_statement":
+            pass
+        
+        elif node.name == "assign_operand":
+            # print(f"[DEBUG] Evaluating assign_operand: {node.children[0].name}")
+            val = self.eval(node.children[0])
+            # print(f"[DEBUG] assign_operand evaluated to: {val}")
+            return val
+
+        elif node.name == "function_call":
+            func_name = node.value
+
+            if node.children:
+                arguments_node = node.children[0]  # The 'arguments' ASTNode
+                args = []
+                for arg_node in arguments_node.children:  # loop through each 'arg'
+                    arg_val = self.eval(arg_node)
+                    args.append(arg_val)
+            else:
+                args = []
+
+            return self.call_function(func_name, args)
+
+
+        elif node.name == "arguments":
+            results = []
+            for child in node.children:
+                result = self.eval(child)
+                results.append(result)
+            return results
+
+        elif node.name == "arg":
+            if node.value is not None:
+                return self.env.get_var(node.value)  # it's a variable like @x
+            else:
+                return self.eval(node.children[0])   # it's a literal like 3, "hello", etc
+
+        elif node.name == "expression":
+            return self.eval(node.children[0])
+
+        # -- Arithmetic Expressions --
+        elif node.name == "arithmetic_expression":
+            left = self.eval(node.children[0])  # term
+            tail = node.children[1]              # arithmetic_expression_tail
+            return self.eval_arithmetic_tail(left, tail)
+
+        elif node.name == "term":
+            left = self.eval(node.children[0])  # factor
+            term_tail = node.children[1]        # term_tail node
+            if not term_tail.children:
+                return left
+            else:
+                return self.eval_term_tail(left, term_tail)
+
+        # -- Relational Expressions --
+        elif node.name == "relational_expression":
+            left = self.eval(node.children[0])
+
+            # Check if there is a relational_expression_tail
+            if len(node.children) == 2:
+                op_node = node.children[1]
+
+                # relational_expression_tail might be empty
+                if not op_node.children:
+                    # No relational operator: pure arithmetic value
+                    return left
+
+                operator = op_node.name
+                right = self.eval(op_node.children[0])
+
+                if operator == "EQUAL":
+                    return left == right
+                elif operator == "NOT_EQUAL":
+                    return left != right
+                elif operator == "LESS_THAN":
+                    return left < right
+                elif operator == "GREATER_THAN":
+                    return left > right
+                elif operator == "LESS_EQUAL":
+                    return left <= right
+                elif operator == "GREATER_EQUAL":
+                    return left >= right
+                else:
+                    raise Exception(f"[EVAL ERROR] Unknown relational operator: {operator}")
+            else:
+                # No relational tail at all
+                return left
+
+        # -- Logical Expressions --
+        elif node.name == "logical_expression":
+            left = self.eval(node.children[0])  # relational_expression
+
+            tail = node.children[1]
+            if not tail.children:
+                return left
+
+            op_node = tail
+            op_type = op_node.name
+
+            right = self.eval(op_node.children[0])  # relational_expression inside OR_OP / AND_OP
+            next_tail = op_node.children[1]
+
+            if op_type == "AND_OP":
+                result = left and right
+            elif op_type == "OR_OP":
+                result = left or right
+            else:
+                raise Exception(f"[EVAL ERROR] Unknown logical operator: {op_type}")
+
+            # Handle chaining if more logical_expression_tail
+            if next_tail.children:
+                # Build fake logical_expression to continue chaining
+                fake_logical_expr = ASTNode("logical_expression", children=[ASTNode("relational_expression", []), next_tail])
+                return self.eval(fake_logical_expr)
+            else:
+                return result
+
+        elif node.name == "AND_OP":
+            left = self.eval(node.children[0])
+            right = self.eval(node.children[1])
+            return left and right
+
+        elif node.name == "OR_OP":
+            left = self.eval(node.children[0])
+            right = self.eval(node.children[1])
+            return left or right
+
+        elif node.name == "NOT_OP":
+            value = self.eval(node.children[0])
+            return not value
+        
+        # -- Terms and Factors --
+        elif node.name == "term":
+            left = self.eval(node.children[0])  # factor
+            term_tail = node.children[1]         # term_tail node
+            if not term_tail.children:
+                return left
+            else:
+                return self.eval_term_tail(left, term_tail)
+
+        elif node.name == "factor":
+            child = node.children[0]
+            
+            if child.name == "function_call":
+                return self.eval(child)
+            else:
+                return self.eval(child)
+
+        # -- Parenthesis (grouped expressions) --
+        elif node.name == "grouped_expression":
+            return self.eval(node.children[0])
+
+        # -- Variables (@var) --
+        elif node.name == "variable":
+            return self.env.get_var(node.value)
+
+        elif node.name == "array_access":
+            if node.value is None:
+                raise ValueError("[EVAL ERROR] array_access node is missing .value (variable name)")
+            
+            container = self.env.get_var(node.value)
+            idx = self.eval(node.children[0])
+
+            if isinstance(container, str):
+                if 0 <= idx < len(container):
+                    return container[idx]
+                else:
+                    return ""  # <-- return empty string if out of bounds
+            elif isinstance(container, list):
+                if 0 <= idx < len(container):
+                    return container[idx]
+                else:
+                    raise IndexError(f"[INDEX ERROR] Array index {idx} out of range")
+            else:
+                raise TypeError(f"[TYPE ERROR] Cannot index into {type(container).__name__}")
+
+        elif node.name == "array_access_2d":
+            array = self.env.get_var(node.value)
+            row_idx = self.eval(node.children[0])  # first element_index
+            col_idx = self.eval(node.children[1])  # second element_index
+            return array[row_idx][col_idx]
+
+        # -- Tail Empty Nodes (just skip) --
+        elif node.name in ["arithmetic_expression_tail", "relational_expression_tail", "logical_expression_tail", "term_tail"]:
+            return None
+
+        elif node.name == "element_index":
+            val = node.value
+            if isinstance(val, str) and val.startswith("@"):
+                # If it's a variable (e.g., @i), fetch its value from environment
+                return self.env.get_var(val)
+            else:
+                # Otherwise it's a literal integer (e.g., 3)
+                return int(val)
+            
+        elif node.name == "type_casting":
+            target_type = node.value  # Now guaranteed: FEINT, FLOATER, CHANT, STAT
+            value_node = node.children[0]
+            value = self.eval(value_node)
+
+            # Convert 'Win'/'Loss' string (only for stat conversion)
+            if value == "Win":
+                value = True
+            elif value == "Loss":
+                value = False
+            
+            try:
+                if target_type == "FEINT":
+                    return int(float(value))
+                elif target_type == "FLOATER":
+                    return float(value)
+                elif target_type == "CHANT":
+                    # Handle stat to chant properly (Win/Loss)
+                    if isinstance(value, bool):
+                        return "Win" if value else "Loss"
+                    if isinstance(value, str):
+                        return value
+                    return str(value)
+                elif target_type == "STAT":
+                    if isinstance(value, str):
+                        return value != "" 
+                    return bool(value)
+                else:
+                    raise ValueError(f"[EVAL ERROR] Unknown cast target: {target_type}")
+            except Exception as e:
+                raise ValueError(f"[TYPE ERROR] Failed to cast '{value}' to {target_type}: {e}")
+
+        elif node.name == "typecast_value":
+            if node.value:
+                if isinstance(node.value, str) and node.value.startswith("@"):
+                    return self.env.get_var(node.value)
+                return node.value
+            elif node.children:
+                return self.eval(node.children[0])
+            else:
+                raise ValueError("[EVAL ERROR] Invalid typecast_value")
+
+
+        elif node.name == "inbound_statement":
+            prompt = node.children[0].value.strip('"')
+            var_token = node.children[1]
+            var_name = var_token.value
+
+            expected_type = self.env.get_type(var_name)
+            if not expected_type:
+                raise ValueError(f"[ERROR] Variable {var_name} not declared before Inbound().")
+
+            user_input = self.get_input(f"{prompt} ")
+
+            # Type-check based on expected type
+            try:
+                if expected_type == "Feint":
+                    value = int(user_input)
+                elif expected_type == "Floater":
+                    value = float(user_input)
+                elif expected_type == "Stat":
+                    if user_input == "Win":
+                        value = "Win"
+                    elif user_input == "Loss":
+                        value = "Loss"
+                    else:
+                        raise ValueError("Expected 'Win' or 'Loss'")
+                elif expected_type == "Chant":
+                    value = user_input
+                else:
+                    raise ValueError(f"[ERROR] Unsupported type '{expected_type}'")
+            except ValueError as ve:
+                raise ValueError(f"[TYPE ERROR] {var_name} expects {expected_type} input: {ve}")
+
+            self.env.set_var(var_name, value, expected_type)
+            # print(f"[INBOUND] {var_name} = {value} ({expected_type})")
+        
+        elif node.name == "dribble_statement":
+            condition_result = self.eval(node.children[0])  # expression
+
+            if condition_result == "Win" or condition_result == True:
+                result = self.eval(node.children[1])  # loop_statements
+                if result == "Resume" or result == "Timeout":
+                    return result  # immediately bubble it up
+            else:
+                if len(node.children) > 2:
+                    result = self.eval(node.children[2])  # add_condition (Pass/Shoot)
+                    if result == "Resume" or result == "Timeout":
+                        return result  # immediately bubble it up
+
+        elif node.name == "add_condition":
+            i = 0
+            while i < len(node.children):
+                keyword_node = node.children[i]
+                if keyword_node.name == "Pass":
+                    condition = self.eval(node.children[i + 1])
+                    if condition == "Win" or condition == True:
+                        result = self.eval(node.children[i + 2])
+                        if result == "Resume" or result == "Timeout":
+                            return result
+                        break
+                    i += 3
+                elif keyword_node.name == "Shoot":
+                    result = self.eval(node.children[i + 1])
+                    if result == "Resume" or result == "Timeout":
+                        return result
+                    break
+                else:
+                    break
+
+        elif node.name == "Shoot":
+            return node 
+
+        elif node.name == "Pass":
+            return node 
+
+        elif node.name == "switch_statement":
+            switch_var_token = node.children[0]  # VAR_INIT node
+            cases_node = node.children[1]         # get_case node
+            default_node = node.children[2]       # get_default node
+
+            switch_var_name = switch_var_token.value
+            switch_value = self.env.get_var(switch_var_name)
+
+            matched = False
+
+            # Handle cases
+            cases = self.flatten_cases(cases_node)
+
+            for case_value, case_body in cases:
+                if switch_value == case_value:
+                    self.eval(case_body)
+                    matched = True
+                    break  # stop after first match
+
+            if not matched and default_node.children:
+                # Execute default if no case matched
+                self.eval(default_node.children[0])
+
+        elif node.name == "forward_statement":
+            loop_var_token = node.children[0]  # VAR_INIT
+            loop_var_name = loop_var_token.value
+
+            # Initial value
+            init_node = node.children[1]
+            init_val = self.eval(init_node)
+            self.env.set_var(loop_var_name, init_val, "Feint")
+
+            # Condition expression
+            condition_node = node.children[2]
+
+            # Update components
+            update_var_token = node.children[3]
+            update_expr = node.children[4]
+
+            # Loop body
+            loop_body = node.children[5]
+
+            done = False  # Flag if Timeout happens
+            while True:
+                condition_val = self.eval(condition_node)
+                if not condition_val:  # ✅ Directly check if condition fails
+                    break
+
+                # Execute loop body
+                for stmt in loop_body.children:
+                    result = self.eval(stmt)
+                    if result == "Resume":
+                        break 
+                    if result == "Timeout":
+                        done = True
+                        break
+
+                if done:
+                    break
+                
+                # Apply update
+                current_val = self.env.get_var(loop_var_name)
+
+                if update_expr.name == "forward_inc_dec":
+                    update_child = update_expr.children[0]
+                    if update_child.name == "increment":
+                        new_val = current_val + 1
+                    elif update_child.name == "decrement":
+                        new_val = current_val - 1
+                    elif update_child.name == "forward_assign_operator":
+                        op = update_child.value
+                        operand_val = self.eval(update_expr.children[1])
+                        if op == "+=":
+                            new_val = current_val + operand_val
+                        elif op == "-=":
+                            new_val = current_val - operand_val
+                        else:
+                            raise RuntimeError("[FORWARD] Unknown assign operator in update.")
+                    else:
+                        raise RuntimeError("[FORWARD] Unknown increment/decrement operation")
+
+                    self.env.set_var(loop_var_name, new_val, "Feint")
+
+        elif node.name == "forward_lit":
+            # forward_lit can either be a literal or a variable
+            if node.value:
+                val = node.value
+                if isinstance(val, str) and val.startswith('@'):
+                    return self.env.get_var(val)
+                elif '.' in str(val):
+                    return float(val)
+                else:
+                    return int(val)
+            elif node.children:
+                return self.eval(node.children[0])
+
+        elif node.name == "loop_statements":
+            for child in node.children:
+                result = self.eval(child)
+                if result == "Resume":
+                    break
+                if result == "Timeout":
+                    return "Timeout"
+
+        elif node.name == "loop_statement":
+            return self.eval(node.children[0])
+
+        elif node.name == "resume_statement":
+            return "Resume"
+        
+        elif node.name == "timeout_statement":
+            return "Timeout"
+        
+        elif node.name == "play_statement":
+            condition_node = node.children[0]
+            body_node = node.children[1]
+
+            while self.eval(condition_node):
+                done = False  # Flag if Timeout happens
+
+                for stmt in body_node.children:
+                    result = self.eval(stmt)
+                    if result == "Resume":
+                        break  # skip to condition check
+                    if result == "Timeout":
+                        done = True
+                        break
+
+                if done:
+                    break  # break the while loop
+
+
+        elif node.name == "run_play_statement":
+            body_node = node.children[0]
+            condition_node = node.children[1]
+
+            while True:
+                done = False
+
+                for stmt in body_node.children:
+                    result = self.eval(stmt)
+                    if result == "Resume":
+                        break  # skip checking condition immediately
+                    if result == "Timeout":
+                        done = True
+                        break
+
+                if done:
+                    break
+
+                if not self.eval(condition_node):
+                    break
+
+        elif node.name == "literal":
+            val = node.value
+
+            # Handle string literal (CHANTLIT)
+            if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
+                return val.strip('"')
+            
+            if isinstance(val, str) and val.startswith('~'):
+                val = val[1:]  # Translate ~ to -
+                return -int(val)            
+            
+            # Handle booleans WIN and LOSS
+            if val == "WIN":
+                return True
+            elif val == "LOSS":
+                return False
+
+            # Handle numbers
+            try:
+                if '.' in str(val):
+                    return float(val)
+                else:
+                    return int(val)
+            except (ValueError, TypeError):
+                # Fallback (return as-is if cannot parse)
+                return val
+
+
+        else:
+            print(f"[WARN] No eval rule for: {node.name}")
+
+    def get_input(self, prompt):
+        """Get user input using either the custom input function or built-in input()"""
+        if self.input_func:
+            return self.input_func(prompt)
+        return input(prompt)
+    
+    def eval_arithmetic_tail(self, left, tail_node):
+        if not tail_node.children:
+            return left  # no more operations
+
+        op = tail_node.name
+        right = self.eval(tail_node.children[0])  # next term
+        next_tail = tail_node.children[1]         # next tail
+        if op == "ADD":
+            result = left + right
+        elif op == "SUB":
+            result = left - right
+        else:
+            raise Exception(f"[EVAL ERROR] Unknown arithmetic tail operation: {op}")
+
+        # continue recursively
+        return self.eval_arithmetic_tail(result, next_tail)
+    
+    def eval_term_tail(self, left, tail_node):
+        if not tail_node.children:
+            return left  # no more operations
+
+        op = tail_node.name
+        right = self.eval(tail_node.children[0])  # next factor
+        next_tail = tail_node.children[1]         # next tail
+
+        if op == "MUL":
+            result = left * right
+        elif op == "DIV":
+            result = left / right
+        elif op == "MOD":
+            result = left % right
+        else:
+            raise Exception(f"[EVAL ERROR] Unknown term tail operation: {op}")
+
+        # continue recursively
+        return self.eval_term_tail(result, next_tail)
+        
+    def flatten_cases(self, node):
+        """
+        Flattens all GET cases into a list of (value, team_statement) pairs.
+        """
+        cases = []
+
+        if node.name == "get_case":
+            get_value_node = node.children[0]  # get_value node
+            team_statement_node = node.children[1]  # team_statement node
+            timeout_node = node.children[2]    # timeout_statement node
+            get_case_end_node = node.children[3]  # get_case_end (next case or empty)
+
+            # Parse value
+            raw_value = get_value_node.value
+
+            # 🔥 Detect and cast the type properly:
+            if isinstance(raw_value, str):
+                if raw_value.startswith('"') and raw_value.endswith('"'):
+                    # Chant literal (remove quotes)
+                    value = raw_value[1:-1]
+                else:
+                    try:
+                        # Try to interpret as integer first
+                        value = int(raw_value)
+                    except ValueError:
+                        value = raw_value  # fallback: keep as string if not int
+            else:
+                value = raw_value
+
+            cases.append((value, team_statement_node))
+
+            # Recurse if there are more cases
+            if get_case_end_node.children:
+                for child in get_case_end_node.children:
+                    cases.extend(self.flatten_cases(child))
+
+        return cases
+
+    def call_function(self, func_name, args):
+        func_info = self.env.functions.get(func_name)
+        if func_info is None:
+            raise ValueError(f"[ERROR] Function '{func_name}' not found.")
+
+        func_node = func_info["node"]
+        expected_type = func_info["type"]
+        
+        param_node = func_node.children[1]  # func_parameters
+        body_node = func_node.children[2]   # function_statement
+        rebound_node = func_node.children[3] if expected_type != "Dunk" else None
+
+        # --- Setup a new local environment ---
+        old_env = self.env
+        self.env = Environment()
+
+        # --- BIND PARAMETERS TO ARGUMENTS ---
+        param_names = [child.value for child in param_node.children]  # list of parameter names (@arg, @x, etc.)
+
+        if len(param_names) != len(args):
+            raise ValueError(f"[ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
+
+        for name, value in zip(param_names, args):
+            self.env.set_var(name, value)  # or None if you want to omit type for now
+        
+        # --- EVALUATE BODY ---
+        for stmt in body_node.children:
+            self.eval(stmt)
+        
+        # --- RETURN VALUE ---
+        # Dunk functions return nothing
+        if expected_type == "Dunk":
+            self.env = old_env  # Restore the caller environment
+            return None  
+            
+        # Otherwise handle rebound normally
+        rebound_value = self.eval(rebound_node)
+        self.env = old_env  # Restore the caller environment
+        
+        # Type checking
+        if expected_type == "Feint":
+            if not isinstance(rebound_value, int):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Feint (integer), got {type(rebound_value).__name__}")
+        elif expected_type == "Floater":
+            if not isinstance(rebound_value, float):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Floater (float), got {type(rebound_value).__name__}")
+        elif expected_type == "Chant":
+            if not isinstance(rebound_value, str):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Chant (string), got {type(rebound_value).__name__}")
+        elif expected_type == "Stat":
+            if not isinstance(rebound_value, bool):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Stat (boolean), got {type(rebound_value).__name__}")
+
+        return rebound_value

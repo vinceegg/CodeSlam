@@ -36,144 +36,9 @@ class Compiler:
         self.env = Environment()
         self.input_func = None  # Default to None, will use built-in input() if not set
 
-    def get_input(self, prompt):
-        """Get user input using either the custom input function or built-in input()"""
-        if self.input_func:
-            return self.input_func(prompt)
-        return input(prompt)
-    
-    def eval_arithmetic_tail(self, left, tail_node):
-        if not tail_node.children:
-            return left  # no more operations
-
-        op = tail_node.name
-        right = self.eval(tail_node.children[0])  # next term
-        next_tail = tail_node.children[1]         # next tail
-        if op == "ADD":
-            result = left + right
-        elif op == "SUB":
-            result = left - right
-        else:
-            raise Exception(f"[EVAL ERROR] Unknown arithmetic tail operation: {op}")
-
-        # continue recursively
-        return self.eval_arithmetic_tail(result, next_tail)
-    
-    def eval_term_tail(self, left, tail_node):
-        if not tail_node.children:
-            return left  # no more operations
-
-        op = tail_node.name
-        right = self.eval(tail_node.children[0])  # next factor
-        next_tail = tail_node.children[1]         # next tail
-
-        if op == "MUL":
-            result = left * right
-        elif op == "DIV":
-            result = left / right
-        elif op == "MOD":
-            result = left % right
-        else:
-            raise Exception(f"[EVAL ERROR] Unknown term tail operation: {op}")
-
-        # continue recursively
-        return self.eval_term_tail(result, next_tail)
-        
-    def flatten_cases(self, node):
-        """
-        Flattens all GET cases into a list of (value, team_statement) pairs.
-        """
-        cases = []
-
-        if node.name == "get_case":
-            get_value_node = node.children[0]  # get_value node
-            team_statement_node = node.children[1]  # team_statement node
-            timeout_node = node.children[2]    # timeout_statement node
-            get_case_end_node = node.children[3]  # get_case_end (next case or empty)
-
-            # Parse value
-            raw_value = get_value_node.value
-
-            # 🔥 Detect and cast the type properly:
-            if isinstance(raw_value, str):
-                if raw_value.startswith('"') and raw_value.endswith('"'):
-                    # Chant literal (remove quotes)
-                    value = raw_value[1:-1]
-                else:
-                    try:
-                        # Try to interpret as integer first
-                        value = int(raw_value)
-                    except ValueError:
-                        value = raw_value  # fallback: keep as string if not int
-            else:
-                value = raw_value
-
-            cases.append((value, team_statement_node))
-
-            # Recurse if there are more cases
-            if get_case_end_node.children:
-                for child in get_case_end_node.children:
-                    cases.extend(self.flatten_cases(child))
-
-        return cases
-
-    def call_function(self, func_name, args):
-        func_info = self.env.functions.get(func_name)
-        if func_info is None:
-            raise ValueError(f"[ERROR] Function '{func_name}' not found.")
-
-        func_node = func_info["node"]
-        expected_type = func_info["type"]
-        
-        param_node = func_node.children[1]  # func_parameters
-        body_node = func_node.children[2]   # function_statement
-        rebound_node = func_node.children[3] if expected_type != "Dunk" else None
-
-        # --- Setup a new local environment ---
-        old_env = self.env
-        self.env = Environment()
-
-        # --- BIND PARAMETERS TO ARGUMENTS ---
-        param_names = [child.value for child in param_node.children]  # list of parameter names (@arg, @x, etc.)
-
-        if len(param_names) != len(args):
-            raise ValueError(f"[ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
-
-        for name, value in zip(param_names, args):
-            self.env.set_var(name, value)  # or None if you want to omit type for now
-        
-        # --- EVALUATE BODY ---
-        for stmt in body_node.children:
-            self.eval(stmt)
-        
-        # --- RETURN VALUE ---
-        # Dunk functions return nothing
-        if expected_type == "Dunk":
-            self.env = old_env  # Restore the caller environment
-            return None  
-            
-        # Otherwise handle rebound normally
-        rebound_value = self.eval(rebound_node)
-        self.env = old_env  # Restore the caller environment
-        
-        # Type checking
-        if expected_type == "Feint":
-            if not isinstance(rebound_value, int):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Feint (integer), got {type(rebound_value).__name__}")
-        elif expected_type == "Floater":
-            if not isinstance(rebound_value, float):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Floater (float), got {type(rebound_value).__name__}")
-        elif expected_type == "Chant":
-            if not isinstance(rebound_value, str):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Chant (string), got {type(rebound_value).__name__}")
-        elif expected_type == "Stat":
-            if not isinstance(rebound_value, bool):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Stat (boolean), got {type(rebound_value).__name__}")
-
-        return rebound_value
 
     def eval(self, node):
-        # --- Top level: PROGRAM node ---
+        # ---  PROGRAM node ---
         if node.name == "program":
             for child in node.children:
                 self.eval(child)
@@ -1665,3 +1530,139 @@ class Compiler:
 
         else:
             print(f"[WARN] No eval rule for: {node.name}")
+
+    def get_input(self, prompt):
+        """Get user input using either the custom input function or built-in input()"""
+        if self.input_func:
+            return self.input_func(prompt)
+        return input(prompt)
+    
+    def eval_arithmetic_tail(self, left, tail_node):
+        if not tail_node.children:
+            return left  # no more operations
+
+        op = tail_node.name
+        right = self.eval(tail_node.children[0])  # next term
+        next_tail = tail_node.children[1]         # next tail
+        if op == "ADD":
+            result = left + right
+        elif op == "SUB":
+            result = left - right
+        else:
+            raise Exception(f"[EVAL ERROR] Unknown arithmetic tail operation: {op}")
+
+        # continue recursively
+        return self.eval_arithmetic_tail(result, next_tail)
+    
+    def eval_term_tail(self, left, tail_node):
+        if not tail_node.children:
+            return left  # no more operations
+
+        op = tail_node.name
+        right = self.eval(tail_node.children[0])  # next factor
+        next_tail = tail_node.children[1]         # next tail
+
+        if op == "MUL":
+            result = left * right
+        elif op == "DIV":
+            result = left / right
+        elif op == "MOD":
+            result = left % right
+        else:
+            raise Exception(f"[EVAL ERROR] Unknown term tail operation: {op}")
+
+        # continue recursively
+        return self.eval_term_tail(result, next_tail)
+        
+    def flatten_cases(self, node):
+        """
+        Flattens all GET cases into a list of (value, team_statement) pairs.
+        """
+        cases = []
+
+        if node.name == "get_case":
+            get_value_node = node.children[0]  # get_value node
+            team_statement_node = node.children[1]  # team_statement node
+            timeout_node = node.children[2]    # timeout_statement node
+            get_case_end_node = node.children[3]  # get_case_end (next case or empty)
+
+            # Parse value
+            raw_value = get_value_node.value
+
+            # 🔥 Detect and cast the type properly:
+            if isinstance(raw_value, str):
+                if raw_value.startswith('"') and raw_value.endswith('"'):
+                    # Chant literal (remove quotes)
+                    value = raw_value[1:-1]
+                else:
+                    try:
+                        # Try to interpret as integer first
+                        value = int(raw_value)
+                    except ValueError:
+                        value = raw_value  # fallback: keep as string if not int
+            else:
+                value = raw_value
+
+            cases.append((value, team_statement_node))
+
+            # Recurse if there are more cases
+            if get_case_end_node.children:
+                for child in get_case_end_node.children:
+                    cases.extend(self.flatten_cases(child))
+
+        return cases
+
+    def call_function(self, func_name, args):
+        func_info = self.env.functions.get(func_name)
+        if func_info is None:
+            raise ValueError(f"[ERROR] Function '{func_name}' not found.")
+
+        func_node = func_info["node"]
+        expected_type = func_info["type"]
+        
+        param_node = func_node.children[1]  # func_parameters
+        body_node = func_node.children[2]   # function_statement
+        rebound_node = func_node.children[3] if expected_type != "Dunk" else None
+
+        # --- Setup a new local environment ---
+        old_env = self.env
+        self.env = Environment()
+
+        # --- BIND PARAMETERS TO ARGUMENTS ---
+        param_names = [child.value for child in param_node.children]  # list of parameter names (@arg, @x, etc.)
+
+        if len(param_names) != len(args):
+            raise ValueError(f"[ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
+
+        for name, value in zip(param_names, args):
+            self.env.set_var(name, value)  # or None if you want to omit type for now
+        
+        # --- EVALUATE BODY ---
+        for stmt in body_node.children:
+            self.eval(stmt)
+        
+        # --- RETURN VALUE ---
+        # Dunk functions return nothing
+        if expected_type == "Dunk":
+            self.env = old_env  # Restore the caller environment
+            return None  
+            
+        # Otherwise handle rebound normally
+        rebound_value = self.eval(rebound_node)
+        self.env = old_env  # Restore the caller environment
+        
+        # Type checking
+        if expected_type == "Feint":
+            if not isinstance(rebound_value, int):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Feint (integer), got {type(rebound_value).__name__}")
+        elif expected_type == "Floater":
+            if not isinstance(rebound_value, float):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Floater (float), got {type(rebound_value).__name__}")
+        elif expected_type == "Chant":
+            if not isinstance(rebound_value, str):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Chant (string), got {type(rebound_value).__name__}")
+        elif expected_type == "Stat":
+            if not isinstance(rebound_value, bool):
+                raise TypeError(f"[ERROR] Function '{func_name}' must return Stat (boolean), got {type(rebound_value).__name__}")
+
+        return rebound_value
