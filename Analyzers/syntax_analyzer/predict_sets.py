@@ -596,6 +596,8 @@ PREDICT_SETS = {
     ('factor', TokenType.NOT_OP): 189,
     ('factor', TokenType.FEINT): 190,
     ('factor', TokenType.FLOATER): 190,
+    ('factor', TokenType.CHANT): 190,
+    ('factor', TokenType.STAT): 190,
     
     # <relational_operator> productions
     ('relational_operator', TokenType.LESS_THAN): 191,

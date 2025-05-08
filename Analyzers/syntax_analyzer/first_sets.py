@@ -260,7 +260,7 @@ FIRST_SETS = {
     # <array_elem>
     'array_elem': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
                   TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                  TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+                  TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <rebound_statement>
     'rebound_statement': {TokenType.REBOUND},
@@ -268,12 +268,12 @@ FIRST_SETS = {
     # <otpt>
     'otpt': {TokenType.VAR_INIT, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
             TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.LEFT_PAREN, 
-            TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+            TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <outputs>
     'outputs': {TokenType.VAR_INIT, TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
             TokenType.NEGAFLOATER, TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.LEFT_PAREN, 
-            TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+            TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <other_outputs>
     'other_outputs': {TokenType.CHANT_CONCAT},
@@ -291,12 +291,12 @@ FIRST_SETS = {
     # <expression>
     'expression': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
                   TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                  TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+                  TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <logical_expression>
     'logical_expression': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
                           TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                          TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+                          TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <more_logical>
     'more_logical': {TokenType.AND_OP, TokenType.OR_OP},
@@ -307,7 +307,7 @@ FIRST_SETS = {
     # <relational_expression>
     'relational_expression': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
                              TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                             TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+                             TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <more_relational>
     'more_relational': {TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.NOT_EQUAL, 
@@ -316,7 +316,7 @@ FIRST_SETS = {
     # <arithmetic_expression>
     'arithmetic_expression': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
                              TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                             TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+                             TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <more_term>
     'more_term': {TokenType.ADD, TokenType.SUB},
@@ -324,7 +324,7 @@ FIRST_SETS = {
     # <term>
     'term': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
             TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-            TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+            TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <more_factor>
     'more_factor': {TokenType.MUL, TokenType.DIV, TokenType.MOD},
@@ -332,7 +332,7 @@ FIRST_SETS = {
     # <factor>
     'factor': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
               TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-              TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+              TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <relational_operator>
     'relational_operator': {TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
@@ -356,7 +356,7 @@ FIRST_SETS = {
     # <assign_operand>
     'assign_operand': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
                       TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                      TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+                      TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <function_call>
     'function_call': {TokenType.LEFT_PAREN},
@@ -364,12 +364,12 @@ FIRST_SETS = {
     # <arguments>
     'arguments': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
                  TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-                 TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+                 TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <arg>
     'arg': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, TokenType.NEGAFLOATER,
            TokenType.CHANTLIT, TokenType.WIN, TokenType.LOSS, TokenType.VAR_INIT, 
-           TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER},
+           TokenType.LEFT_PAREN, TokenType.NOT_OP, TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <more_args>
     'more_args': {TokenType.COMMA},
