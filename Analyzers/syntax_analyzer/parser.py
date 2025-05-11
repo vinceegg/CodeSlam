@@ -1090,7 +1090,7 @@ class Parser:
         self.parse_dunk_function()
 
     def parse_feint_function(self) -> None:
-        """<feint_function> → Feint @identifier(<func_parameters>) {<local_decl> <function_statement> <rebound_statement>}"""
+        """<feint_function> → Feint @identifier(<func_parameters>) {<decl> <function_statement> <rebound_statement>}"""
         self.current_nonterminal = "feint_function"
         expected_tokens = self.get_expected_tokens("feint_function")
         
@@ -1103,13 +1103,13 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_local_decl()
+        self.parse_decl()
         self.parse_function_statement()
         self.parse_rebound_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT)
 
     def parse_floater_function(self) -> None:
-        """<floater_function> → Floater @identifier(<func_parameters>) { <local_decl> <function_statement> <rebound_statement>}"""
+        """<floater_function> → Floater @identifier(<func_parameters>) { <decl> <function_statement> <rebound_statement>}"""
         self.current_nonterminal = "floater_function"
         expected_tokens = self.get_expected_tokens("floater_function")
         
@@ -1122,13 +1122,13 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_local_decl()
+        self.parse_decl()
         self.parse_function_statement()
         self.parse_rebound_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT)
 
     def parse_chant_function(self) -> None:
-        """<chant_function> → Chant @identifier(<func_parameters>) {<local_decl> <function_statement> <rebound_statement>}"""
+        """<chant_function> → Chant @identifier(<func_parameters>) {<decl> <function_statement> <rebound_statement>}"""
         self.current_nonterminal = "chant_function"
         expected_tokens = self.get_expected_tokens("chant_function")
         
@@ -1141,13 +1141,13 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_local_decl()
+        self.parse_decl()
         self.parse_function_statement()
         self.parse_rebound_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT)
 
     def parse_stat_function(self) -> None:
-        """<stat_function> → Stat @identifier(<func_parameters>) {<local_decl> <function_statement> <rebound_statement>}"""
+        """<stat_function> → Stat @identifier(<func_parameters>) {<decl> <function_statement> <rebound_statement>}"""
         self.current_nonterminal = "stat_function"
         expected_tokens = self.get_expected_tokens("stat_function")
         
@@ -1160,13 +1160,13 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_local_decl()
+        self.parse_decl()
         self.parse_function_statement()
         self.parse_rebound_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT)
 
     def parse_dunk_function(self) -> None:
-        """<dunk_function> → @identifier(<func_parameters>) {<local_decl> <function_statement>}"""
+        """<dunk_function> → @identifier(<func_parameters>) {<decl> <function_statement>}"""
         self.current_nonterminal = "dunk_function"
         expected_tokens = self.get_expected_tokens("dunk_function")
         
@@ -1178,7 +1178,7 @@ class Parser:
         self.parse_func_parameters()
         self.expect(TokenType.RIGHT_PAREN)
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_local_decl()
+        self.parse_decl()
         self.parse_function_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT)
 
@@ -2135,29 +2135,29 @@ class Parser:
         self.expect(TokenType.LEFT_PAREN)
         self.expect(TokenType.RIGHT_PAREN)
         self.expect(TokenType.CODE_BLOCK_LEFT)
-        self.parse_local_decl()
+        self.parse_decl()
         self.parse_team_statement()
         self.expect(TokenType.CODE_BLOCK_RIGHT)
 
-    def parse_local_decl(self) -> None:
-        """<local_decl> → <local_declaration> <local_dec> | λ"""
-        self.current_nonterminal = "local_decl"
-        expected_tokens = self.get_expected_tokens("local_decl")
+    def parse_decl(self) -> None:
+        """<decl> → <declaration> <local_dec> | λ"""
+        self.current_nonterminal = "decl"
+        expected_tokens = self.get_expected_tokens("decl")
         
         # If we don't have a token that could be a local declaration, return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
         
-        self.parse_local_declaration()
-        self.parse_local_decl()
+        self.parse_declaration()
+        self.parse_decl()
 
-    def parse_local_declaration(self) -> None:
-        """<local_declaration> → <variable_dec> | <array_dec>"""
-        self.current_nonterminal = "local_declaration"
-        expected_tokens = self.get_expected_tokens("local_declaration")
+    def parse_declaration(self) -> None:
+        """<declaration> → <variable_dec> | <array_dec>"""
+        self.current_nonterminal = "declaration"
+        expected_tokens = self.get_expected_tokens("declaration")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("local_declaration", expected_tokens)
+            self.error_handler("declaration", expected_tokens)
 
         # ADDED
         start_line = self.line_number
@@ -2170,7 +2170,7 @@ class Parser:
 
         # ADDED
         if (self.current_token and self.line_number == start_line and 
-            any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("local_declaration"))):
+            any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("declaration"))):
             error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
             error_msg += "Multiple declarations on the same line are not allowed."
             raise SyntaxError(
@@ -2179,7 +2179,7 @@ class Parser:
                 self.column,
                 expected="Each declaration must be on a separate line",
                 token=self.current_token.value,
-                nonterminal="local_declaration"
+                nonterminal="declaration"
             )
 
     def parse_typecast_value(self) -> None:

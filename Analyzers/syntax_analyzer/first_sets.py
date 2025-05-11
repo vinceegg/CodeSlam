@@ -26,7 +26,7 @@ FIRST_SETS = {
     'feint_init': {TokenType.ASSIGN},
     
     # <feint_lit>
-    'feint_lit': {TokenType.FEINTLIT},
+    'feint_lit': {TokenType.FEINTLIT, TokenType.NEGAFEINT},
     
     # <feint_init_end>
     'feint_init_end': {TokenType.COMMA},
@@ -38,13 +38,13 @@ FIRST_SETS = {
     'more_floater': {TokenType.COMMA, TokenType.ASSIGN},
     
     # <floater_init>
-    'floater_init': {TokenType.ASSIGN, },
+    'floater_init': {TokenType.ASSIGN},
     
     # <floater_lit>
-    'floater_lit': {TokenType.FLOATERLIT},
+    'floater_lit': {TokenType.FLOATERLIT, TokenType.NEGAFLOATER},
     
     # <floater_init_end>
-    'floater_init_end': {TokenType.COMMA, },
+    'floater_init_end': {TokenType.COMMA},
     
     # <chant_dec>
     'chant_dec': {TokenType.CHANT},
@@ -53,13 +53,13 @@ FIRST_SETS = {
     'more_chant': {TokenType.COMMA, TokenType.ASSIGN},
     
     # <chant_init>
-    'chant_init': {TokenType.ASSIGN, TokenType.COMMA},
+    'chant_init': {TokenType.ASSIGN}, #CHECKED KUNG WALANG COMMA TALAGA
     
     # <chant_lit>
     'chant_lit': {TokenType.CHANTLIT},
     
     # <chant_init_end>
-    'chant_init_end': {TokenType.COMMA, },
+    'chant_init_end': {TokenType.COMMA},
     
     # <stat_dec>
     'stat_dec': {TokenType.STAT},
@@ -68,13 +68,13 @@ FIRST_SETS = {
     'more_stat': {TokenType.ASSIGN, TokenType.COMMA},
     
     # <stat_init>
-    'stat_init': {TokenType.ASSIGN, },
+    'stat_init': {TokenType.ASSIGN},
     
     # <stat_value>
     'stat_value': {TokenType.WIN, TokenType.LOSS},
     
     # <stat_init_end>
-    'stat_init_end': {TokenType.COMMA, },
+    'stat_init_end': {TokenType.COMMA},
     
     # <const_dec>
     'const_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
@@ -89,7 +89,7 @@ FIRST_SETS = {
     'feint_const': {TokenType.ASSIGN},
     
     # <feint_const_end>
-    'feint_const_end': {TokenType.COMMA, },
+    'feint_const_end': {TokenType.COMMA},
     
     # <const_floater>
     'const_floater': {TokenType.FLOATER},
@@ -101,7 +101,7 @@ FIRST_SETS = {
     'floater_const': {TokenType.ASSIGN},
     
     # <floater_const_end>
-    'floater_const_end': {TokenType.COMMA, },
+    'floater_const_end': {TokenType.COMMA},
     
     # <const_chant>
     'const_chant': {TokenType.CHANT},
@@ -113,7 +113,7 @@ FIRST_SETS = {
     'chant_const': {TokenType.ASSIGN},
     
     # <chant_const_end>
-    'chant_const_end': {TokenType.COMMA, },
+    'chant_const_end': {TokenType.COMMA},
     
     # <const_stat>
     'const_stat': {TokenType.STAT},
@@ -125,7 +125,7 @@ FIRST_SETS = {
     'stat_const': {TokenType.ASSIGN},
     
     # <stat_const_end>
-    'stat_const_end': {TokenType.COMMA, },
+    'stat_const_end': {TokenType.COMMA},
     
     # <array_dec>
     'array_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT},
@@ -134,19 +134,19 @@ FIRST_SETS = {
     'feint_array': {TokenType.FEINT},
     
     # <2D_array>
-    '2D_array': {TokenType.ARRAY_INDEX_LEFT, },
+    '2D_array': {TokenType.ARRAY_INDEX_LEFT},
     
     # <feint_array_init>
-    'feint_array_init': {TokenType.ASSIGN, },
+    'feint_array_init': {TokenType.ASSIGN},
     
     # <feint_row>
     'feint_row': {TokenType.FEINTLIT, TokenType.CODE_BLOCK_LEFT},
     
     # <2D_feint_row>
-    '2D_feint_row': {TokenType.COMMA, },
+    '2D_feint_row': {TokenType.COMMA},
     
     # <more_feint_lit>
-    'more_feint_lit': {TokenType.COMMA, },
+    'more_feint_lit': {TokenType.COMMA},
     
     # <floater_array>
     'floater_array': {TokenType.FLOATER},
@@ -158,30 +158,30 @@ FIRST_SETS = {
     'floater_row': {TokenType.FLOATERLIT, TokenType.CODE_BLOCK_LEFT},
     
     # <2D_floater_row>
-    '2D_floater_row': {TokenType.COMMA, },
+    '2D_floater_row': {TokenType.COMMA},
     
     # <more_floater_lit>
-    'more_floater_lit': {TokenType.COMMA, },
+    'more_floater_lit': {TokenType.COMMA},
     
     # <chant_array>
     'chant_array': {TokenType.CHANT},
     
     # <chant_array_init>
-    'chant_array_init': {TokenType.ASSIGN, },
+    'chant_array_init': {TokenType.ASSIGN},
     
     # <chant_row>
     'chant_row': {TokenType.CHANTLIT, TokenType.CODE_BLOCK_LEFT},
     
     # <2D_chant_row>
-    '2D_chant_row': {TokenType.COMMA, },
+    '2D_chant_row': {TokenType.COMMA},
     
     # <more_chant_lit>
-    'more_chant_lit': {TokenType.COMMA, },
+    'more_chant_lit': {TokenType.COMMA},
 
     'array_size': {TokenType.VAR_INIT, TokenType.FEINTLIT},
     
     # <function_def>
-    'function_def': {TokenType.WILT, TokenType.DUNK, },
+    'function_def': {TokenType.WILT, TokenType.DUNK},
     
     # <function_declared>
     'function_declared': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
@@ -205,10 +205,10 @@ FIRST_SETS = {
     'dunk_function': {TokenType.VAR_INIT},
     
     # <func_parameters>
-    'func_parameters': {TokenType.VAR_INIT, },
+    'func_parameters': {TokenType.VAR_INIT},
     
     # <param_end>
-    'param_end': {TokenType.COMMA, },
+    'param_end': {TokenType.COMMA},
     
     # <function_statement>
     'function_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, TokenType.FORWARD, 
@@ -244,9 +244,9 @@ FIRST_SETS = {
     'run_play_statement': {TokenType.RUN},
     
     # <follow_statement>
-    'follow_statement': {TokenType.INCREMENT, TokenType.DECREMENT, TokenType.ASSIGN, 
+    'follow_statement': {TokenType.INCREMENT, TokenType.DECREMENT, TokenType.LEFT_PAREN, TokenType.ASSIGN, 
                         TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN, TokenType.MUL_ASSIGN, 
-                        TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN, TokenType.ARRAY_INDEX_LEFT, TokenType.VAR_INIT},
+                        TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN, TokenType.ARRAY_INDEX_LEFT, TokenType.VAR_INIT}, #BALIKAN array var init
 
     # <element_index>
     'element_index': {TokenType.FEINTLIT, TokenType.VAR_INIT},
@@ -441,17 +441,16 @@ FIRST_SETS = {
     # <team_block>
     'team_block': {TokenType.TEAM},
     
-    # <local_decl>
-    'local_decl': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ZONE},
+    # <decl>
+    'decl': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ZONE},
     
-    # <local_declaration>
-    'local_declaration': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ZONE},
+    # <declaration>
+    'declaration': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, TokenType.ZONE},
     
     # <typecast_value>
     'typecast_value': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.CHANTLIT, TokenType.WIN, 
                       TokenType.LOSS, TokenType.VAR_INIT},
 
-    # <typecast_value>
+    # <follow_factor>
     'follow_factor': {TokenType.LEFT_PAREN, TokenType.ARRAY_INDEX_LEFT}
-
 }

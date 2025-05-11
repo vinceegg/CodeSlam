@@ -42,6 +42,7 @@ PREDICT_SETS = {
     
     # <more_feint> productions
     ('more_feint', TokenType.SEMICOLON): 12,
+    ('more_feint', TokenType.COMMA): 12,
     ('more_feint', TokenType.ASSIGN): 13,
     
     # <feint_init> productions
@@ -51,760 +52,767 @@ PREDICT_SETS = {
     
     # <feint_lit> productions
     ('feint_lit', TokenType.FEINTLIT): 16,
+    ('feint_lit', TokenType.NEGAFEINT): 17,
     
     # <feint_init_end> productions
-    ('feint_init_end', TokenType.SEMICOLON): 17,
-    ('feint_init_end', TokenType.COMMA): 18,
+    ('feint_init_end', TokenType.SEMICOLON): 18,
+    ('feint_init_end', TokenType.COMMA): 19,
     
     # <floater_dec> productions
-    ('floater_dec', TokenType.FLOATER): 19,
+    ('floater_dec', TokenType.FLOATER): 20,
     
     # <more_floater> productions
-    ('more_floater', TokenType.SEMICOLON): 20,
-    ('more_floater', TokenType.ASSIGN): 21,
+    ('more_floater', TokenType.SEMICOLON): 21,
+    ('more_floater', TokenType.COMMA): 21,
+    ('more_floater', TokenType.ASSIGN): 22,
     
     # <floater_init> productions
-    ('floater_init', TokenType.SEMICOLON): 22,
-    ('floater_init', TokenType.COMMA): 22,
-    ('floater_init', TokenType.ASSIGN): 23,
+    ('floater_init', TokenType.SEMICOLON): 23,
+    ('floater_init', TokenType.COMMA): 23,
+    ('floater_init', TokenType.ASSIGN): 24,
     
     # <floater_lit> productions
-    ('floater_lit', TokenType.FLOATERLIT): 24,
+    ('floater_lit', TokenType.FLOATERLIT): 25,
+    ('floater_lit', TokenType.NEGAFLOATER): 26,
     
     # <floater_init_end> productions
-    ('floater_init_end', TokenType.SEMICOLON): 25,
-    ('floater_init_end', TokenType.COMMA): 26,
+    ('floater_init_end', TokenType.SEMICOLON): 27,
+    ('floater_init_end', TokenType.COMMA): 28,
     
     # <chant_dec> productions
-    ('chant_dec', TokenType.CHANT): 27,
+    ('chant_dec', TokenType.CHANT): 29,
     
     # <more_chant> productions
-    ('more_chant', TokenType.SEMICOLON): 28,
-    ('more_chant', TokenType.ASSIGN): 29,
+    ('more_chant', TokenType.SEMICOLON): 30,
+    ('more_chant', TokenType.COMMA): 30,
+    ('more_chant', TokenType.ASSIGN): 31,
     
     # <chant_init> productions
-    ('chant_init', TokenType.SEMICOLON): 30,
-    ('chant_init', TokenType.COMMA): 30,
-    ('chant_init', TokenType.ASSIGN): 31,
+    ('chant_init', TokenType.SEMICOLON): 32,
+    ('chant_init', TokenType.COMMA): 32,
+    ('chant_init', TokenType.ASSIGN): 33,
     
     # <chant_lit> productions
-    ('chant_lit', TokenType.CHANTLIT): 32,
+    ('chant_lit', TokenType.CHANTLIT): 34,
     
     # <chant_init_end> productions
-    ('chant_init_end', TokenType.SEMICOLON): 33,
-    ('chant_init_end', TokenType.COMMA): 34,
+    ('chant_init_end', TokenType.SEMICOLON): 35,
+    ('chant_init_end', TokenType.COMMA): 36,
     
     # <stat_dec> productions
-    ('stat_dec', TokenType.STAT): 35,
+    ('stat_dec', TokenType.STAT): 37,
     
     # <more_stat> productions
-    ('more_stat', TokenType.SEMICOLON): 36,
-    ('more_stat', TokenType.COMMA): 37,
+    ('more_stat', TokenType.SEMICOLON): 38,
+    ('more_stat', TokenType.COMMA): 38,
+    ('more_stat', TokenType.ASSIGN): 39,
     
     # <stat_init> productions
-    ('stat_init', TokenType.SEMICOLON): 38,
-    ('stat_init', TokenType.COMMA): 38,
-    ('stat_init', TokenType.ASSIGN): 39,
+    ('stat_init', TokenType.SEMICOLON): 40,
+    ('stat_init', TokenType.COMMA): 40,
+    ('stat_init', TokenType.ASSIGN): 41,
     
     # <stat_value> productions
-    ('stat_value', TokenType.WIN): 40,
-    ('stat_value', TokenType.LOSS): 41,
+    ('stat_value', TokenType.WIN): 42,
+    ('stat_value', TokenType.LOSS): 43,
     
     # <stat_init_end> productions
-    ('stat_init_end', TokenType.SEMICOLON): 42,
-    ('stat_init_end', TokenType.COMMA): 43,
-    
+    ('stat_init_end', TokenType.SEMICOLON): 44,
+    ('stat_init_end', TokenType.COMMA): 45,
+
     # <const_dec> productions
-    ('const_dec', TokenType.FEINT): 44,
-    ('const_dec', TokenType.FLOATER): 45,
-    ('const_dec', TokenType.CHANT): 46,
-    ('const_dec', TokenType.STAT): 47,
+    ('const_dec', TokenType.FEINT): 46,
+    ('const_dec', TokenType.FLOATER): 47,
+    ('const_dec', TokenType.CHANT): 48,
+    ('const_dec', TokenType.FEINT): 49,
+    ('const_dec', TokenType.FLOATER): 49,
+    ('const_dec', TokenType.CHANT): 49,
+    ('const_dec', TokenType.STAT): 49,
+    ('const_dec', TokenType.CONST): 49,
+    ('const_dec', TokenType.ZONE): 49,
+    ('const_dec', TokenType.WILT): 49,
+    ('const_dec', TokenType.DUNK): 49,
+    ('const_dec', TokenType.TEAM): 49,
     
     # <const_feint> productions
-    ('const_feint', TokenType.FEINT): 48,
+    ('const_feint', TokenType.FEINT): 50,
     
     # <feint_const_init> productions
-    ('feint_const_init', TokenType.ASSIGN): 49,
+    ('feint_const_init', TokenType.ASSIGN): 51,
     
     # <feint_const> productions
-    ('feint_const', TokenType.ASSIGN): 50,
+    ('feint_const', TokenType.ASSIGN): 52,
     
     # <feint_const_end> productions
-    ('feint_const_end', TokenType.COMMA): 51,
-    ('feint_const_end', TokenType.SEMICOLON): 52,
+    ('feint_const_end', TokenType.COMMA): 53,
+    ('feint_const_end', TokenType.SEMICOLON): 54,
     
     # <const_floater> productions
-    ('const_floater', TokenType.FLOATER): 53,
+    ('const_floater', TokenType.FLOATER): 55,
     
     # <floater_const_init> productions
-    ('floater_const_init', TokenType.ASSIGN): 54,
+    ('floater_const_init', TokenType.ASSIGN): 56,
     
     # <floater_const> productions
-    ('floater_const', TokenType.ASSIGN): 55,
+    ('floater_const', TokenType.ASSIGN): 57,
     
     # <floater_const_end> productions
-    ('floater_const_end', TokenType.COMMA): 56,
-    ('floater_const_end', TokenType.SEMICOLON): 57,
+    ('floater_const_end', TokenType.COMMA): 58,
+    ('floater_const_end', TokenType.SEMICOLON): 59,
     
     # <const_chant> productions
-    ('const_chant', TokenType.CHANT): 58,
+    ('const_chant', TokenType.CHANT): 60,
     
     # <chant_const_init> productions
-    ('chant_const_init', TokenType.ASSIGN): 59,
+    ('chant_const_init', TokenType.ASSIGN): 61,
     
     # <chant_const> productions
-    ('chant_const', TokenType.ASSIGN): 60,
+    ('chant_const', TokenType.ASSIGN): 62,
     
     # <chant_const_end> productions
-    ('chant_const_end', TokenType.COMMA): 61,
-    ('chant_const_end', TokenType.SEMICOLON): 62,
+    ('chant_const_end', TokenType.COMMA): 63,
+    ('chant_const_end', TokenType.SEMICOLON): 64,
     
     # <const_stat> productions
-    ('const_stat', TokenType.STAT): 63,
+    ('const_stat', TokenType.STAT): 65,
     
     # <stat_const_init> productions
-    ('stat_const_init', TokenType.ASSIGN): 64,
+    ('stat_const_init', TokenType.ASSIGN): 66,
     
     # <stat_const> productions
-    ('stat_const', TokenType.ASSIGN): 65,
+    ('stat_const', TokenType.ASSIGN): 67,
     
     # <stat_const_end> productions
-    ('stat_const_end', TokenType.COMMA): 66,
-    ('stat_const_end', TokenType.SEMICOLON): 67,
+    ('stat_const_end', TokenType.COMMA): 68,
+    ('stat_const_end', TokenType.SEMICOLON): 69,
     
     # <array_dec> productions
-    ('array_dec', TokenType.FEINT): 68,
-    ('array_dec', TokenType.FLOATER): 69,
-    ('array_dec', TokenType.CHANT): 70,
+    ('array_dec', TokenType.FEINT): 70,
+    ('array_dec', TokenType.FLOATER): 71,
+    ('array_dec', TokenType.CHANT): 72,
     
     # <feint_array> productions
-    ('feint_array', TokenType.FEINT): 71,
+    ('feint_array', TokenType.FEINT): 73,
+    
+    # <array_size> productions
+    ('array_size', TokenType.FEINTLIT): 74,
+    ('array_size', TokenType.VAR_INIT): 75,
     
     # <2D_array> productions
-    ('2D_array', TokenType.SEMICOLON): 72,
-    ('2D_array', TokenType.ARRAY_INDEX_LEFT): 73,
+    ('2D_array', TokenType.ASSIGN): 76,
+    ('2D_array', TokenType.SEMICOLON): 76,
+    ('2D_array', TokenType.ARRAY_INDEX_LEFT): 77,
     
     # <feint_array_init> productions
-    ('feint_array_init', TokenType.SEMICOLON): 74,
-    ('feint_array_init', TokenType.ASSIGN): 75,
+    ('feint_array_init', TokenType.SEMICOLON): 78,
+    ('feint_array_init', TokenType.ASSIGN): 79,
     
     # <feint_row> productions
-    ('feint_row', TokenType.FEINTLIT): 76,
-
-     # <feint_row> productions 
-    ('feint_row', TokenType.CODE_BLOCK_RIGHT): 77,
+    ('feint_row', TokenType.FEINTLIT): 80,
+    ('feint_row', TokenType.CODE_BLOCK_LEFT): 81,
     
     # <2D_feint_row> productions
-    ('2D_feint_row', TokenType.CODE_BLOCK_RIGHT): 78,
-    ('2D_feint_row', TokenType.COMMA): 79,
+    ('2D_feint_row', TokenType.CODE_BLOCK_RIGHT): 82,
+    ('2D_feint_row', TokenType.COMMA): 83,
     
     # <more_feint_lit> productions
-    ('more_feint_lit', TokenType.CODE_BLOCK_RIGHT): 80,
-    ('more_feint_lit', TokenType.RIGHT_PAREN): 80,
-    ('more_feint_lit', TokenType.COMMA): 81,
+    ('more_feint_lit', TokenType.CODE_BLOCK_RIGHT): 84,
+    ('more_feint_lit', TokenType.COMMA): 85,
     
     # <floater_array> productions
-    ('floater_array', TokenType.FLOATER): 82,
+    ('floater_array', TokenType.FLOATER): 86,
     
     # <floater_array_init> productions
-    ('floater_array_init', TokenType.SEMICOLON): 83,
-    ('floater_array_init', TokenType.ASSIGN): 84,
+    ('floater_array_init', TokenType.SEMICOLON): 87,
+    ('floater_array_init', TokenType.ASSIGN): 88,
     
     # <floater_row> productions
-    ('floater_row', TokenType.FLOATERLIT): 85,
-    ('floater_row', TokenType.CODE_BLOCK_RIGHT): 86,
+    ('floater_row', TokenType.FLOATERLIT): 89,
+    ('floater_row', TokenType.CODE_BLOCK_LEFT): 90,
     
     # <2D_floater_row> productions
-    ('2D_floater_row', TokenType.CODE_BLOCK_RIGHT): 87,
-    ('2D_floater_row', TokenType.COMMA): 88,
+    ('2D_floater_row', TokenType.CODE_BLOCK_RIGHT): 91,
+    ('2D_floater_row', TokenType.COMMA): 92,
     
     # <more_floater_lit> productions
-    ('more_floater_lit', TokenType.CODE_BLOCK_RIGHT): 89,
-    ('more_floater_lit', TokenType.RIGHT_PAREN): 89,
-    ('more_floater_lit', TokenType.COMMA): 90,
+    ('more_floater_lit', TokenType.CODE_BLOCK_RIGHT): 93,
+    ('more_floater_lit', TokenType.COMMA): 94,
     
     # <chant_array> productions
-    ('chant_array', TokenType.CHANT): 91,
+    ('chant_array', TokenType.CHANT): 95,
     
     # <chant_array_init> productions
-    ('chant_array_init', TokenType.SEMICOLON): 92,
-    ('chant_array_init', TokenType.ASSIGN): 93,
+    ('chant_array_init', TokenType.SEMICOLON): 96,
+    ('chant_array_init', TokenType.ASSIGN): 97,
     
     # <chant_row> productions
-    ('chant_row', TokenType.CHANTLIT): 94,
-    ('chant_row', TokenType.CODE_BLOCK_RIGHT): 95,
+    ('chant_row', TokenType.CHANTLIT): 98,
+    ('chant_row', TokenType.CODE_BLOCK_LEFT): 99,
     
     # <2D_chant_row> productions
-    ('2D_chant_row', TokenType.CODE_BLOCK_RIGHT): 96,
-    ('2D_chant_row', TokenType.COMMA): 97,
+    ('2D_chant_row', TokenType.CODE_BLOCK_RIGHT): 100,
+    ('2D_chant_row', TokenType.COMMA): 101,
     
     # <more_chant_lit> productions
-    ('more_chant_lit', TokenType.CODE_BLOCK_RIGHT): 98,
-    ('more_chant_lit', TokenType.RIGHT_PAREN): 98,
-    ('more_chant_lit', TokenType.COMMA): 99,
+    ('more_chant_lit', TokenType.CODE_BLOCK_RIGHT): 102,
+    ('more_chant_lit', TokenType.COMMA): 103,
     
     # <function_def> productions
-    ('function_def', TokenType.TEAM): 100,
-    ('function_def', TokenType.WILT): 101,
-    ('function_def', TokenType.DUNK): 102,
+    ('function_def', TokenType.TEAM): 104,
+    ('function_def', TokenType.WILT): 105,
+
+     # <function_def> productions
+    ('function_def', TokenType.DUNK): 106,
     
     # <function_declared> productions
-    ('function_declared', TokenType.FEINT): 103,
-    ('function_declared', TokenType.FLOATER): 104,
-    ('function_declared', TokenType.CHANT): 105,
-    ('function_declared', TokenType.STAT): 106,
+    ('function_declared', TokenType.FEINT): 107,
+    ('function_declared', TokenType.FLOATER): 108,
+    ('function_declared', TokenType.CHANT): 109,
+    ('function_declared', TokenType.STAT): 110,
     
     # <dunk_func_declared> productions
-    ('dunk_func_declared', TokenType.VAR_INIT): 107,
+    ('dunk_func_declared', TokenType.VAR_INIT): 111,
     
     # <feint_function> productions
-    ('feint_function', TokenType.FEINT): 108,
+    ('feint_function', TokenType.FEINT): 112,
     
     # <floater_function> productions
-    ('floater_function', TokenType.FLOATER): 109,
+    ('floater_function', TokenType.FLOATER): 113,
     
     # <chant_function> productions
-    ('chant_function', TokenType.CHANT): 110,
+    ('chant_function', TokenType.CHANT): 114,
     
     # <stat_function> productions
-    ('stat_function', TokenType.STAT): 111,
+    ('stat_function', TokenType.STAT): 115,
     
     # <dunk_function> productions
-    ('dunk_function', TokenType.VAR_INIT): 112,
+    ('dunk_function', TokenType.VAR_INIT): 116,
     
     # <func_parameters> productions
-    ('func_parameters', TokenType.RIGHT_PAREN): 113,
-    ('func_parameters', TokenType.VAR_INIT): 114,
+    ('func_parameters', TokenType.RIGHT_PAREN): 117,
+    ('func_parameters', TokenType.VAR_INIT): 118,
     
     # <param_end> productions
-    ('param_end', TokenType.COMMA): 115,
-    ('param_end', TokenType.RIGHT_PAREN): 116,
+    ('param_end', TokenType.COMMA): 119,
+    ('param_end', TokenType.RIGHT_PAREN): 120,
+    
+    # <decl> productions
+    ('decl', TokenType.FEINT): 121,
+    ('decl', TokenType.FLOATER): 121,
+    ('decl', TokenType.CHANT): 121,
+    ('decl', TokenType.STAT): 121,
+    ('decl', TokenType.ZONE): 121,
+    ('decl', TokenType.ANNOUNCE): 122,
+    ('decl', TokenType.INBOUND): 122,
+    ('decl', TokenType.DRIBBLE): 122,
+    ('decl', TokenType.SWITCH): 122,
+    ('decl', TokenType.FORWARD): 122,
+    ('decl', TokenType.PLAY): 122,
+    ('decl', TokenType.RUN): 122,
+    ('decl', TokenType.VAR_INIT): 122,
+    ('decl', TokenType.REBOUND): 122,
+    
+    # <declaration> productions
+    ('declaration', TokenType.FEINT): 123,
+    ('declaration', TokenType.FLOATER): 123,
+    ('declaration', TokenType.CHANT): 123,
+    ('declaration', TokenType.STAT): 123,
+    ('declaration', TokenType.ZONE): 124,
     
     # <function_statement> productions
-    ('function_statement', TokenType.FEINT): 117,
-    ('function_statement', TokenType.FLOATER): 117,
-    ('function_statement', TokenType.CHANT): 117,
-    ('function_statement', TokenType.STAT): 117,
-    ('function_statement', TokenType.ANNOUNCE): 117,
-    ('function_statement', TokenType.INBOUND): 117,
-    ('function_statement', TokenType.DRIBBLE): 117,
-    ('function_statement', TokenType.SWITCH): 117,
-    ('function_statement', TokenType.FORWARD): 117,
-    ('function_statement', TokenType.PLAY): 117,
-    ('function_statement', TokenType.RUN): 117,
-    ('function_statement', TokenType.VAR_INIT): 117,
-    ('function_statement', TokenType.REBOUND): 118,
-    ('function_statement', TokenType.CODE_BLOCK_RIGHT): 118,
-    
-    # <team_statement> productions
-    ('team_statement', TokenType.FEINT): 119,
-    ('team_statement', TokenType.FLOATER): 119,
-    ('team_statement', TokenType.CHANT): 119,
-    ('team_statement', TokenType.STAT): 119,
-    ('team_statement', TokenType.ANNOUNCE): 119,
-    ('team_statement', TokenType.INBOUND): 119,
-    ('team_statement', TokenType.DRIBBLE): 119,
-    ('team_statement', TokenType.SWITCH): 119,
-    ('team_statement', TokenType.FORWARD): 119,
-    ('team_statement', TokenType.PLAY): 119,
-    ('team_statement', TokenType.RUN): 119,
-    ('team_statement', TokenType.VAR_INIT): 119,
-    ('team_statement', TokenType.TIMEOUT): 120,
-    ('team_statement', TokenType.DEFAULT): 120,
-    ('team_statement', TokenType.CODE_BLOCK_RIGHT): 120,
-    
-    # <statement> productions
-    ('statement', TokenType.FEINT): 121,
-    ('statement', TokenType.FLOATER): 121,
-    ('statement', TokenType.CHANT): 121,
-    ('statement', TokenType.STAT): 121,
-    ('statement', TokenType.ANNOUNCE): 122,
-    ('statement', TokenType.INBOUND): 123,
-    ('statement', TokenType.DRIBBLE): 124,
-    ('statement', TokenType.SWITCH): 125,
-    ('statement', TokenType.FORWARD): 126,
-    ('statement', TokenType.PLAY): 127,
-    ('statement', TokenType.RUN): 128,
-    ('statement', TokenType.VAR_INIT): 129,
-    
-    # <follow_statement> productions
-    ('follow_statement', TokenType.INCREMENT): 130,
-    ('follow_statement', TokenType.DECREMENT): 131,
-    ('follow_statement', TokenType.LEFT_PAREN): 132,
-    ('follow_statement', TokenType.ASSIGN): 133,
-    ('follow_statement', TokenType.ADD_ASSIGN): 134,
-    ('follow_statement', TokenType.SUB_ASSIGN): 135,
-    ('follow_statement', TokenType.MUL_ASSIGN): 136,
-    ('follow_statement', TokenType.DIV_ASSIGN): 137,
-    ('follow_statement', TokenType.MOD_ASSIGN): 138,
-    ('follow_statement', TokenType.ARRAY_INDEX_LEFT): 139,
-    
-    # <element_index> productions
-    ('element_index', TokenType.FEINTLIT): 140,
-    ('element_index', TokenType.FLOATERLIT): 140,
-    ('element_index', TokenType.NEGAFEINT): 140,
-    ('element_index', TokenType.NEGAFLOATER): 140,
-    ('element_index', TokenType.CHANTLIT): 140,
-    ('element_index', TokenType.WIN): 140,
-    ('element_index', TokenType.LOSS): 140,
-    ('element_index', TokenType.VAR_INIT): 140,
-    ('element_index', TokenType.LEFT_PAREN): 140,
-    ('element_index', TokenType.NOT_OP): 140,
-    ('element_index', TokenType.FEINT): 140,
-    ('element_index', TokenType.FLOATER): 140,
-
-    # <2d_manipulation> productions
-    ('2d_manipulation', TokenType.ARRAY_INDEX_LEFT): 141,
-    ('2d_manipulation', TokenType.ASSIGN): 142,
-    ('2d_manipulation', TokenType.SEMICOLON): 142,
-    
-    # <array_man> productions
-    ('array_man', TokenType.ASSIGN): 143,
-    ('array_man', TokenType.SEMICOLON): 144,
-    
-    # <array_elem> productions
-    ('array_elem', TokenType.FEINTLIT): 145,
-    ('array_elem', TokenType.FLOATERLIT): 145,
-    ('array_elem', TokenType.NEGAFEINT): 145,
-    ('array_elem', TokenType.NEGAFLOATER): 145,
-    ('array_elem', TokenType.CHANTLIT): 145,
-    ('array_elem', TokenType.WIN): 145,
-    ('array_elem', TokenType.LOSS): 145,
-    ('array_elem', TokenType.VAR_INIT): 145,
-    ('array_elem', TokenType.LEFT_PAREN): 145,
-    ('array_elem', TokenType.NOT_OP): 145,
-    ('array_elem', TokenType.FEINT): 145,
-    ('array_elem', TokenType.FLOATER): 145,
+    ('function_statement', TokenType.ANNOUNCE): 125,
+    ('function_statement', TokenType.INBOUND): 125,
+    ('function_statement', TokenType.DRIBBLE): 125,
+    ('function_statement', TokenType.SWITCH): 125,
+    ('function_statement', TokenType.FORWARD): 125,
+    ('function_statement', TokenType.PLAY): 125,
+    ('function_statement', TokenType.RUN): 125,
+    ('function_statement', TokenType.VAR_INIT): 125,
+    ('function_statement', TokenType.REBOUND): 126,
+    ('function_statement', TokenType.CODE_BLOCK_RIGHT): 126,
     
     # <rebound_statement> productions
-    ('rebound_statement', TokenType.REBOUND): 146,
+    ('rebound_statement', TokenType.REBOUND): 127,
     
-    # <announce_statement> productions
-    ('announce_statement', TokenType.ANNOUNCE): 150,
+    # <statement> productions
+    ('statement', TokenType.ANNOUNCE): 128,
+    ('statement', TokenType.INBOUND): 129,
+    ('statement', TokenType.DRIBBLE): 130,
+    ('statement', TokenType.SWITCH): 131,
+    ('statement', TokenType.FORWARD): 132,
+    ('statement', TokenType.PLAY): 133,
+    ('statement', TokenType.RUN): 134,
+    ('statement', TokenType.VAR_INIT): 135,
     
-    # <otpt> productions
-    ('otpt', TokenType.FEINTLIT): 151,
-    ('otpt', TokenType.FLOATERLIT): 151,
-    ('otpt', TokenType.NEGAFEINT): 151,
-    ('otpt', TokenType.NEGAFLOATER): 151,
-    ('otpt', TokenType.CHANTLIT): 151,
-    ('otpt', TokenType.WIN): 151,
-    ('otpt', TokenType.LOSS): 151,
-    ('otpt', TokenType.VAR_INIT): 151,
-    
-    # <outputs> productions
-    ('outputs', TokenType.VAR_INIT): 152,
-
-    # <otpts> productions
-    ('otpts', TokenType.RIGHT_PAREN): 153,
-    ('otpts', TokenType.CHANT_CONCAT): 153,
-    ('otpts', TokenType.ARRAY_INDEX_LEFT): 154,
-
-    ('outputs', TokenType.FEINTLIT): 155,
-    ('outputs', TokenType.FLOATERLIT): 155,
-    ('outputs', TokenType.NEGAFEINT): 155,
-    ('outputs', TokenType.NEGAFLOATER): 155,
-    ('outputs', TokenType.CHANTLIT): 155,
-    ('outputs', TokenType.WIN): 155,
-    ('outputs', TokenType.LOSS): 155,
-    ('outputs', TokenType.FEINTLIT): 156,
-    ('outputs', TokenType.FLOATERLIT): 156,
-    ('outputs', TokenType.NEGAFEINT): 156,
-    ('outputs', TokenType.NEGAFLOATER): 156,
-    ('outputs', TokenType.CHANTLIT): 156,
-    ('outputs', TokenType.WIN): 156,
-    ('outputs', TokenType.LOSS): 156,
-    ('outputs', TokenType.VAR_INIT): 156,
-    ('outputs', TokenType.LEFT_PAREN): 156,
-    ('outputs', TokenType.NOT_OP): 156,
-    ('outputs', TokenType.FEINT): 156,
-    ('outputs', TokenType.FLOATER): 156,
-    ('outputs', TokenType.WIN): 157,
-    ('outputs', TokenType.LOSS): 157,
-    
-    # <other_outputs> productions
-    ('other_outputs', TokenType.RIGHT_PAREN): 158,
-    ('other_outputs', TokenType.CHANT_CONCAT): 159,
-    
-    # <literal> productions
-    ('literal', TokenType.FEINTLIT): 160,
-    ('literal', TokenType.FLOATERLIT): 161,
-    ('literal', TokenType.NEGAFEINT): 162,
-    ('literal', TokenType.NEGAFLOATER): 163,
-    ('literal', TokenType.CHANTLIT): 164,
-    ('literal', TokenType.WIN): 165,
-    ('literal', TokenType.LOSS): 165,
-    
-    # <nega_feint_lit> productions
-    ('nega_feint_lit', TokenType.NEGAFEINT): 166,
-    
-    # <nega_floater_lit> productions
-    ('nega_floater_lit', TokenType.NEGAFLOATER): 167,
-    
-    # <expression> productions
-    ('expression', TokenType.FEINTLIT): 168,
-    ('expression', TokenType.FLOATERLIT): 168,
-    ('expression', TokenType.NEGAFEINT): 168,
-    ('expression', TokenType.NEGAFLOATER): 168,
-    ('expression', TokenType.CHANTLIT): 168,
-    ('expression', TokenType.WIN): 168,
-    ('expression', TokenType.LOSS): 168,
-    ('expression', TokenType.VAR_INIT): 168,
-    ('expression', TokenType.LEFT_PAREN): 168,
-    ('expression', TokenType.NOT_OP): 168,
-    ('expression', TokenType.FEINT): 168,
-    ('expression', TokenType.FLOATER): 168,
-    
-    # <logical_expression> productions
-    ('logical_expression', TokenType.FEINTLIT): 169,
-    ('logical_expression', TokenType.FLOATERLIT): 169,
-    ('logical_expression', TokenType.NEGAFEINT): 169,
-    ('logical_expression', TokenType.NEGAFLOATER): 169,
-    ('logical_expression', TokenType.CHANTLIT): 169,
-    ('logical_expression', TokenType.WIN): 169,
-    ('logical_expression', TokenType.LOSS): 169,
-    ('logical_expression', TokenType.VAR_INIT): 169,
-    ('logical_expression', TokenType.LEFT_PAREN): 169,
-    ('logical_expression', TokenType.NOT_OP): 169,
-    ('logical_expression', TokenType.FEINT): 169,
-    ('logical_expression', TokenType.FLOATER): 169,
-    
-    # <more_logical> productions
-    ('more_logical', TokenType.AND_OP): 170,
-    ('more_logical', TokenType.OR_OP): 170,
-    ('more_logical', TokenType.RIGHT_PAREN): 171,
-    ('more_logical', TokenType.SEMICOLON): 171,
-    ('more_logical', TokenType.COMMA): 171,
-    ('more_logical', TokenType.CODE_BLOCK_RIGHT): 171,
-    ('more_logical', TokenType.ARRAY_INDEX_RIGHT): 171,
-    ('more_logical', TokenType.COLON): 171,
-
-    # <log_operator> productions
-    ('log_operator', TokenType.AND_OP): 172,
-    ('log_operator', TokenType.OR_OP): 173,
-    
-    # <relational_expression> productions
-    ('relational_expression', TokenType.FEINTLIT): 174,
-    ('relational_expression', TokenType.FLOATERLIT): 174,
-    ('relational_expression', TokenType.NEGAFEINT): 174,
-    ('relational_expression', TokenType.NEGAFLOATER): 174,
-    ('relational_expression', TokenType.CHANTLIT): 174,
-    ('relational_expression', TokenType.WIN): 174,
-    ('relational_expression', TokenType.LOSS): 174,
-    ('relational_expression', TokenType.VAR_INIT): 174,
-    ('relational_expression', TokenType.LEFT_PAREN): 174,
-    ('relational_expression', TokenType.NOT_OP): 174,
-    ('relational_expression', TokenType.FEINT): 174,
-    ('relational_expression', TokenType.FLOATER): 174,
-    
-    # <more_relational> productions
-    ('more_relational', TokenType.LESS_THAN): 175,
-    ('more_relational', TokenType.GREATER_THAN): 175,
-    ('more_relational', TokenType.EQUAL): 175,
-    ('more_relational', TokenType.LESS_EQUAL): 175,
-    ('more_relational', TokenType.GREATER_EQUAL): 175,
-    ('more_relational', TokenType.NOT_EQUAL): 175,
-
-    ('more_relational', TokenType.AND_OP): 176,
-    ('more_relational', TokenType.OR_OP): 176,
-    ('more_relational', TokenType.RIGHT_PAREN): 176,
-    ('more_relational', TokenType.SEMICOLON): 176,
-    ('more_relational', TokenType.COMMA): 176,
-    ('more_relational', TokenType.CODE_BLOCK_RIGHT): 176,
-    ('more_relational', TokenType.ARRAY_INDEX_RIGHT): 176,
-    ('more_relational', TokenType.COLON): 176,
-    
-    # <arithmetic_expression> productions
-    ('arithmetic_expression', TokenType.FEINTLIT): 177,
-    ('arithmetic_expression', TokenType.FLOATERLIT): 177,
-    ('arithmetic_expression', TokenType.NEGAFEINT): 177,
-    ('arithmetic_expression', TokenType.NEGAFLOATER): 177,
-    ('arithmetic_expression', TokenType.CHANTLIT): 177,
-    ('arithmetic_expression', TokenType.WIN): 177,
-    ('arithmetic_expression', TokenType.LOSS): 177,
-    ('arithmetic_expression', TokenType.VAR_INIT): 177,
-    ('arithmetic_expression', TokenType.LEFT_PAREN): 177,
-    ('arithmetic_expression', TokenType.NOT_OP): 177,
-    ('arithmetic_expression', TokenType.FEINT): 177,
-    ('arithmetic_expression', TokenType.FLOATER): 177,
-    
-    # <more_term> productions
-    ('more_term', TokenType.ADD): 178,
-    ('more_term', TokenType.SUB): 179,
-    
-    ('more_term', TokenType.LESS_THAN): 180,
-    ('more_term', TokenType.GREATER_THAN): 180,
-    ('more_term', TokenType.EQUAL): 180,
-    ('more_term', TokenType.LESS_EQUAL): 180,
-    ('more_term', TokenType.GREATER_EQUAL): 180,
-    ('more_term', TokenType.NOT_EQUAL): 180,
-    ('more_term', TokenType.AND_OP): 180,
-    ('more_term', TokenType.OR_OP): 180,
-    ('more_term', TokenType.RIGHT_PAREN): 180,
-    ('more_term', TokenType.SEMICOLON): 180,
-    ('more_term', TokenType.COMMA): 180,
-    ('more_term', TokenType.CODE_BLOCK_RIGHT): 180,
-    ('more_term', TokenType.ARRAY_INDEX_RIGHT): 180,
-    ('more_term', TokenType.COLON): 180,
-    
-    # <term> productions
-    ('term', TokenType.FEINTLIT): 181,
-    ('term', TokenType.FLOATERLIT): 181,
-    ('term', TokenType.NEGAFEINT): 181,
-    ('term', TokenType.NEGAFLOATER): 181,
-    ('term', TokenType.CHANTLIT): 181,
-    ('term', TokenType.WIN): 181,
-    ('term', TokenType.LOSS): 181,
-    ('term', TokenType.VAR_INIT): 181,
-    ('term', TokenType.LEFT_PAREN): 181,
-    ('term', TokenType.NOT_OP): 181,
-    ('term', TokenType.FEINT): 181,
-    ('term', TokenType.FLOATER): 181,
-    
-    # <more_factor> productions
-    ('more_factor', TokenType.MUL): 182,
-    ('more_factor', TokenType.DIV): 183,
-    ('more_factor', TokenType.MOD): 184,
-
-    ('more_factor', TokenType.ADD): 185,
-    ('more_factor', TokenType.SUB): 185,
-    ('more_factor', TokenType.LESS_THAN): 185,
-    ('more_factor', TokenType.GREATER_THAN): 185,
-    ('more_factor', TokenType.EQUAL): 185,
-    ('more_factor', TokenType.LESS_EQUAL): 185,
-    ('more_factor', TokenType.GREATER_EQUAL): 185,
-    ('more_factor', TokenType.NOT_EQUAL): 185,
-    ('more_factor', TokenType.AND_OP): 185,
-    ('more_factor', TokenType.OR_OP): 185,
-    ('more_factor', TokenType.RIGHT_PAREN): 185,
-    ('more_factor', TokenType.SEMICOLON): 185,
-    ('more_factor', TokenType.COMMA): 185,
-    ('more_factor', TokenType.CODE_BLOCK_RIGHT): 185,
-    ('more_factor', TokenType.ARRAY_INDEX_RIGHT): 185,
-    ('more_factor', TokenType.COLON): 185,
-    
-    # <factor> productions
-    ('factor', TokenType.FEINTLIT): 186,
-    ('factor', TokenType.FLOATERLIT): 186,
-    ('factor', TokenType.NEGAFEINT): 186,
-    ('factor', TokenType.NEGAFLOATER): 186,
-    ('factor', TokenType.CHANTLIT): 186,
-    ('factor', TokenType.WIN): 186,
-    ('factor', TokenType.LOSS): 186,
-    ('factor', TokenType.VAR_INIT): 187,
-    ('factor', TokenType.LEFT_PAREN): 188,
-    ('factor', TokenType.NOT_OP): 189,
-    ('factor', TokenType.FEINT): 190,
-    ('factor', TokenType.FLOATER): 190,
-    ('factor', TokenType.CHANT): 190,
-    ('factor', TokenType.STAT): 190,
-    
-    # <relational_operator> productions
-    ('relational_operator', TokenType.LESS_THAN): 191,
-    ('relational_operator', TokenType.GREATER_THAN): 192,
-    ('relational_operator', TokenType.EQUAL): 193,
-    ('relational_operator', TokenType.LESS_EQUAL): 194,
-    ('relational_operator', TokenType.GREATER_EQUAL): 195,
-    ('relational_operator', TokenType.NOT_EQUAL): 196,
-    
-    # <number_type_cast> productions
-    ('number_type_cast', TokenType.FEINT): 197,
-    ('number_type_cast', TokenType.FLOATER): 198,
-    
-    # <feint_type_casting> productions
-    ('feint_type_casting', TokenType.FEINT): 199,
-    
-    # <floater_type_casting> productions
-    ('floater_type_casting', TokenType.FLOATER): 200,
-    
-    # <chant_type_casting> productions
-    ('chant_type_casting', TokenType.CHANT): 201,
-    
-    # <stat_type_casting> productions
-    ('stat_type_casting', TokenType.STAT): 202,
+    # <follow_statement> productions
+    ('follow_statement', TokenType.INCREMENT): 136,
+    ('follow_statement', TokenType.DECREMENT): 137,
+    ('follow_statement', TokenType.LEFT_PAREN): 138,
+    ('follow_statement', TokenType.ASSIGN): 139,
+    ('follow_statement', TokenType.ADD_ASSIGN): 140,
+    ('follow_statement', TokenType.SUB_ASSIGN): 141,
+    ('follow_statement', TokenType.MUL_ASSIGN): 142,
+    ('follow_statement', TokenType.DIV_ASSIGN): 143,
+    ('follow_statement', TokenType.MOD_ASSIGN): 144,
+    ('follow_statement', TokenType.ARRAY_INDEX_LEFT): 145,
     
     # <assign_operand> productions
-    ('assign_operand', TokenType.FEINTLIT): 203,
-    ('assign_operand', TokenType.FLOATERLIT): 203,
-    ('assign_operand', TokenType.NEGAFEINT): 203,
-    ('assign_operand', TokenType.NEGAFLOATER): 203,
-    ('assign_operand', TokenType.CHANTLIT): 203,
-    ('assign_operand', TokenType.WIN): 203,
-    ('assign_operand', TokenType.LOSS): 203,
-    ('assign_operand', TokenType.VAR_INIT): 203,
-    ('assign_operand', TokenType.LEFT_PAREN): 203,
-    ('assign_operand', TokenType.NOT_OP): 203,
-    ('assign_operand', TokenType.FEINT): 203,
-    ('assign_operand', TokenType.FLOATER): 203,
-    ('assign_operand', TokenType.VAR_INIT): 204,
+    ('assign_operand', TokenType.FEINTLIT): 146,
+    ('assign_operand', TokenType.FLOATERLIT): 146,
+    ('assign_operand', TokenType.NEGAFEINT): 146,
+    ('assign_operand', TokenType.NEGAFLOATER): 146,
+    ('assign_operand', TokenType.CHANTLIT): 146,
+    ('assign_operand', TokenType.WIN): 146,
+    ('assign_operand', TokenType.LOSS): 146,
+    ('assign_operand', TokenType.VAR_INIT): 146,
+    ('assign_operand', TokenType.LEFT_PAREN): 146,
+    ('assign_operand', TokenType.NOT_OP): 146,
+    ('assign_operand', TokenType.FEINT): 146,
+    ('assign_operand', TokenType.FLOATER): 146,
+    ('assign_operand', TokenType.CHANT): 146,
+    ('assign_operand', TokenType.STAT): 146,
+    
+    # <element_index> productions
+    ('element_index', TokenType.VAR_INIT): 147,
+    ('element_index', TokenType.FEINTLIT): 148,
+    
+    # <2d_manipulation> productions
+    ('2d_manipulation', TokenType.ARRAY_INDEX_LEFT): 149,
+    ('2d_manipulation', TokenType.ASSIGN): 150,
+    ('2d_manipulation', TokenType.MUL): 150,
+    ('2d_manipulation', TokenType.DIV): 150,
+    ('2d_manipulation', TokenType.MOD): 150,
+    ('2d_manipulation', TokenType.ADD): 150,
+    ('2d_manipulation', TokenType.SUB): 150,
+    ('2d_manipulation', TokenType.LESS_THAN): 150,
+    ('2d_manipulation', TokenType.GREATER_THAN): 150,
+    ('2d_manipulation', TokenType.EQUAL): 150,
+    ('2d_manipulation', TokenType.LESS_EQUAL): 150,
+    ('2d_manipulation', TokenType.GREATER_EQUAL): 150,
+    ('2d_manipulation', TokenType.NOT_EQUAL): 150,
+    ('2d_manipulation', TokenType.SEMICOLON): 150,
+    
+    # <array_man> productions
+    ('array_man', TokenType.ASSIGN): 151,
+    ('array_man', TokenType.SEMICOLON): 152,
+    
+    # <array_elem> productions
+    ('array_elem', TokenType.FEINTLIT): 153,
+    ('array_elem', TokenType.FLOATERLIT): 153,
+    ('array_elem', TokenType.NEGAFEINT): 153,
+    ('array_elem', TokenType.NEGAFLOATER): 153,
+    ('array_elem', TokenType.CHANTLIT): 153,
+    ('array_elem', TokenType.WIN): 153,
+    ('array_elem', TokenType.LOSS): 153,
+    ('array_elem', TokenType.VAR_INIT): 153,
+    ('array_elem', TokenType.LEFT_PAREN): 153,
+    ('array_elem', TokenType.NOT_OP): 153,
+    ('array_elem', TokenType.FEINT): 153,
+    ('array_elem', TokenType.FLOATER): 153,
+    ('array_elem', TokenType.CHANT): 153,
+    ('array_elem', TokenType.STAT): 153,
+    
+    # <expression> productions
+    ('expression', TokenType.FEINTLIT): 154,
+    ('expression', TokenType.FLOATERLIT): 154,
+    ('expression', TokenType.NEGAFEINT): 154,
+    ('expression', TokenType.NEGAFLOATER): 154,
+    ('expression', TokenType.CHANTLIT): 154,
+    ('expression', TokenType.WIN): 154,
+    ('expression', TokenType.LOSS): 154,
+    ('expression', TokenType.VAR_INIT): 154,
+    ('expression', TokenType.LEFT_PAREN): 154,
+    ('expression', TokenType.NOT_OP): 154,
+    ('expression', TokenType.FEINT): 154,
+    ('expression', TokenType.FLOATER): 154,
+    ('expression', TokenType.CHANT): 154,
+    ('expression', TokenType.STAT): 154,
+
+    # <logical_expression> productions
+    ('logical_expression', TokenType.FEINTLIT): 155,
+    ('logical_expression', TokenType.FLOATERLIT): 155,
+    ('logical_expression', TokenType.NEGAFEINT): 155,
+    ('logical_expression', TokenType.NEGAFLOATER): 155,
+    ('logical_expression', TokenType.CHANTLIT): 155,
+    ('logical_expression', TokenType.WIN): 155,
+    ('logical_expression', TokenType.LOSS): 155,
+    ('logical_expression', TokenType.VAR_INIT): 155,
+    ('logical_expression', TokenType.LEFT_PAREN): 155,
+    ('logical_expression', TokenType.NOT_OP): 155,
+    ('logical_expression', TokenType.FEINT): 155,
+    ('logical_expression', TokenType.FLOATER): 155,
+    ('logical_expression', TokenType.CHANT): 155,
+    ('logical_expression', TokenType.STAT): 155,
+    
+    # <more_logical> productions
+    ('more_logical', TokenType.AND_OP): 156,
+    ('more_logical', TokenType.OR_OP): 156,
+    ('more_logical', TokenType.SEMICOLON): 157,
+    ('more_logical', TokenType.RIGHT_PAREN): 157,
+    ('more_logical', TokenType.COMMA): 157,
+    ('more_logical', TokenType.CHANT_CONCAT): 157,
+    ('more_logical', TokenType.COLON): 157,
+    ('more_logical', TokenType.ARRAY_INDEX_RIGHT): 157,
+    
+    # <log_operator> productions
+    ('log_operator', TokenType.AND_OP): 158,
+    ('log_operator', TokenType.OR_OP): 159,
+    
+    # <relational_expression> productions
+    ('relational_expression', TokenType.FEINTLIT): 160,
+    ('relational_expression', TokenType.FLOATERLIT): 160,
+    ('relational_expression', TokenType.NEGAFEINT): 160,
+    ('relational_expression', TokenType.NEGAFLOATER): 160,
+    ('relational_expression', TokenType.CHANTLIT): 160,
+    ('relational_expression', TokenType.WIN): 160,
+    ('relational_expression', TokenType.LOSS): 160,
+    ('relational_expression', TokenType.VAR_INIT): 160,
+    ('relational_expression', TokenType.LEFT_PAREN): 160,
+    ('relational_expression', TokenType.NOT_OP): 160,
+    ('relational_expression', TokenType.FEINT): 160,
+    ('relational_expression', TokenType.FLOATER): 160,
+    ('relational_expression', TokenType.CHANT): 160,
+    ('relational_expression', TokenType.STAT): 160,
+    
+    # <arithmetic_expression> productions
+    ('arithmetic_expression', TokenType.FEINTLIT): 161,
+    ('arithmetic_expression', TokenType.FLOATERLIT): 161,
+    ('arithmetic_expression', TokenType.NEGAFEINT): 161,
+    ('arithmetic_expression', TokenType.NEGAFLOATER): 161,
+    ('arithmetic_expression', TokenType.CHANTLIT): 161,
+    ('arithmetic_expression', TokenType.WIN): 161,
+    ('arithmetic_expression', TokenType.LOSS): 161,
+    ('arithmetic_expression', TokenType.VAR_INIT): 161,
+    ('arithmetic_expression', TokenType.LEFT_PAREN): 161,
+    ('arithmetic_expression', TokenType.NOT_OP): 161,
+    ('arithmetic_expression', TokenType.FEINT): 161,
+    ('arithmetic_expression', TokenType.FLOATER): 161,
+    ('arithmetic_expression', TokenType.CHANT): 161,
+    ('arithmetic_expression', TokenType.STAT): 161,
+    
+    # <more_relational> productions
+    ('more_relational', TokenType.LESS_THAN): 162,
+    ('more_relational', TokenType.GREATER_THAN): 162,
+    ('more_relational', TokenType.EQUAL): 162,
+    ('more_relational', TokenType.LESS_EQUAL): 162,
+    ('more_relational', TokenType.GREATER_EQUAL): 162,
+    ('more_relational', TokenType.NOT_EQUAL): 162,
+    ('more_relational', TokenType.AND_OP): 163,
+    ('more_relational', TokenType.OR_OP): 163,
+    ('more_relational', TokenType.SEMICOLON): 163,
+    ('more_relational', TokenType.RIGHT_PAREN): 163,
+    ('more_relational', TokenType.COMMA): 163,
+    ('more_relational', TokenType.CHANT_CONCAT): 163,
+    
+    # <term> productions
+    ('term', TokenType.FEINTLIT): 164,
+    ('term', TokenType.FLOATERLIT): 164,
+    ('term', TokenType.NEGAFEINT): 164,
+    ('term', TokenType.NEGAFLOATER): 164,
+    ('term', TokenType.CHANTLIT): 164,
+    ('term', TokenType.WIN): 164,
+    ('term', TokenType.LOSS): 164,
+    ('term', TokenType.VAR_INIT): 164,
+    ('term', TokenType.LEFT_PAREN): 164,
+    ('term', TokenType.NOT_OP): 164,
+    ('term', TokenType.FEINT): 164,
+    ('term', TokenType.FLOATER): 164,
+    ('term', TokenType.CHANT): 164,
+    ('term', TokenType.STAT): 164,
+    
+    # <more_term> productions
+    ('more_term', TokenType.ADD): 165,
+    ('more_term', TokenType.SUB): 166,
+    ('more_term', TokenType.LESS_THAN): 167,
+    ('more_term', TokenType.GREATER_THAN): 167,
+    ('more_term', TokenType.EQUAL): 167,
+    ('more_term', TokenType.LESS_EQUAL): 167,
+    ('more_term', TokenType.GREATER_EQUAL): 167,
+    ('more_term', TokenType.NOT_EQUAL): 167,
+    
+    # <more_factor> productions
+    ('more_factor', TokenType.MUL): 168,
+    ('more_factor', TokenType.DIV): 169,
+    ('more_factor', TokenType.MOD): 170,
+    ('more_factor', TokenType.ADD): 171,
+    ('more_factor', TokenType.SUB): 171,
+    ('more_factor', TokenType.LESS_THAN): 171,
+    ('more_factor', TokenType.GREATER_THAN): 171,
+    ('more_factor', TokenType.EQUAL): 171,
+    ('more_factor', TokenType.LESS_EQUAL): 171,
+    ('more_factor', TokenType.GREATER_EQUAL): 171,
+    ('more_factor', TokenType.NOT_EQUAL): 171,
+    
+    # <factor> productions
+    ('factor', TokenType.FEINTLIT): 172,
+    ('factor', TokenType.FLOATERLIT): 172,
+    ('factor', TokenType.NEGAFEINT): 172,
+    ('factor', TokenType.NEGAFLOATER): 172,
+    ('factor', TokenType.CHANTLIT): 172,
+    ('factor', TokenType.WIN): 172,
+    ('factor', TokenType.LOSS): 172,
+    ('factor', TokenType.VAR_INIT): 173,
+    ('factor', TokenType.LEFT_PAREN): 174,
+    ('factor', TokenType.NOT_OP): 175,
+    ('factor', TokenType.FEINT): 176,
+    ('factor', TokenType.FLOATER): 176,
+    ('factor', TokenType.CHANT): 176,
+    ('factor', TokenType.STAT): 176,
+    
+    # <literal> productions
+    ('literal', TokenType.FEINTLIT): 177,
+    ('literal', TokenType.NEGAFEINT): 177,
+    ('literal', TokenType.FLOATERLIT): 178,
+    ('literal', TokenType.NEGAFLOATER): 178,
+    ('literal', TokenType.NEGAFEINT): 179,
+    ('literal', TokenType.NEGAFLOATER): 180,
+    ('literal', TokenType.CHANTLIT): 181,
+    ('literal', TokenType.WIN): 182,
+    ('literal', TokenType.LOSS): 182,
+    
+    # <nega_feint_lit> and <nega_floater_lit> productions
+    ('nega_feint_lit', TokenType.NEGAFEINT): 183,
+    ('nega_floater_lit', TokenType.NEGAFLOATER): 184,
+    
+    # <follow_factor> productions
+    ('follow_factor', TokenType.ARRAY_INDEX_LEFT): 185,
+    ('follow_factor', TokenType.LEFT_PAREN): 186,
     
     # <function_call> productions
-    ('function_call', TokenType.VAR_INIT): 205,
+    ('function_call', TokenType.MUL): 187,
+    ('function_call', TokenType.DIV): 187,
+    ('function_call', TokenType.MOD): 187,
+    ('function_call', TokenType.ADD): 187,
+    ('function_call', TokenType.SUB): 187,
+    ('function_call', TokenType.LESS_THAN): 187,
+    ('function_call', TokenType.GREATER_THAN): 187,
+    ('function_call', TokenType.EQUAL): 187,
+    ('function_call', TokenType.LESS_EQUAL): 187,
+    ('function_call', TokenType.GREATER_EQUAL): 187,
+    ('function_call', TokenType.NOT_EQUAL): 187,
+    ('function_call', TokenType.SEMICOLON): 187,
+    ('function_call', TokenType.LEFT_PAREN): 188,
     
     # <arguments> productions
-    ('arguments', TokenType.FEINTLIT): 206,
-    ('arguments', TokenType.FLOATERLIT): 206,
-    ('arguments', TokenType.NEGAFEINT): 206,
-    ('arguments', TokenType.NEGAFLOATER): 206,
-    ('arguments', TokenType.CHANTLIT): 206,
-    ('arguments', TokenType.WIN): 206,
-    ('arguments', TokenType.LOSS): 206,
-    ('arguments', TokenType.VAR_INIT): 206,
-    ('arguments', TokenType.RIGHT_PAREN): 207,
+    ('arguments', TokenType.FEINTLIT): 189,
+    ('arguments', TokenType.FLOATERLIT): 189,
+    ('arguments', TokenType.NEGAFEINT): 189,
+    ('arguments', TokenType.NEGAFLOATER): 189,
+    ('arguments', TokenType.CHANTLIT): 189,
+    ('arguments', TokenType.WIN): 189,
+    ('arguments', TokenType.LOSS): 189,
+    ('arguments', TokenType.VAR_INIT): 189,
+    ('arguments', TokenType.LEFT_PAREN): 189,
+    ('arguments', TokenType.NOT_OP): 189,
+    ('arguments', TokenType.FEINT): 189,
+    ('arguments', TokenType.FLOATER): 189,
+    ('arguments', TokenType.CHANT): 189,
+    ('arguments', TokenType.STAT): 189,
+    ('arguments', TokenType.RIGHT_PAREN): 190,
     
     # <arg> productions
-    ('arg', TokenType.FEINTLIT): 208,
-    ('arg', TokenType.FLOATERLIT): 208,
-    ('arg', TokenType.NEGAFEINT): 208,
-    ('arg', TokenType.NEGAFLOATER): 208,
-    ('arg', TokenType.CHANTLIT): 208,
-    ('arg', TokenType.WIN): 208,
-    ('arg', TokenType.LOSS): 208,
-    ('arg', TokenType.VAR_INIT): 209,
-    ('arg', TokenType.FEINTLIT): 210,
-    ('arg', TokenType.FLOATERLIT): 210,
-    ('arg', TokenType.NEGAFEINT): 210,
-    ('arg', TokenType.NEGAFLOATER): 210,
-    ('arg', TokenType.CHANTLIT): 210,
-    ('arg', TokenType.WIN): 210,
-    ('arg', TokenType.LOSS): 210,
-    ('arg', TokenType.VAR_INIT): 210,
-    ('arg', TokenType.LEFT_PAREN): 210,
-    ('arg', TokenType.NOT_OP): 210,
-    ('arg', TokenType.FEINT): 210,
-    ('arg', TokenType.FLOATER): 210,
+    ('arg', TokenType.FEINTLIT): 191,
+    ('arg', TokenType.FLOATERLIT): 191,
+    ('arg', TokenType.NEGAFEINT): 191,
+    ('arg', TokenType.NEGAFLOATER): 191,
+    ('arg', TokenType.CHANTLIT): 191,
+    ('arg', TokenType.WIN): 191,
+    ('arg', TokenType.LOSS): 191,
+    ('arg', TokenType.VAR_INIT): 191,
+    ('arg', TokenType.LEFT_PAREN): 191,
+    ('arg', TokenType.NOT_OP): 191,
+    ('arg', TokenType.FEINT): 191,
+    ('arg', TokenType.FLOATER): 191,
+    ('arg', TokenType.CHANT): 191,
+    ('arg', TokenType.STAT): 191,
     
     # <more_args> productions
-    ('more_args', TokenType.COMMA): 211,
-    ('more_args', TokenType.RIGHT_PAREN): 212,
-
-    ('inbound_statement', TokenType.INBOUND): 213,
-    ('dribble_statement', TokenType.DRIBBLE): 214,
-    ('add_condition', TokenType.PASS): 215,
-    ('add_condition', TokenType.SHOOT): 216,
-    ('add_condition', TokenType.FEINT): 217,
-    ('add_condition', TokenType.FLOATER): 217,
-    ('add_condition', TokenType.CHANT): 217,
-    ('add_condition', TokenType.STAT): 217,
-    ('add_condition', TokenType.ANNOUNCE): 217,
-    ('add_condition', TokenType.INBOUND): 217,
-    ('add_condition', TokenType.DRIBBLE): 217,
-    ('add_condition', TokenType.SWITCH): 217,
-    ('add_condition', TokenType.FORWARD): 217,
-    ('add_condition', TokenType.PLAY): 217,
-    ('add_condition', TokenType.RUN): 217,
-    ('add_condition', TokenType.VAR_INIT): 217, 
-    ('add_condition', TokenType.REBOUND): 217,
-    ('add_condition', TokenType.CODE_BLOCK_RIGHT): 217,
-    ('add_condition', TokenType.TIMEOUT): 217,
-    ('add_condition', TokenType.DEFAULT): 217,
+    ('more_args', TokenType.COMMA): 192,
+    ('more_args', TokenType.RIGHT_PAREN): 193,
     
-    ('loop_statements', TokenType.FEINT): 218,
-    ('loop_statements', TokenType.FLOATER): 218,
-    ('loop_statements', TokenType.CHANT): 218,
-    ('loop_statements', TokenType.STAT): 218,
-    ('loop_statements', TokenType.ANNOUNCE): 218,
-    ('loop_statements', TokenType.INBOUND): 218,
-    ('loop_statements', TokenType.DRIBBLE): 218,
-    ('loop_statements', TokenType.SWITCH): 218,
-    ('loop_statements', TokenType.FORWARD): 218,
-    ('loop_statements', TokenType.PLAY): 218,
-    ('loop_statements', TokenType.RUN): 218,
-    ('loop_statements', TokenType.VAR_INIT): 218, 
-    ('loop_statements', TokenType.RESUME): 218,
+    # <relational_operator> productions
+    ('relational_operator', TokenType.LESS_THAN): 194,
+    ('relational_operator', TokenType.GREATER_THAN): 195,
+    ('relational_operator', TokenType.EQUAL): 196,
+    ('relational_operator', TokenType.LESS_EQUAL): 197,
+    ('relational_operator', TokenType.GREATER_EQUAL): 198,
+    ('relational_operator', TokenType.NOT_EQUAL): 199,
     
-    ('loop_statements', TokenType.CODE_BLOCK_RIGHT): 219, 
+    # <type_casting> productions
+    ('type_casting', TokenType.FEINT): 200,
+    ('type_casting', TokenType.FLOATER): 201,
+    ('type_casting', TokenType.CHANT): 202,
+    ('type_casting', TokenType.STAT): 203,
     
-    ('loop_statement', TokenType.FEINT): 220,
-    ('loop_statement', TokenType.FLOATER): 220,
-    ('loop_statement', TokenType.CHANT): 220,
-    ('loop_statement', TokenType.STAT): 220,
-    ('loop_statement', TokenType.ANNOUNCE): 220,
-    ('loop_statement', TokenType.INBOUND): 220,
-    ('loop_statement', TokenType.DRIBBLE): 220,
-    ('loop_statement', TokenType.SWITCH): 220,
-    ('loop_statement', TokenType.FORWARD): 220,
-    ('loop_statement', TokenType.PLAY): 220,
-    ('loop_statement', TokenType.RUN): 220,
-    ('loop_statement', TokenType.VAR_INIT): 220, 
+    # <typecast_value> productions
+    ('typecast_value', TokenType.FEINTLIT): 204,
+    ('typecast_value', TokenType.FLOATERLIT): 205,
+    ('typecast_value', TokenType.CHANTLIT): 206,
+    ('typecast_value', TokenType.WIN): 207,
+    ('typecast_value', TokenType.LOSS): 207,
+    ('typecast_value', TokenType.VAR_INIT): 208,
     
-    ('loop_statement', TokenType.RESUME): 221,
+    # <announce_statement> productions
+    ('announce_statement', TokenType.ANNOUNCE): 209,
     
-    ('switch_statement', TokenType.SWITCH): 222,
-    ('get_case', TokenType.GET): 223,
-    ('get_value', TokenType.FEINTLIT): 224,
-    ('get_value', TokenType.CHANTLIT): 225,
-    ('timeout_statement', TokenType.TIMEOUT): 226,
-    ('get_case_end', TokenType.DEFAULT): 227, 
-    ('get_case_end', TokenType.CODE_BLOCK_RIGHT): 227,  
-    ('get_case_end', TokenType.GET): 228,
-    ('get_default', TokenType.DEFAULT): 229,
-    ('get_default', TokenType.CODE_BLOCK_RIGHT): 230, 
+    # <otpt> productions
+    ('otpt', TokenType.FEINTLIT): 210,
+    ('otpt', TokenType.FLOATERLIT): 210,
+    ('otpt', TokenType.NEGAFEINT): 210,
+    ('otpt', TokenType.NEGAFLOATER): 210,
+    ('otpt', TokenType.CHANTLIT): 210,
+    ('otpt', TokenType.WIN): 210,
+    ('otpt', TokenType.LOSS): 210,
+    ('otpt', TokenType.VAR_INIT): 210,
+    ('otpt', TokenType.LEFT_PAREN): 210,
+    ('otpt', TokenType.NOT_OP): 210,
+    ('otpt', TokenType.FEINT): 210,
+    ('otpt', TokenType.FLOATER): 210,
+    ('otpt', TokenType.CHANT): 210,
+    ('otpt', TokenType.STAT): 210,
     
-    ('forward_statement', TokenType.FORWARD): 231,
-    ('forward_lit', TokenType.FEINTLIT): 232,
-    ('forward_lit', TokenType.VAR_INIT): 233,  
-    ('forward_inc_dec', TokenType.INCREMENT): 234,
-    ('forward_inc_dec', TokenType.DECREMENT): 235,
-    ('forward_inc_dec', TokenType.ADD_ASSIGN): 236,
-    ('forward_inc_dec', TokenType.SUB_ASSIGN): 236,
+    # <outputs> productions
+    ('outputs', TokenType.FEINTLIT): 211,
+    ('outputs', TokenType.FLOATERLIT): 211,
+    ('outputs', TokenType.NEGAFEINT): 211,
+    ('outputs', TokenType.NEGAFLOATER): 211,
+    ('outputs', TokenType.CHANTLIT): 211,
+    ('outputs', TokenType.WIN): 211,
+    ('outputs', TokenType.LOSS): 211,
+    ('outputs', TokenType.VAR_INIT): 211,
+    ('outputs', TokenType.LEFT_PAREN): 211,
+    ('outputs', TokenType.NOT_OP): 211,
+    ('outputs', TokenType.FEINT): 211,
+    ('outputs', TokenType.FLOATER): 211,
+    ('outputs', TokenType.CHANT): 211,
+    ('outputs', TokenType.STAT): 211,
     
-    ('increment', TokenType.INCREMENT): 237,
-    ('decrement', TokenType.DECREMENT): 238,
-    ('forward_assign_operator', TokenType.ADD_ASSIGN): 239,
-    ('forward_assign_operator', TokenType.SUB_ASSIGN): 240,
+    # <other_outputs> productions
+    ('other_outputs', TokenType.CHANT_CONCAT): 212,
+    ('other_outputs', TokenType.RIGHT_PAREN): 213,
     
-    ('resume_statement', TokenType.RESUME): 241,
-
-    ('resume_statement', TokenType.FEINT): 242,  
-    ('resume_statement', TokenType.FLOATER): 242,
-    ('resume_statement', TokenType.CHANT): 242,
-    ('resume_statement', TokenType.STAT): 242,
-    ('resume_statement', TokenType.ANNOUNCE): 242,
-    ('resume_statement', TokenType.INBOUND): 242,
-    ('resume_statement', TokenType.DRIBBLE): 242,
-    ('resume_statement', TokenType.SWITCH): 242,
-    ('resume_statement', TokenType.FORWARD): 242,
-    ('resume_statement', TokenType.PLAY): 242,
-    ('resume_statement', TokenType.RUN): 242,
-    ('resume_statement', TokenType.VAR_INIT): 242,
-    ('resume_statement', TokenType.RESUME): 242,
-    ('resume_statement', TokenType.CODE_BLOCK_RIGHT): 242,
+    # <inbound_statement> productions
+    ('inbound_statement', TokenType.INBOUND): 214,
     
-    ('play_statement', TokenType.PLAY): 243,
-    ('run_play_statement', TokenType.RUN): 244,
+    # <dribble_statement> productions
+    ('dribble_statement', TokenType.DRIBBLE): 215,
     
-    ('team_block', TokenType.TEAM): 245,
-    ('local_decl', TokenType.FEINT): 246,
-    ('local_decl', TokenType.FLOATER): 246,
-    ('local_decl', TokenType.CHANT): 246,
-    ('local_decl', TokenType.STAT): 246,
+    # <add_condition> productions
+    ('add_condition', TokenType.PASS): 216,
+    ('add_condition', TokenType.SHOOT): 217,
+    ('add_condition', TokenType.ANNOUNCE): 218,
+    ('add_condition', TokenType.INBOUND): 218,
+    ('add_condition', TokenType.DRIBBLE): 218,
+    ('add_condition', TokenType.SWITCH): 218,
+    ('add_condition', TokenType.FORWARD): 218,
+    ('add_condition', TokenType.PLAY): 218,
+    ('add_condition', TokenType.RUN): 218,
+    ('add_condition', TokenType.VAR_INIT): 218,
+    ('add_condition', TokenType.RESUME): 218,
+    ('add_condition', TokenType.TIMEOUT): 218,
+    ('add_condition', TokenType.TEAM): 218,
     
-    ('local_decl', TokenType.FEINT): 247,  
-    ('local_decl', TokenType.FLOATER): 247,
-    ('local_decl', TokenType.CHANT): 247,
-    ('local_decl', TokenType.STAT): 247,
-    ('local_decl', TokenType.ANNOUNCE): 247,
-    ('local_decl', TokenType.INBOUND): 247,
-    ('local_decl', TokenType.DRIBBLE): 247,
-    ('local_decl', TokenType.SWITCH): 247,
-    ('local_decl', TokenType.FORWARD): 247,
-    ('local_decl', TokenType.PLAY): 247,
-    ('local_decl', TokenType.RUN): 247,
-    ('local_decl', TokenType.VAR_INIT): 247,
+    # <loop_statements> productions
+    ('loop_statements', TokenType.ANNOUNCE): 219,
+    ('loop_statements', TokenType.INBOUND): 219,
+    ('loop_statements', TokenType.DRIBBLE): 219,
+    ('loop_statements', TokenType.SWITCH): 219,
+    ('loop_statements', TokenType.FORWARD): 219,
+    ('loop_statements', TokenType.PLAY): 219,
+    ('loop_statements', TokenType.RUN): 219,
+    ('loop_statements', TokenType.VAR_INIT): 219,
+    ('loop_statements', TokenType.RESUME): 219,
+    ('loop_statements', TokenType.TIMEOUT): 219,
+    ('loop_statements', TokenType.CODE_BLOCK_RIGHT): 220,
     
-    ('local_declaration', TokenType.FEINT): 248,
-    ('local_declaration', TokenType.FLOATER): 248,
-    ('local_declaration', TokenType.CHANT): 248,
-    ('local_declaration', TokenType.STAT): 248,
+    # <loop_statement> productions
+    ('loop_statement', TokenType.ANNOUNCE): 221,
+    ('loop_statement', TokenType.INBOUND): 221,
+    ('loop_statement', TokenType.DRIBBLE): 221,
+    ('loop_statement', TokenType.SWITCH): 221,
+    ('loop_statement', TokenType.FORWARD): 221,
+    ('loop_statement', TokenType.PLAY): 221,
+    ('loop_statement', TokenType.RUN): 221,
+    ('loop_statement', TokenType.VAR_INIT): 221,
+    ('loop_statement', TokenType.RESUME): 222,
+    ('loop_statement', TokenType.TIMEOUT): 223,
     
-    ('local_declaration', TokenType.ZONE): 249,
+    # <timeout_statement> productions
+    ('timeout_statement', TokenType.TIMEOUT): 224,
     
-    ('typecast_value', TokenType.FEINTLIT): 250,
-    ('typecast_value', TokenType.FLOATERLIT): 251,
-    ('typecast_value', TokenType.CHANTLIT): 252,
-    ('typecast_value', TokenType.WIN): 253,
-    ('typecast_value', TokenType.LOSS): 253,
-    ('typecast_value', TokenType.VAR_INIT): 254, 
+    # <switch_statement> productions
+    ('switch_statement', TokenType.SWITCH): 225,
+    
+    # <get_case> productions
+    ('get_case', TokenType.GET): 226,
+    
+    # <get_value> productions
+    ('get_value', TokenType.FEINTLIT): 227,
+    ('get_value', TokenType.CHANTLIT): 228,
+    
+    # <get_case_end> productions
+    ('get_case_end', TokenType.DEFAULT): 229,
+    ('get_case_end', TokenType.RIGHT_PAREN): 229,
+    ('get_case_end', TokenType.GET): 230,
+    
+    # <get_default> productions
+    ('get_default', TokenType.DEFAULT): 231,
+    ('get_default', TokenType.CODE_BLOCK_RIGHT): 232,
+    
+    # <forward_statement> productions
+    ('forward_statement', TokenType.FORWARD): 233,
+    
+    # <forward_lit> productions
+    ('forward_lit', TokenType.FEINTLIT): 234,
+    ('forward_lit', TokenType.VAR_INIT): 235,
+    
+    # <forward_inc_dec> productions
+    ('forward_inc_dec', TokenType.INCREMENT): 236,
+    ('forward_inc_dec', TokenType.DECREMENT): 237,
+    ('forward_inc_dec', TokenType.ADD_ASSIGN): 238,
+    ('forward_inc_dec', TokenType.SUB_ASSIGN): 238,
+    
+    # <increment> productions
+    ('increment', TokenType.INCREMENT): 239,
+    
+    # <decrement> productions
+    ('decrement', TokenType.DECREMENT): 240,
+    
+    # <forward_assign_operator> productions
+    ('forward_assign_operator', TokenType.ADD_ASSIGN): 241,
+    ('forward_assign_operator', TokenType.SUB_ASSIGN): 242,
+    
+    # <resume_statement> productions
+    ('resume_statement', TokenType.RESUME): 243,
+    ('resume_statement', TokenType.ANNOUNCE): 244,
+    ('resume_statement', TokenType.INBOUND): 244,
+    ('resume_statement', TokenType.DRIBBLE): 244,
+    ('resume_statement', TokenType.SWITCH): 244,
+    ('resume_statement', TokenType.FORWARD): 244,
+    ('resume_statement', TokenType.PLAY): 244,
+    ('resume_statement', TokenType.RUN): 244,
+    ('resume_statement', TokenType.VAR_INIT): 244,
+    ('resume_statement', TokenType.RESUME): 244,
+    ('resume_statement', TokenType.TIMEOUT): 244,
+    
+    # <play_statement> productions
+    ('play_statement', TokenType.PLAY): 245,
+    
+    # <run_play_statement> productions
+    ('run_play_statement', TokenType.RUN): 246,
+    
+    # <team_block> productions
+    ('team_block', TokenType.TEAM): 247,
+    
+    # <team_statement> productions
+    ('team_statement', TokenType.ANNOUNCE): 248,
+    ('team_statement', TokenType.INBOUND): 248,
+    ('team_statement', TokenType.DRIBBLE): 248,
+    ('team_statement', TokenType.SWITCH): 248,
+    ('team_statement', TokenType.FORWARD): 248,
+    ('team_statement', TokenType.PLAY): 248,
+    ('team_statement', TokenType.RUN): 248,
+    ('team_statement', TokenType.VAR_INIT): 248,
+    ('team_statement', TokenType.TIMEOUT): 249
     
 }
