@@ -379,17 +379,6 @@ PREDICT_SETS = {
     # <2d_manipulation> productions
     ('2d_manipulation', TokenType.ARRAY_INDEX_LEFT): 149,
     ('2d_manipulation', TokenType.ASSIGN): 150,
-    ('2d_manipulation', TokenType.MUL): 150,
-    ('2d_manipulation', TokenType.DIV): 150,
-    ('2d_manipulation', TokenType.MOD): 150,
-    ('2d_manipulation', TokenType.ADD): 150,
-    ('2d_manipulation', TokenType.SUB): 150,
-    ('2d_manipulation', TokenType.LESS_THAN): 150,
-    ('2d_manipulation', TokenType.GREATER_THAN): 150,
-    ('2d_manipulation', TokenType.EQUAL): 150,
-    ('2d_manipulation', TokenType.LESS_EQUAL): 150,
-    ('2d_manipulation', TokenType.GREATER_EQUAL): 150,
-    ('2d_manipulation', TokenType.NOT_EQUAL): 150,
     ('2d_manipulation', TokenType.SEMICOLON): 150,
     
     # <array_man> productions
@@ -503,6 +492,8 @@ PREDICT_SETS = {
     ('more_relational', TokenType.RIGHT_PAREN): 163,
     ('more_relational', TokenType.COMMA): 163,
     ('more_relational', TokenType.CHANT_CONCAT): 163,
+    ('more_relational', TokenType.COLON): 163,
+    ('more_relational', TokenType.ARRAY_INDEX_RIGHT): 163,
     
     # <term> productions
     ('term', TokenType.FEINTLIT): 164,
