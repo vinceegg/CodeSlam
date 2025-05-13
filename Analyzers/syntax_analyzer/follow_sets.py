@@ -313,13 +313,19 @@ FOLLOW_SETS = {
                   TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.SEMICOLON},
     
     # <expression>
-    'expression': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT},
+    'expression': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.MUL, TokenType.DIV,
+                  TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
+                  TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <logical_expression>
-    'logical_expression': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT},
+    'logical_expression': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.MUL, TokenType.DIV,
+                  TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
+                  TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <more_logical>
-    'more_logical': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT},
+    'more_logical': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.MUL, TokenType.DIV,
+                  TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
+                  TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <log_operator>
     'log_operator': {TokenType.FEINTLIT, TokenType.FLOATERLIT, TokenType.NEGAFEINT, 
