@@ -9,8 +9,8 @@ FOLLOW_SETS = {
     
     # <global_declaration>
     'global_declaration': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
-                          TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
-                          TokenType.TEAM},
+                           TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
+                           TokenType.TEAM},
     
     # <variable_dec>
     'variable_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
@@ -37,7 +37,7 @@ FOLLOW_SETS = {
                  TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB,
                  TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL,
                  TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.AND_OP, TokenType.OR_OP,
-                 TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT, TokenType.COLON, TokenType.COMMA},
+                 TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT, TokenType.COLON},
                  
     # <feint_init_end>
     'feint_init_end': {TokenType.SEMICOLON, TokenType.COMMA},
@@ -266,21 +266,21 @@ FOLLOW_SETS = {
     'dunk_function': {TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
     
     # <func_parameters>
-    'func_parameters': {TokenType.CODE_BLOCK_RIGHT},
+    'func_parameters': {TokenType.RIGHT_PAREN},
     
     # <param_end>
-    'param_end': {TokenType.CODE_BLOCK_RIGHT},
+    'param_end': {TokenType.RIGHT_PAREN},
     
     # <decl>
     'decl': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
             TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-            TokenType.REBOUND},
+            TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
     
     # <declarations>
     'declarations': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
                     TokenType.ZONE, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                     TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, 
-                    TokenType.VAR_INIT, TokenType.REBOUND},
+                    TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
 
     # <function_statement>
     'function_statement': {TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
@@ -291,7 +291,7 @@ FOLLOW_SETS = {
     # <statement>
     'statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                 TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                TokenType.RESUME, TokenType.TIMEOUT, TokenType.TEAM},
+                TokenType.REBOUND, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <follow_statement>
     'follow_statement': {TokenType.SEMICOLON},
@@ -306,7 +306,9 @@ FOLLOW_SETS = {
     '2d_manipulation': {TokenType.SEMICOLON, TokenType.ASSIGN},
     
     # <array_man>
-    'array_man': {TokenType.SEMICOLON},
+    'array_man': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, 
+                  TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT, 
+                  TokenType.SEMICOLON},
     
     # <array_elem>
     'array_elem': {TokenType.ASSIGN, TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, 
@@ -314,17 +316,17 @@ FOLLOW_SETS = {
                   TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.SEMICOLON},
     
     # <expression>
-    'expression': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.MUL, TokenType.DIV,
+    'expression': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.MUL, TokenType.ASSIGN, TokenType.DIV,
                   TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
                   TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <logical_expression>
-    'logical_expression': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.MUL, TokenType.DIV,
+    'logical_expression': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.MUL, TokenType.ASSIGN, TokenType.DIV,
                   TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
                   TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <more_logical>
-    'more_logical': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.MUL, TokenType.DIV,
+    'more_logical': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.MUL, TokenType.ASSIGN, TokenType.DIV,
                   TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
                   TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
@@ -336,62 +338,68 @@ FOLLOW_SETS = {
     
     # <relational_expression>
     'relational_expression': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, 
-                             TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT},
+                             TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.ASSIGN, 
+                             TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, 
+                             TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <more_relational>
-    'more_relational': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, 
-                       TokenType.COMMA, TokenType.CHANT_CONCAT},
+    'more_relational': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.ASSIGN, 
+                        TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, 
+                        TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <arithmetic_expression>
-    'arithmetic_expression': {TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
-                             TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'arithmetic_expression': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, 
+                              TokenType.ASSIGN, TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, 
+                              TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <more_term>
-    'more_term': {TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-                 TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'more_term': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.ASSIGN, 
+                  TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
+                  TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <term>
-    'term': {TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, 
-            TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'term': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.ASSIGN, 
+             TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
+             TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <more_factor>
-    'more_factor': {TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, 
-                   TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'more_factor': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, TokenType.ASSIGN, 
+                    TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
+                    TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <factor>
-    'factor': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
-              TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-              TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'factor': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, 
+               TokenType.CHANT_CONCAT, TokenType.ASSIGN,TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
+               TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
+               TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <literal>
-    'literal': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
+    'literal': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, 
+               TokenType.CHANT_CONCAT, TokenType.ASSIGN,TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
                TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
                TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <nega_feint_lit>
-    'nega_feint_lit': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
-                      TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-                      TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.CODE_BLOCK_LEFT, 
-                      TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.CODE_BLOCK_RIGHT, 
-                      TokenType.COLON, TokenType.AND_OP, TokenType.OR_OP, TokenType.ARRAY_INDEX_RIGHT, 
-                      TokenType.CHANT_CONCAT},
+    'nega_feint_lit': {TokenType.COMMA, TokenType.ASSIGN, TokenType.SEMICOLON,  TokenType.ARRAY_INDEX_RIGHT, TokenType.COLON, TokenType.MUL, 
+                       TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, 
+                       TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.AND_OP, TokenType.OR_OP, TokenType.RIGHT_PAREN, 
+                       TokenType.CHANT_CONCAT, TokenType.CODE_BLOCK_RIGHT},
     
     # <nega_floater_lit>
-    'nega_floater_lit': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
-                        TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-                        TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.CODE_BLOCK_LEFT, 
-                        TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.CODE_BLOCK_RIGHT, 
-                        TokenType.COLON, TokenType.AND_OP, TokenType.OR_OP, TokenType.CHANT_CONCAT},
+    'nega_floater_lit': {TokenType.COMMA, TokenType.ASSIGN, TokenType.SEMICOLON, TokenType.COLON, TokenType.MUL, 
+                         TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, 
+                         TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.AND_OP, 
+                         TokenType.OR_OP, TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT, TokenType.CODE_BLOCK_RIGHT},
     
     # <follow_factor>
-    'follow_factor': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
-                     TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-                     TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'follow_factor': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, 
+                      TokenType.ASSIGN, TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, 
+                      TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <function_call>
-    'function_call': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
-                     TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-                     TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.SEMICOLON},
+    'function_call': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, TokenType.CHANT_CONCAT, 
+                      TokenType.ASSIGN, TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, 
+                      TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <arguments>
     'arguments': {TokenType.RIGHT_PAREN},
@@ -409,19 +417,18 @@ FOLLOW_SETS = {
                            TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
     
     # <type_casting>
-    'type_casting': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
-                    TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-                    TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'type_casting': {TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.COMMA, 
+                     TokenType.CHANT_CONCAT, TokenType.ASSIGN, TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
+                     TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
+                     TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
     
     # <typecast_value>
-    'typecast_value': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, 
-                      TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-                      TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'typecast_value': {TokenType.RIGHT_PAREN},
     
     # <announce_statement>
     'announce_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                           TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                          TokenType.RESUME, TokenType.TIMEOUT, TokenType.TEAM},
+                          TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <otpt>
     'otpt': {TokenType.RIGHT_PAREN},
@@ -435,17 +442,17 @@ FOLLOW_SETS = {
     # <inbound_statement>
     'inbound_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                          TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                         TokenType.RESUME, TokenType.TIMEOUT, TokenType.TEAM},
+                         TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <dribble_statement>
     'dribble_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                          TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                         TokenType.RESUME, TokenType.TIMEOUT, TokenType.TEAM},
+                         TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <add_condition>
     'add_condition': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                      TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                     TokenType.RESUME, TokenType.TIMEOUT, TokenType.TEAM},
+                     TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <loop_statements>
     'loop_statements': {TokenType.CODE_BLOCK_RIGHT},
@@ -453,17 +460,17 @@ FOLLOW_SETS = {
     # <loop_statement>
     'loop_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                       TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                      TokenType.RESUME, TokenType.TIMEOUT},
+                      TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <timeout_statement>
     'timeout_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                          TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                         TokenType.RESUME, TokenType.TIMEOUT},
+                         TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT, TokenType.GET, TokenType.DEFAULT},
     
     # <switch_statement>
     'switch_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                         TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                        TokenType.RESUME, TokenType.TIMEOUT, TokenType.TEAM},
+                        TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <get_case>
     'get_case': {TokenType.DEFAULT, TokenType.RIGHT_PAREN},
@@ -479,20 +486,20 @@ FOLLOW_SETS = {
     
     # <forward_statement>
     'forward_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
-                         TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                         TokenType.RESUME, TokenType.TIMEOUT, TokenType.TEAM},
+                          TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
+                          TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <forward_lit>
-    'forward_lit': {TokenType.SEMICOLON},
+    'forward_lit': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN},
     
     # <forward_inc_dec>
     'forward_inc_dec': {TokenType.RIGHT_PAREN},
     
     # <increment>
-    'increment': {TokenType.RIGHT_PAREN},
+    'increment': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN},
     
     # <decrement>
-    'decrement': {TokenType.RIGHT_PAREN},
+    'decrement': {TokenType.SEMICOLON, TokenType.RIGHT_PAREN},
     
     # <forward_assign_operator>
     'forward_assign_operator': {TokenType.FEINTLIT, TokenType.VAR_INIT},
@@ -500,22 +507,22 @@ FOLLOW_SETS = {
     # <resume_statement>
     'resume_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                         TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                        TokenType.RESUME, TokenType.TIMEOUT},
+                        TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <play_statement>
     'play_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                       TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                      TokenType.RESUME, TokenType.TIMEOUT, TokenType.TEAM},
+                      TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <run_play_statement>
     'run_play_statement': {TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE, TokenType.SWITCH, 
                           TokenType.FORWARD, TokenType.PLAY, TokenType.RUN, TokenType.VAR_INIT, 
-                          TokenType.RESUME, TokenType.TIMEOUT, TokenType.TEAM},
+                          TokenType.RESUME, TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
     
     # <team_block>
     'team_block': {None},
     
     # <team_statement>
-    'team_statement': {TokenType.TIMEOUT}
+    'team_statement': {TokenType.TIMEOUT, TokenType.CODE_BLOCK_RIGHT},
 
 }
