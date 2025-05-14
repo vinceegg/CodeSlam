@@ -1240,7 +1240,9 @@ class Compiler:
         elif node.name == "type_casting":
             target_type = node.value  # Now guaranteed: FEINT, FLOATER, CHANT, STAT
             value_node = node.children[0]
+            # print(f"[DEBUG] Typecasting to {value_node}")
             value = self.eval(value_node)
+            # print(f"[DEBUG] Typecasting value: {value} ({type(value)})")
 
             # Convert 'Win'/'Loss' string (only for stat conversion)
             if value == "Win":
@@ -1263,6 +1265,9 @@ class Compiler:
                 elif target_type == "STAT":
                     if isinstance(value, str):
                         return value != "" 
+                    if isinstance(value, int) or isinstance(value, float):
+                        test = value != 0
+                        return test
                     return bool(value)
                 else:
                     raise ValueError(f"[EVAL ERROR] Unknown cast target: {target_type}")
@@ -1270,9 +1275,21 @@ class Compiler:
                 raise ValueError(f"[TYPE ERROR] Failed to cast '{value}' to {target_type}: {e}")
 
         elif node.name == "typecast_value":
-            if node.value:
+            if node.value is not None:
                 if isinstance(node.value, str) and node.value.startswith("@"):
                     return self.env.get_var(node.value)
+                if isinstance(node.value, str) and node.value.startswith('"') and node.value.endswith('"'):
+                    return node.value[1:-1]  # Strip the quotes
+                if isinstance(node.value, str) and node.value.startswith('~'):
+                    node.value = node.value[1:]  # Translate ~ to -
+                    return -int(node.value)            
+                
+                # Handle numbers
+                if '.' in str(node.value):
+                    return float(node.value)
+                else:
+                    return int(node.value)
+
                 return node.value
             elif node.children:
                 return self.eval(node.children[0])
@@ -1627,9 +1644,10 @@ class Compiler:
         func_node = func_info["node"]
         expected_type = func_info["type"]
         
-        param_node = func_node.children[1]  # func_parameters
-        body_node = func_node.children[2]   # function_statement
-        rebound_node = func_node.children[3] if expected_type != "Dunk" else None
+        param_node = func_node.children[1]       # func_parameters
+        local_decl_node = func_node.children[2]  # local_decl
+        body_node = func_node.children[3]        # function_statement
+        rebound_node = func_node.children[4] if expected_type != "Dunk" else None
 
         # --- Setup a new local environment ---
         old_env = self.env
@@ -1643,6 +1661,9 @@ class Compiler:
 
         for name, value in zip(param_names, args):
             self.env.set_var(name, value)  # or None if you want to omit type for now
+        
+        # --- Evaluate local declarations (arrays + variables) ---
+        self.eval(local_decl_node)
         
         # --- EVALUATE BODY ---
         for stmt in body_node.children:
