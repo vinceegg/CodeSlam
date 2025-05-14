@@ -42,12 +42,11 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Wilt Chant @addNum(@addNum){
-Rebound "Hello";
-}
-Team(){
-Feint @add;
-@add = @addNum(1, 2);
+Team() {
+Feint @x = 9999999999999; 
+Feint @y;
+@y = @x + 1;
+Announce(@y);
 }
  '''
  

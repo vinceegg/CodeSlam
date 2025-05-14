@@ -1000,7 +1000,7 @@ class Compiler:
             if array_access_node.name == "no_array_access":
                 # ---PREVENT CONSTANT REASSIGNMENT ---
                 if var_type in ["ConstFeint", "ConstFloater", "ConstChant", "ConstStat"]:
-                    raise ValueError(f"[ERROR] Cannot reassign to constant variable '{var_name}' ({var_type}).")
+                    raise ValueError(f"[CONSTANT MODIFICATION] Cannot reassign to constant variable '{var_name}' ({var_type}).")
 
                 # --- Type Compatibility Check ---
                 # rhs is the evaluated value, infer its type
@@ -1694,7 +1694,7 @@ class Compiler:
         param_names = [child.value for child in param_node.children]  # list of parameter names (@arg, @x, etc.)
 
         if len(param_names) != len(args):
-            raise ValueError(f"[ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
+            raise ValueError(f"[SEMANTIC ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
 
         for name, value in zip(param_names, args):
             self.env.set_var(name, value)  # or None if you want to omit type for now
