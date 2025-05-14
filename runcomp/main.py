@@ -42,24 +42,12 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-
-Wilt Feint @samplecode(@x){
-
-Zone Feint @arr[2] = {1, 2};
-Feint @result = 0;
-
-@result += @arr[0] + @arr[1];
-Announce("The result is: " & @result);
-
-Rebound @result;
-}
-
-
 Team() {
-Feint @try =0;
-
-@try = @samplecode(@try);
-   Announce("The result is: " );
+Stat @test;
+Chant @str = "";
+@test = Stat(@str);
+Announce (@test);
+Announce(Stat(5) ==  Win);
 }
 
  '''

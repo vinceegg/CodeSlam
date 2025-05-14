@@ -1240,7 +1240,9 @@ class Compiler:
         elif node.name == "type_casting":
             target_type = node.value  # Now guaranteed: FEINT, FLOATER, CHANT, STAT
             value_node = node.children[0]
+            # print(f"[DEBUG] Typecasting to {value_node}")
             value = self.eval(value_node)
+            # print(f"[DEBUG] Typecasting value: {value} ({type(value)})")
 
             # Convert 'Win'/'Loss' string (only for stat conversion)
             if value == "Win":
@@ -1263,6 +1265,9 @@ class Compiler:
                 elif target_type == "STAT":
                     if isinstance(value, str):
                         return value != "" 
+                    if isinstance(value, int) or isinstance(value, float):
+                        test = value != 0
+                        return test
                     return bool(value)
                 else:
                     raise ValueError(f"[EVAL ERROR] Unknown cast target: {target_type}")
@@ -1270,9 +1275,21 @@ class Compiler:
                 raise ValueError(f"[TYPE ERROR] Failed to cast '{value}' to {target_type}: {e}")
 
         elif node.name == "typecast_value":
-            if node.value:
+            if node.value is not None:
                 if isinstance(node.value, str) and node.value.startswith("@"):
                     return self.env.get_var(node.value)
+                if isinstance(node.value, str) and node.value.startswith('"') and node.value.endswith('"'):
+                    return node.value[1:-1]  # Strip the quotes
+                if isinstance(node.value, str) and node.value.startswith('~'):
+                    node.value = node.value[1:]  # Translate ~ to -
+                    return -int(node.value)            
+                
+                # Handle numbers
+                if '.' in str(node.value):
+                    return float(node.value)
+                else:
+                    return int(node.value)
+
                 return node.value
             elif node.children:
                 return self.eval(node.children[0])

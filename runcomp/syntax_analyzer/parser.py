@@ -1210,7 +1210,7 @@ def typecast_value_floater(p):
 # Rule 279: typecast_value → CHANTLIT
 @pg.production("typecast_value : CHANTLIT")
 def typecast_value_chant(p):
-    return ASTNode("typecast_value", value=p[0].value)
+    return ASTNode("typecast_value", value=str(p[0].value))
 
 # Rule 280: typecast_value → stat_value
 @pg.production("typecast_value : stat_value")
