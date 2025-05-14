@@ -1041,7 +1041,7 @@ class Compiler:
                 # --- Feint boundary check ---
                 if var_type == "Feint" and isinstance(new_val, int):
                     if not -9999999999999 <= new_val <= 9999999999999:
-                        raise ValueError(f"[INTEGER OVERFLOW ERROR] Feint value out of bounds: {new_val}")
+                        raise ValueError(f"[FEINT OVERFLOW ERROR] Feint value out of bounds: {new_val}")
                 # --- Floater boundary check ---
                 if var_type == "Floater" and isinstance(new_val, float):                   
                     if not -9999999999999.999999 <= new_val <= 9999999999999.999999:
@@ -1353,14 +1353,45 @@ class Compiler:
             if expected_type.endswith("Array"):
                 raise ValueError(f"[SEMANTIC ERROR] Inbound() cannot assign to an array identifier: {var_name}")
             
-            user_input = self.get_input(f"{prompt} ")
+            user_input = self.get_input(f"{prompt} ").strip()
 
             # Type-check based on expected type
             try:
+                # Normalize tilde
+                normalized_input = user_input.replace("~", "-")                
+                
                 if expected_type == "Feint":
-                    value = int(user_input)
+                    if normalized_input.lstrip("-").startswith("0") and len(normalized_input.lstrip("-")) > 1:
+                        normalized_input = "-" + normalized_input.lstrip("-").lstrip("0") if normalized_input.startswith("-") else normalized_input.lstrip("0")
+
+                    value = int(normalized_input)
+
+                    # Check overflow
+                    if not (-9999999999999 <= value <= 9999999999999):
+                        raise OverflowError(f"[FEINT OVERFLOW ERROR] Feint value out of bounds: {value}")
+
+                    # Reject negative zero
+                    if value == 0 and normalized_input.startswith("-"):
+                        raise ValueError("[SEMANTIC ERROR] Negative zero (-0) is not allowed.")
+                
                 elif expected_type == "Floater":
-                    value = float(user_input)
+                    if '.' not in normalized_input:
+                        raise ValueError("[SEMANTIC ERROR] Floater must contain a decimal point.")
+
+                    # Reject cases like '.5' or '-.7'
+                    if normalized_input.startswith('.') or normalized_input.startswith('-.'):
+                        raise ValueError("[SEMANTIC ERROR] Floater must include a whole number before the decimal point.")
+
+                    whole, frac = normalized_input.split('.', 1)
+                    if frac == '':
+                        raise ValueError("[SEMANTIC ERROR] Floater must include digits after the decimal point.")
+
+                    value = round(float(normalized_input), 6)
+
+                    # Check overflow
+                    if not (-9999999999999.999999 <= value <= 9999999999999.999999):
+                        raise OverflowError(f"[FLOATER OVERFLOW ERROR] Floater value out of bounds: {value}")
+
                 elif expected_type == "Stat":
                     if user_input == "Win":
                         value = "Win"
@@ -1372,8 +1403,10 @@ class Compiler:
                     value = user_input
                 else:
                     raise ValueError(f"[ERROR] Unsupported type '{expected_type}'")
+            except OverflowError as oe:
+                raise oe  # Let overflow errors be directly shown
             except ValueError as ve:
-                raise ValueError(f"[SEMANTIC ERROR] Input type mismatch: {var_name} expects {expected_type} input, but got '{user_input}'.") from ve
+                raise ValueError(f"[SEMANTIC ERROR] HERE Input type mismatch: {var_name} expects {expected_type} input, but got '{user_input}'.") from ve
 
             self.env.set_var(var_name, value, expected_type)
             # print(f"[INBOUND] {var_name} = {value} ({expected_type})")

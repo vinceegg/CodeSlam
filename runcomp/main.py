@@ -42,13 +42,10 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Team() {
-    Feint @count = 5;
-    Stat @isWin = Win;
-    
-    Play (@count AND @isWin) {
-        Announce("This will cause a runtime error");
-    }
+Team(){
+Floater @num;
+Inbound("Enter num" ,@num);
+Announce(@num);
 }
  '''
  
