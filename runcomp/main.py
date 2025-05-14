@@ -42,11 +42,8 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Wilt Feint @addNum(@x, @y){
-Rebound 1;
-}
-Wilt Floater @addNum(@x, @y){
-Rebound 2.0;
+Wilt Chant @addNum(@addNum){
+Rebound "Hello";
 }
 Team(){
 Feint @add;

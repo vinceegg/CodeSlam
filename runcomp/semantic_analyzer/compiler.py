@@ -29,6 +29,8 @@ class Environment:
 
     # --- Functions ---
     def set_func(self, name, func_node):
+        if name in self.functions:
+            raise ValueError(f"[DECLARATION ERROR] Function '{name}' is already declared.")
         self.functions[name] = func_node
 
     def get_func(self, name):
@@ -796,30 +798,40 @@ class Compiler:
         elif node.name == "feint_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")
             self.env.functions[func_name] = {"node": node, "type": "Feint"} # Store the full function AST and return type
             return None
 
         elif node.name == "floater_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")            
             self.env.functions[func_name] = {"node": node, "type": "Floater"} # Store the full function AST and return type
             return None
         
         elif node.name == "chant_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")            
             self.env.functions[func_name] = {"node": node, "type": "Chant"} # Store the full function AST and return type
             return None
 
         elif node.name == "stat_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")            
             self.env.functions[func_name] = {"node": node, "type": "Stat"} # Store the full function AST and return type
             return None
 
         elif node.name == "dunk_function":
             func_name_token = node.children[0]  # VAR_INIT token
             func_name = func_name_token.value
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")            
             self.env.functions[func_name] = {"node": node, "type": "Dunk"}  # store as type Dunk
             return None
                                 
