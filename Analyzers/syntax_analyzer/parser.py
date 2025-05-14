@@ -16,6 +16,7 @@ class Parser:
         self.line_starts = {1: 0}  # Track the starting position of each line
         self.current_line_content = ""  # Track content of current line
         self.current_nonterminal = None  # Track current nonterminal being parsed
+        
 
     def get_expected_tokens(self, nonterminal: str) -> Set[TokenType]:
         """Get all expected tokens for a nonterminal based on FIRST sets"""
@@ -53,16 +54,11 @@ class Parser:
             
             # Build detailed error message
             error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
-            error_msg += f"While parsing {nonterminal}, "
+            error_msg += f"Unexpected Token: {token_value}\n"
             
-            if production_rule:
-                error_msg += f"expected production rule {production_rule} "
-            else:
-                error_msg += "unexpected "
-            
-            error_msg += f"token '{token_value}' of type {token_type}.\n"
             # Remove "TokenType." prefix from token names in the expected tokens list
-            error_msg += f"Expected one of: {', '.join(str(t).replace('TokenType.', '') for t in expected_tokens)}"
+            expected_tokens_str = ', '.join(str(t).replace('TokenType.', '') for t in expected_tokens)
+            error_msg += f"Expected Token: {{{expected_tokens_str}}}"
             
             raise SyntaxError(
                 error_msg,
@@ -77,7 +73,8 @@ class Parser:
             error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
             error_msg += f"Unexpected end of file while parsing {nonterminal}.\n"
             # Remove "TokenType." prefix from token names in the expected tokens list
-            error_msg += f"Expected one of: {', '.join(str(t).replace('TokenType.', '') for t in expected_tokens)}"
+            expected_tokens_str = ', '.join(str(t).replace('TokenType.', '') for t in expected_tokens)
+            error_msg += f"Expected Token: {{{expected_tokens_str}}}"
             
             raise SyntaxError(
                 error_msg,
@@ -166,18 +163,24 @@ class Parser:
         # Check if either the token's type matches or its value converts to the expected type
         return token.type == expected_type or value_type == expected_type
 
-    def expect(self, token_type: TokenType) -> None:
+    def expect(self, token_type: TokenType, strict: bool = False) -> None:
         """Expect a specific token type, raise error if not found"""
         if self.current_token and self.match_token_type(self.current_token, token_type):
             self.advance()
         else:
-            # Enhanced error handling with FOLLOW set information
-            expected_tokens = {token_type}
-            if self.current_nonterminal in FOLLOW_SETS:
-                # Only add FOLLOW tokens if we're in a context where they might be relevant
-                follow_tokens = self.get_follow_tokens(self.current_nonterminal)
-                expected_tokens.update(follow_tokens)
-            self.error_handler(self.current_nonterminal, expected_tokens)
+            # In strict mode, only show the specific expected token
+            # In regular mode, use the normal error handling
+            if strict:
+                expected_tokens = {token_type}
+                self.error_handler(self.current_nonterminal, expected_tokens)
+            else:
+                # Use your existing approach for non-strict cases
+                expected_tokens = {token_type}
+                if self.current_nonterminal in FOLLOW_SETS:
+                    # Only add FOLLOW tokens if we're in a context where they might be relevant
+                    follow_tokens = self.get_follow_tokens(self.current_nonterminal)
+                    expected_tokens.update(follow_tokens)
+                self.error_handler(self.current_nonterminal, expected_tokens)
 
     def match(self, expected_type: TokenType) -> bool:
         """Check if current token matches expected type"""
@@ -1165,16 +1168,16 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("feint_function", expected_tokens)
         
-        self.expect(TokenType.FEINT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.FEINT, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.LEFT_PAREN, strict=True)
         self.parse_func_parameters()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.expect(TokenType.RIGHT_PAREN, strict=True)
+        self.expect(TokenType.CODE_BLOCK_LEFT, strict=True)
         self.parse_decl()
         self.parse_function_statement()
         self.parse_rebound_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
     
     def parse_floater_function(self) -> None:
         """<floater_function> → Floater @identifier(<func_parameters>) { <decl> <function_statement> <rebound_statement>}"""
@@ -1184,16 +1187,16 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("floater_function", expected_tokens)
         
-        self.expect(TokenType.FLOATER)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.FLOATER, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.LEFT_PAREN, strict=True)
         self.parse_func_parameters()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.expect(TokenType.RIGHT_PAREN, strict=True)
+        self.expect(TokenType.CODE_BLOCK_LEFT, strict=True)
         self.parse_decl()
         self.parse_function_statement()
         self.parse_rebound_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
     
     def parse_chant_function(self) -> None:
         """<chant_function> → Chant @identifier(<func_parameters>) {<decl> <function_statement> <rebound_statement>}"""
@@ -1203,16 +1206,16 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("chant_function", expected_tokens)
         
-        self.expect(TokenType.CHANT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.CHANT, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.LEFT_PAREN, strict=True)
         self.parse_func_parameters()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.expect(TokenType.RIGHT_PAREN, strict=True)
+        self.expect(TokenType.CODE_BLOCK_LEFT, strict=True)
         self.parse_decl()
         self.parse_function_statement()
         self.parse_rebound_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
     
     def parse_stat_function(self) -> None:
         """<stat_function> → Stat @identifier(<func_parameters>) {<decl> <function_statement> <rebound_statement>}"""
@@ -1222,16 +1225,16 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("stat_function", expected_tokens)
         
-        self.expect(TokenType.STAT)
-        self.expect(TokenType.VAR_INIT)
-        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.STAT, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.LEFT_PAREN, strict=True)
         self.parse_func_parameters()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.expect(TokenType.RIGHT_PAREN, strict=True)
+        self.expect(TokenType.CODE_BLOCK_LEFT, strict=True)
         self.parse_decl()
         self.parse_function_statement()
         self.parse_rebound_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
     
     def parse_dunk_function(self) -> None:
         """<dunk_function> → @identifier(<func_parameters>) {<decl> <function_statement>}"""
@@ -1672,7 +1675,7 @@ class Parser:
         elif self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
             self.expect(TokenType.LEFT_PAREN)
             self.parse_expression()
-            self.expect(TokenType.RIGHT_PAREN)
+            self.expect(TokenType.RIGHT_PAREN, strict=True)
         elif self.match_token_type(self.current_token, TokenType.NOT_OP):
             self.expect(TokenType.NOT_OP)
             self.parse_factor()
