@@ -1348,7 +1348,7 @@ class Compiler:
                 else:
                     raise ValueError(f"[ERROR] Unsupported type '{expected_type}'")
             except ValueError as ve:
-                raise ValueError(f"[TYPE ERROR] {var_name} expects {expected_type} input: {ve}")
+                raise ValueError(f"[SEMANTIC ERROR] Input type mismatch: {var_name} expects {expected_type} input, but got '{user_input}'.") from ve
 
             self.env.set_var(var_name, value, expected_type)
             # print(f"[INBOUND] {var_name} = {value} ({expected_type})")

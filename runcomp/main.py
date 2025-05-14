@@ -42,14 +42,9 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Floater @a = 10.123456;
-Floater @a = 3.000001;
-Team() {
-    Feint @result = 0, @result;
-    
-    Floater @result = 0.0;
-    @result = @a / @b; #Answer: 3.374484208505263
-    Announce(@result);  
+Team(){
+Zone Feint @scores[10];
+Inbound("Enter ID: ", @scores); 
 }
  '''
  
