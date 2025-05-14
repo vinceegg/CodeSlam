@@ -6,38 +6,91 @@ from Analyzers.syntax_analyzer.follow_sets import FOLLOW_SETS
 from Analyzers.syntax_analyzer.predict_sets import PREDICT_SETS
 
 class Parser:
+
+    """
+        Initialize the parser with a list of tokens from the lexer.
+        
+        How it works:
+        - Stores the token list and sets the current position to the first token
+        - Sets up tracking for line numbers and columns for error reporting
+        - Prepares to track the current grammar rule being processed
+    """
+    
     def __init__(self, tokens: List[Token]):
-        self.tokens = tokens
-        self.current = 0
-        self.current_token = self.tokens[0] if tokens else None
-        self.line_number = 1
-        self.column = 0
-        self.expected_tokens = set()
-        self.line_starts = {1: 0}  # Track the starting position of each line
-        self.current_line_content = ""  # Track content of current line
-        self.current_nonterminal = None  # Track current nonterminal being parsed
+        self.tokens = tokens                                        # Store all tokens from lexer
+        self.current = 0                                            # Index of current token
+        self.current_token = self.tokens[0] if tokens else None     # Current token being processed
+        self.line_number = 1                                        # Track current line number
+        self.column = 0                                             # Track current column position
+        self.expected_tokens = set()                                # Set of tokens we might expect
+        self.line_starts = {1: 0}                                   # Track the starting position of each line
+        self.current_line_content = ""                              # Track content of current line
+        self.current_nonterminal = None                             # Track current nonterminal being parsed
         
 
     def get_expected_tokens(self, nonterminal: str) -> Set[TokenType]:
-        """Get all expected tokens for a nonterminal based on FIRST sets"""
+        """
+            Get all tokens that can legally appear first in a grammar rule.
+            
+            How it works:
+            - Looks up the grammar rule in the FIRST_SETS dictionary
+            - Returns all tokens that can legally start this grammar rule
+            - This is used for error reporting and prediction
+            
+            Example: For a rule like <expr> → id + <expr> | num * <expr>,
+                    the FIRST set would be {id, num}
+        """
         if nonterminal in FIRST_SETS:
             return FIRST_SETS[nonterminal]
         return set()
 
     def get_follow_tokens(self, nonterminal: str) -> Set[TokenType]:
-        """Get all follow tokens for a nonterminal based on FOLLOW sets"""
+        """
+        Get all tokens that can legally follow after a grammar rule is completed.
+        
+        How it works:
+        - Looks up the grammar rule in the FOLLOW_SETS dictionary
+        - Returns all tokens that can legally come after this rule
+        - This helps with error recovery and checking for rule boundaries
+        
+        Example: For a rule like <term> within <expr> → <term> + <factor>,
+                 the FOLLOW set would include {+, ), ;, etc.}
+        """
         if nonterminal in FOLLOW_SETS:
             return FOLLOW_SETS[nonterminal]
         return set()
 
     def get_production_rule(self, nonterminal: str, token_type: TokenType) -> Optional[int]:
-        """Get the production rule number based on PREDICT sets"""
+        """
+        Get the specific grammar production to use based on the current token.
+        
+        How it works:
+        - Uses the PREDICT_SETS dictionary to look up which production to follow
+        - PREDICT_SETS maps (nonterminal, token) pairs to production rule numbers
+        - This makes parsing decisions deterministic based on the current token
+        
+        Example: For rules like <stmt> → if(...) {...} | while(...) {...},
+                 PREDICT[(stmt, if)] would return production #1
+        """
         if (nonterminal, token_type) in PREDICT_SETS:
             return PREDICT_SETS[(nonterminal, token_type)]
         return None
 
     def error_handler(self, nonterminal: str, expected_tokens: Set[TokenType] = None) -> None:
-        """Enhanced error handler that uses FIRST sets, FOLLOW sets, and PREDICT sets"""
+        """
+        Create detailed syntax error messages when parsing fails.
+        
+        How it works:
+        - If no expected tokens are provided, gets them from FIRST sets
+        - Also adds tokens from FOLLOW sets for better error recovery
+        - Builds a detailed error message with line/column information
+        - Reports what token was found vs. what was expected
+        
+        This function is the heart of error handling, using the FIRST and FOLLOW
+        sets to tell the programmer exactly what went wrong and what was expected.
+        """
+
+        # If no expected tokens specified, get them from FIRST sets
         if expected_tokens is None:
             expected_tokens = self.get_expected_tokens(nonterminal)
             
@@ -48,6 +101,7 @@ class Parser:
                 expected_tokens.update(follow_tokens)
 
         if self.current_token:
+            # We have a token but it's the wrong one
             token_type = self.current_token.type
             token_value = self.current_token.value
             production_rule = self.get_production_rule(nonterminal, token_type)
@@ -60,6 +114,7 @@ class Parser:
             expected_tokens_str = ', '.join(str(t).replace('TokenType.', '') for t in expected_tokens)
             error_msg += f"Expected Token: {{{expected_tokens_str}}}"
             
+            # Raise the error with detailed information
             raise SyntaxError(
                 error_msg,
                 self.line_number,
@@ -70,6 +125,7 @@ class Parser:
                 production_rule=production_rule
             )
         else:
+            # We ran out of tokens unexpectedly (end of file)
             error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
             error_msg += f"Unexpected end of file while parsing {nonterminal}.\n"
             # Remove "TokenType." prefix from token names in the expected tokens list
@@ -86,7 +142,16 @@ class Parser:
             )
 
     def skip_whitespace_and_comments(self):
-        """Helper method to skip whitespace, newlines and comments"""
+        """
+        Skip over tokens that don't affect the grammar parsing.
+        
+        How it works:
+        - Skips spaces, tabs, newlines, and comments
+        - Updates line/column tracking when encountering newlines
+        - Ensures parser only processes meaningful tokens
+        """
+
+        # Loop while current token is something we want to skip
         while self.current_token and self.current_token.type in [
             TokenType.SPACE,
             TokenType.TAB,
@@ -94,16 +159,17 @@ class Parser:
             TokenType.SINGLE_COMMENT,
             TokenType.MULTI_COMMENT
         ]:
-            # Update position tracking for whitespace/comments
+            # Update line number when we see a newline
             if self.current_token.type == TokenType.NEWLINE:
                 self.line_number += 1
                 self.column = 0
                 self.line_starts[self.line_number] = 0
                 self.current_line_content = ""
             elif self.current_token.type in [TokenType.SPACE, TokenType.TAB]:
-                # Add spaces to line content
+                # Add spaces to track column position accurately
                 self.current_line_content += " " * (1 if self.current_token.type == TokenType.TAB else 1)
                 
+            # Move to next token
             self.current += 1
             if self.current < len(self.tokens):
                 self.current_token = self.tokens[self.current]
@@ -112,7 +178,14 @@ class Parser:
                 break
 
     def update_position(self, token):
-        """Update line and column position based on token content"""
+        """
+        Update line and column tracking after processing a token.
+        
+        How it works:
+        - Updates line number when encountering a newline
+        - Updates column position for accurate error reporting
+        - Maintains the current line content for context
+        """
         if token.type == TokenType.NEWLINE:
             self.line_number += 1
             self.column = 0
@@ -126,10 +199,21 @@ class Parser:
                 self.current_line_content += token_value
 
     def advance(self) -> None:
-        """Advance to next token and update position tracking"""
+        """
+        Move to the next token in the input stream.
+        
+        How it works:
+        - Updates position tracking for the current token
+        - Moves to the next token in the list
+        - Automatically skips whitespace and comments
+        
+        This is a key function used whenever we successfully process a token
+        and want to move to the next one.
+        """
         if self.current_token:
             self.update_position(self.current_token)
             
+        # Move to next token
         self.current += 1
         if self.current < len(self.tokens):
             self.current_token = self.tokens[self.current]
@@ -139,13 +223,26 @@ class Parser:
             self.current_token = None
 
     def peek(self) -> Optional[Token]:
-        """Look at next token without advancing"""
+        """
+        Look ahead at the next token without advancing.
+        
+        How it works:
+        - Returns the next token without changing the current position
+        - Useful for making decisions that require lookahead
+        """
         if self.current + 1 >= len(self.tokens):
             return None
         return self.tokens[self.current + 1]
 
     def get_token_type(self, token_value: str) -> TokenType:
-        """Convert a token value to its corresponding TokenType"""
+        """
+        Convert a token's string value to its TokenType enum.
+        
+        How it works:
+        - Tries to convert a string like "if" to TokenType.IF
+        - Returns None if conversion fails
+        - Helps match tokens by either their type or value
+        """
         try:
             return TokenType[token_value.upper()]
         except KeyError:
@@ -153,7 +250,14 @@ class Parser:
             return None
 
     def match_token_type(self, token: Token, expected_type: TokenType) -> bool:
-        """Match a token against an expected token type, considering both type and value"""
+        """
+        Check if a token matches an expected type.
+        
+        How it works:
+        - Matches by either direct type comparison or by comparing the token's value
+        - For example, a token with value "if" would match TokenType.IF
+        - This flexibility makes the parser more robust
+        """
         if not token:
             return False
         
@@ -164,33 +268,57 @@ class Parser:
         return token.type == expected_type or value_type == expected_type
 
     def expect(self, token_type: TokenType, strict: bool = False) -> None:
-        """Expect a specific token type, raise error if not found"""
+        """
+        Expect a specific token type and consume it, or raise an error.
+        
+        How it works:
+        - If current token matches the expected type, advance to next token
+        - If not, raise a syntax error with detailed information
+        - The strict parameter controls whether to show only the specific expected token
+          or a broader set of expected tokens in the error message
+        
+        This function is used when a specific token must be present.
+        """
         if self.current_token and self.match_token_type(self.current_token, token_type):
+            # Token matches, consume it
             self.advance()
         else:
             # In strict mode, only show the specific expected token
-            # In regular mode, use the normal error handling
             if strict:
                 expected_tokens = {token_type}
                 self.error_handler(self.current_nonterminal, expected_tokens)
             else:
-                # Use your existing approach for non-strict cases
+                # In regular mode, show all possible tokens
                 expected_tokens = {token_type}
                 if self.current_nonterminal in FOLLOW_SETS:
-                    # Only add FOLLOW tokens if we're in a context where they might be relevant
+                    # Add FOLLOW tokens for more helpful error messages
                     follow_tokens = self.get_follow_tokens(self.current_nonterminal)
                     expected_tokens.update(follow_tokens)
                 self.error_handler(self.current_nonterminal, expected_tokens)
 
     def match(self, expected_type: TokenType) -> bool:
-        """Check if current token matches expected type"""
+        """
+        Check if current token matches expected type and advance if it does.
+        
+        How it works:
+        - Similar to expect() but returns boolean instead of raising error
+        - Used when a token is optional or one of several alternatives
+        - Returns True if token matched and was consumed, False otherwise
+        """
         if self.current_token and self.match_token_type(self.current_token, expected_type):
             self.advance()
             return True
         return False
             
     def parse(self) -> None:
-        """Start parsing the program"""
+        """
+        Start parsing the program from the top-level rule.
+        
+        How it works:
+        - Calls parse_program() to start the recursive descent process
+        - Catches and prints any syntax errors that occur
+        - This is the main entry point for parsing
+        """
         try:
             self.parse_program()
         except SyntaxError as e:
@@ -248,6 +376,7 @@ class Parser:
         self.current_nonterminal = "program"
         expected_tokens = self.get_expected_tokens("program")
         
+        # Check if we have a valid starting token for the program
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("program", expected_tokens)
 
