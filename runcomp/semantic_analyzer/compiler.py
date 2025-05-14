@@ -1042,6 +1042,11 @@ class Compiler:
                 if var_type == "Feint" and isinstance(new_val, int):
                     if not -9999999999999 <= new_val <= 9999999999999:
                         raise ValueError(f"[INTEGER OVERFLOW ERROR] Feint value out of bounds: {new_val}")
+                # --- Floater boundary check ---
+                if var_type == "Floater" and isinstance(new_val, float):                   
+                    if not -9999999999999.999999 <= new_val <= 9999999999999.999999:
+                        raise ValueError(f"[FLOATER OVERFLOW ERROR] Floater value out of bounds: {format(new_val, '.7f')}")
+
                     
                 # Store the result back with the original variable type
                 self.env.set_var(var_name, new_val, var_type)
