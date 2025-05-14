@@ -5,6 +5,12 @@ class Environment:
         self.variables = {}
         self.functions = {}
 
+    # --- Declare Variable ---
+    def declare_var(self, name, value, type_name=None):
+        if name in self.variables:
+            raise ValueError(f"[DECLARATION ERROR] Variable '{name}' is already declared.")
+        self.set_var(name, value, type_name)
+
     # --- Variables ---
     def set_var(self, name, value, type_name=None):
         self.variables[name] = {"value": value, "type": type_name}
@@ -66,13 +72,13 @@ class Compiler:
             if more and more[0][1] is not None:
                 first_value = more[0][1]
 
-            self.env.set_var(first_var.value, first_value, "Feint")
+            self.env.declare_var(first_var.value, first_value, "Feint")
 
             # Set additional variables
             for var_name, value in more[1:]:
                 if var_name is None:
                     raise ValueError("[PARSE ERROR] Missing variable name for additional Feint.")
-                self.env.set_var(var_name, value, "Feint")
+                self.env.declare_var(var_name, value, "Feint")
 
         elif node.name == "more_feint":
             if not node.children:
@@ -121,7 +127,7 @@ class Compiler:
             all_vars += additional
 
             for var_name, val in all_vars:
-                self.env.set_var(var_name, val, type_name="Floater")
+                self.env.declare_var(var_name, val, type_name="Floater")
 
             
         elif node.name == "more_floater":
@@ -176,7 +182,7 @@ class Compiler:
             all_vars += additional
 
             for var_name, val in all_vars:
-                self.env.set_var(var_name, val, type_name="Chant")
+                self.env.declare_var(var_name, val, type_name="Chant")
         
         elif node.name == "more_chant":
             if not node.children:
@@ -221,7 +227,7 @@ class Compiler:
             all_vars += additional
 
             for var_name, val in all_vars:
-                self.env.set_var(var_name, val, type_name="Stat")
+                self.env.declare_var(var_name, val, type_name="Stat")
 
         elif node.name == "stat_init":
             if node.value == "Win":
@@ -269,11 +275,11 @@ class Compiler:
             value, additional_constants = self.eval(init_node)
 
             # Set the first variable
-            self.env.set_var(var_name, value, type_name="ConstFeint")
+            self.env.declare_var(var_name, value, type_name="ConstFeint")
 
             # Set any additional variables
             for name, val in additional_constants:
-                self.env.set_var(name, val, type_name="ConstFeint")
+                self.env.declare_var(name, val, type_name="ConstFeint")
 
         elif node.name == "feint_const_init":
             value = self.eval(node.children[0])  # feint_const
@@ -309,11 +315,11 @@ class Compiler:
             value, additional_constants = self.eval(init_node)
 
             # Set the first variable
-            self.env.set_var(var_name, value, type_name="ConstFloater")
+            self.env.declare_var(var_name, value, type_name="ConstFloater")
 
             # Set any additional variables
             for name, val in additional_constants:
-                self.env.set_var(name, val, type_name="ConstFloater")
+                self.env.declare_var(name, val, type_name="ConstFloater")
                 
         elif node.name == "floater_const_init":
             value = self.eval(node.children[0])  # floater_const
@@ -349,11 +355,11 @@ class Compiler:
             value, additional_constants = self.eval(init_node)
 
             # Set the first variable
-            self.env.set_var(var_name, value, type_name="ConstChant")
+            self.env.declare_var(var_name, value, type_name="ConstChant")
 
             # Set any additional variables
             for name, val in additional_constants:
-                self.env.set_var(name, val, type_name="ConstChant")
+                self.env.declare_var(name, val, type_name="ConstChant")
                 
         elif node.name == "chant_const_init":
             value = self.eval(node.children[0])  # chant_const
@@ -383,11 +389,11 @@ class Compiler:
             value, additional_constants = self.eval(init_node)
 
             # Set the first variable
-            self.env.set_var(var_name, value, type_name="ConstStat")
+            self.env.declare_var(var_name, value, type_name="ConstStat")
 
             # Set any additional variables
             for name, val in additional_constants:
-                self.env.set_var(name, val, type_name="ConstStat")
+                self.env.declare_var(name, val, type_name="ConstStat")
                 
         elif node.name == "stat_const_init":
             value = self.eval(node.children[0])  # stat_const
@@ -442,7 +448,7 @@ class Compiler:
                     if len(data) != first_dimension:
                         raise ValueError(f"[SEMANTIC ERROR] Array initializer size mismatch: expected {first_dimension}, got {len(data)}")
                     # print(f"[DEBUG] Storing 1D array {var_name}: {data}")
-                    self.env.set_var(var_name, data, type_name="FeintArray")
+                    self.env.declare_var(var_name, data, type_name="FeintArray")
                 else:
                     if not isinstance(data, list):
                         raise ValueError("[SEMANTIC ERROR] Expected list for 2D array initializer.")
@@ -456,12 +462,12 @@ class Compiler:
                         row = data[i * second_dimension : (i + 1) * second_dimension]
                         reshaped.append(row)
 
-                    self.env.set_var(var_name, reshaped, type_name="FeintArray2D")
+                    self.env.declare_var(var_name, reshaped, type_name="FeintArray2D")
             else:
                 if second_dimension is None:
-                    self.env.set_var(var_name, [0]*first_dimension, type_name="FeintArray")
+                    self.env.declare_var(var_name, [0]*first_dimension, type_name="FeintArray")
                 else:
-                    self.env.set_var(var_name, [[0]*second_dimension for _ in range(first_dimension)], type_name="FeintArray2D")
+                    self.env.declare_var(var_name, [[0]*second_dimension for _ in range(first_dimension)], type_name="FeintArray2D")
 
         elif node.name == "2D_array":
             if not node.children:
@@ -538,7 +544,7 @@ class Compiler:
                     # 1D Floater Array
                     if not isinstance(data, list):
                         raise ValueError("[TYPE ERROR] Expected list for 1D floater array initializer.")
-                    self.env.set_var(var_name, data, type_name="FloaterArray")
+                    self.env.declare_var(var_name, data, type_name="FloaterArray")
                 else:
                     # 2D Floater Array
                     if not isinstance(data, list):
@@ -553,13 +559,13 @@ class Compiler:
                         row = data[i * second_dimension : (i + 1) * second_dimension]
                         reshaped.append(row)
 
-                    self.env.set_var(var_name, reshaped, type_name="FloaterArray2D")
+                    self.env.declare_var(var_name, reshaped, type_name="FloaterArray2D")
             else:
                 # No initializer provided
                 if second_dimension is None:
-                    self.env.set_var(var_name, [0.0] * first_dimension, type_name="FloaterArray")
+                    self.env.declare_var(var_name, [0.0] * first_dimension, type_name="FloaterArray")
                 else:
-                    self.env.set_var(var_name, [[0.0] * second_dimension for _ in range(first_dimension)], type_name="FloaterArray2D")
+                    self.env.declare_var(var_name, [[0.0] * second_dimension for _ in range(first_dimension)], type_name="FloaterArray2D")
 
         elif node.name == "floater_array_init":
             if node.children:
@@ -629,7 +635,7 @@ class Compiler:
                     # 1D Chant Array
                     if not isinstance(data, list):
                         raise ValueError("[TYPE ERROR] Expected list for 1D chant array initializer.")
-                    self.env.set_var(var_name, data, type_name="ChantArray")
+                    self.env.declare_var(var_name, data, type_name="ChantArray")
                 else:
                     # 2D Chant Array
                     if not isinstance(data, list):
@@ -644,13 +650,13 @@ class Compiler:
                         row = data[i * second_dimension : (i + 1) * second_dimension]
                         reshaped.append(row)
 
-                    self.env.set_var(var_name, reshaped, type_name="ChantArray2D")
+                    self.env.declare_var(var_name, reshaped, type_name="ChantArray2D")
             else:
                 # No initializer provided
                 if second_dimension is None:
-                    self.env.set_var(var_name, [""] * first_dimension, type_name="ChantArray")
+                    self.env.declare_var(var_name, [""] * first_dimension, type_name="ChantArray")
                 else:
-                    self.env.set_var(var_name, [[""] * second_dimension for _ in range(first_dimension)], type_name="ChantArray2D")
+                    self.env.declare_var(var_name, [[""] * second_dimension for _ in range(first_dimension)], type_name="ChantArray2D")
 
         elif node.name == "chant_array_init":
             if node.children:
@@ -716,7 +722,7 @@ class Compiler:
         #             # 1D Stat Array
         #             if not isinstance(data, list):
         #                 raise ValueError("[TYPE ERROR] Expected list for 1D stat array initializer.")
-        #             self.env.set_var(var_name, data, type_name="StatArray")
+        #             self.env.declare_var(var_name, data, type_name="StatArray")
         #         else:
         #             # 2D Stat Array
         #             if not isinstance(data, list):
@@ -731,13 +737,13 @@ class Compiler:
         #                 row = data[i * second_dimension : (i + 1) * second_dimension]
         #                 reshaped.append(row)
 
-        #             self.env.set_var(var_name, reshaped, type_name="StatArray2D")
+        #             self.env.declare_var(var_name, reshaped, type_name="StatArray2D")
         #     else:
         #         # No initializer provided
         #         if second_dimension is None:
-        #             self.env.set_var(var_name, [False] * first_dimension, type_name="StatArray")
+        #             self.env.declare_var(var_name, [False] * first_dimension, type_name="StatArray")
         #         else:
-        #             self.env.set_var(var_name, [[False] * second_dimension for _ in range(first_dimension)], type_name="StatArray2D")
+        #             self.env.declare_var(var_name, [[False] * second_dimension for _ in range(first_dimension)], type_name="StatArray2D")
 
         # elif node.name == "stat_array_init":
         #     if node.children:
