@@ -42,9 +42,15 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
+Wilt Feint @addNum(@x, @y){
+Rebound 1;
+}
+Wilt Floater @addNum(@x, @y){
+Rebound 2.0;
+}
 Team(){
-Zone Feint @scores[10];
-Inbound("Enter ID: ", @scores); 
+Feint @add;
+@add = @addNum(1, 2);
 }
  '''
  

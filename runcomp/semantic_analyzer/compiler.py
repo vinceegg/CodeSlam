@@ -18,13 +18,13 @@ class Environment:
     def get_var(self, name):
         var = self.variables.get(name)
         if var is None:
-            raise ValueError(f"[ERROR] Variable '{name}' not found.")
+            raise ValueError(f"[UNDECLARED VARIABLE] Variable '{name}' not found.")
         return var["value"]
 
     def get_type(self, name):
         var = self.variables.get(name)
         if var is None:
-            raise ValueError(f"[ERROR] Variable '{name}' not found.")
+            raise ValueError(f"[UNDECLARED VARIABLE] Variable '{name}' not found.")
         return var["type"]
 
     # --- Functions ---
@@ -34,7 +34,7 @@ class Environment:
     def get_func(self, name):
         func = self.functions.get(name)
         if func is None:
-            raise ValueError(f"[ERROR] Function '{name}' not found.")
+            raise ValueError(f"[UNDECLARED FUNCTION] Function '{name}' not found.")
         return func
 
 class Compiler:
@@ -1327,7 +1327,10 @@ class Compiler:
             expected_type = self.env.get_type(var_name)
             if not expected_type:
                 raise ValueError(f"[ERROR] Variable {var_name} not declared before Inbound().")
-
+            # Reject arrays and function names explicitly
+            if expected_type.endswith("Array"):
+                raise ValueError(f"[SEMANTIC ERROR] Inbound() cannot assign to an array identifier: {var_name}")
+            
             user_input = self.get_input(f"{prompt} ")
 
             # Type-check based on expected type
@@ -1661,7 +1664,7 @@ class Compiler:
     def call_function(self, func_name, args):
         func_info = self.env.functions.get(func_name)
         if func_info is None:
-            raise ValueError(f"[ERROR] Function '{func_name}' not found.")
+            raise ValueError(f"[UNDECLARED FUNCTION] Function '{func_name}' not found.")
 
         func_node = func_info["node"]
         expected_type = func_info["type"]
@@ -1704,15 +1707,15 @@ class Compiler:
         # Type checking
         if expected_type == "Feint":
             if not isinstance(rebound_value, int):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Feint (integer), got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Feint, got {type(rebound_value).__name__}")
         elif expected_type == "Floater":
             if not isinstance(rebound_value, float):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Floater (float), got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Floater, got {type(rebound_value).__name__}")
         elif expected_type == "Chant":
             if not isinstance(rebound_value, str):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Chant (string), got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Chant, got {type(rebound_value).__name__}")
         elif expected_type == "Stat":
             if not isinstance(rebound_value, bool):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Stat (boolean), got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Stat, got {type(rebound_value).__name__}")
 
         return rebound_value
