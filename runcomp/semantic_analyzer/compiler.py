@@ -1627,9 +1627,10 @@ class Compiler:
         func_node = func_info["node"]
         expected_type = func_info["type"]
         
-        param_node = func_node.children[1]  # func_parameters
-        body_node = func_node.children[2]   # function_statement
-        rebound_node = func_node.children[3] if expected_type != "Dunk" else None
+        param_node = func_node.children[1]       # func_parameters
+        local_decl_node = func_node.children[2]  # local_decl
+        body_node = func_node.children[3]        # function_statement
+        rebound_node = func_node.children[4] if expected_type != "Dunk" else None
 
         # --- Setup a new local environment ---
         old_env = self.env
@@ -1643,6 +1644,9 @@ class Compiler:
 
         for name, value in zip(param_names, args):
             self.env.set_var(name, value)  # or None if you want to omit type for now
+        
+        # --- Evaluate local declarations (arrays + variables) ---
+        self.eval(local_decl_node)
         
         # --- EVALUATE BODY ---
         for stmt in body_node.children:

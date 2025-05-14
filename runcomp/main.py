@@ -42,31 +42,18 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
+
+Wilt Feint @samplecode(@x){
+
+Zone Feint @arr[2];
+
+Rebound 1;
+}
+
+
 Team() {
-Feint @score;
-Floater @scaledScore;
-Stat @isValid = Loss;
 
-Run {
-Inbound("Enter a test score (0-100): ", @score);
-
-Dribble ((@score >= 0) AND (@score <= 100)) {
-@isValid = Win;
-} Shoot {
-Announce("Invalid score. Please enter a value between 0 and 100.\n");
-}
-
-} Play (@isValid == Loss);
-
-@scaledScore = Floater(@score) / 100.0;
-
-Dribble ((@score >= 90 AND @score <= 100) OR (@score >= 75 AND @score < 80)) {
-Announce("Excellent or Fairly Good Score!\n");
-} Shoot {
-Announce("Average or Needs Improvement.\n");
-}
-
-Announce("Your scaled score is: " & @scaledScore);
+   Announce("The result is: ");
 }
 
  '''
