@@ -561,24 +561,24 @@ def feint_function(p):
     return ASTNode("feint_function", children=[p[1], p[3], p[6], p[7], p[8]])
 
 # Rule 109: floater_function → FLOATER VAR_INIT ( func_parameters ) { function_statement rebound_statement }
-@pg.production("floater_function : FLOATER VAR_INIT LEFT_PAREN func_parameters RIGHT_PAREN CODE_BLOCK_LEFT function_statement rebound_statement CODE_BLOCK_RIGHT")
+@pg.production("floater_function : FLOATER VAR_INIT LEFT_PAREN func_parameters RIGHT_PAREN CODE_BLOCK_LEFT local_decl function_statement rebound_statement CODE_BLOCK_RIGHT")
 def floater_function(p):
-    return ASTNode("floater_function", children=[p[1], p[3], p[6], p[7]])
+    return ASTNode("floater_function", children=[p[1], p[3], p[6], p[7], p[8]])
 
 # Rule 110: chant_function → CHANT VAR_INIT ( func_parameters ) { function_statement rebound_statement }
-@pg.production("chant_function : CHANT VAR_INIT LEFT_PAREN func_parameters RIGHT_PAREN CODE_BLOCK_LEFT function_statement rebound_statement CODE_BLOCK_RIGHT")
+@pg.production("chant_function : CHANT VAR_INIT LEFT_PAREN func_parameters RIGHT_PAREN CODE_BLOCK_LEFT local_decl function_statement rebound_statement CODE_BLOCK_RIGHT")
 def chant_function(p):
-    return ASTNode("chant_function", children=[p[1], p[3], p[6], p[7]])
+    return ASTNode("chant_function", children=[p[1], p[3], p[6], p[7], p[8]])
 
 # Rule 111: stat_function → STAT VAR_INIT ( func_parameters ) { function_statement rebound_statement }
-@pg.production("stat_function : STAT VAR_INIT LEFT_PAREN func_parameters RIGHT_PAREN CODE_BLOCK_LEFT function_statement rebound_statement CODE_BLOCK_RIGHT")
+@pg.production("stat_function : STAT VAR_INIT LEFT_PAREN func_parameters RIGHT_PAREN CODE_BLOCK_LEFT local_decl function_statement rebound_statement CODE_BLOCK_RIGHT")
 def stat_function(p):
-    return ASTNode("stat_function", children=[p[1], p[3], p[6], p[7]])
+    return ASTNode("stat_function", children=[p[1], p[3], p[6], p[7], p[8]])
 
 # Rule 112: dunk_function → VAR_INIT ( func_parameters ) { function_statement }
-@pg.production("dunk_function : VAR_INIT LEFT_PAREN func_parameters RIGHT_PAREN CODE_BLOCK_LEFT function_statement CODE_BLOCK_RIGHT")
+@pg.production("dunk_function : VAR_INIT LEFT_PAREN func_parameters RIGHT_PAREN CODE_BLOCK_LEFT local_decl function_statement CODE_BLOCK_RIGHT")
 def dunk_function(p):
-    return ASTNode("dunk_function", children=[p[0], p[2], p[5]])
+    return ASTNode("dunk_function", children=[p[0], p[2], p[5], p[6]])
 
 # Rule 113: func_parameters → λ
 @pg.production("func_parameters : ")

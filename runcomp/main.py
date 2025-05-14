@@ -45,15 +45,21 @@ def main():
 
 Wilt Feint @samplecode(@x){
 
-Zone Feint @arr[2];
+Zone Feint @arr[2] = {1, 2};
+Feint @result = 0;
 
-Rebound 1;
+@result += @arr[0] + @arr[1];
+Announce("The result is: " & @result);
+
+Rebound @result;
 }
 
 
 Team() {
+Feint @try =0;
 
-   Announce("The result is: ");
+@try = @samplecode(@try);
+   Announce("The result is: " );
 }
 
  '''
