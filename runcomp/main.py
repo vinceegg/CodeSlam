@@ -42,14 +42,14 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
+Floater @a = 10.123456;
+Floater @b = 3.000001;
+
 Team() {
-Stat @test = Loss;
-Feint @float = 3;
-
-@float = Feint(@test);
-Announce (@float);
+    Floater @result = 0.0;
+    @result = @a / @b; #Answer: 3.374484208505263
+    Announce(@result);  
 }
-
  '''
  
      # Build lexer and tokenize input

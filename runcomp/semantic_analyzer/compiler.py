@@ -438,16 +438,18 @@ class Compiler:
 
                 if second_dimension is None:
                     if not isinstance(data, list):
-                        raise ValueError("[TYPE ERROR] Expected list for 1D array initializer.")
+                        raise ValueError("[SEMANTIC ERROR] Expected list for 1D array initializer.")
+                    if len(data) != first_dimension:
+                        raise ValueError(f"[SEMANTIC ERROR] Array initializer size mismatch: expected {first_dimension}, got {len(data)}")
                     # print(f"[DEBUG] Storing 1D array {var_name}: {data}")
                     self.env.set_var(var_name, data, type_name="FeintArray")
                 else:
                     if not isinstance(data, list):
-                        raise ValueError("[TYPE ERROR] Expected list for 2D array initializer.")
+                        raise ValueError("[SEMANTIC ERROR] Expected list for 2D array initializer.")
                     
                     total_elements = first_dimension * second_dimension
                     if len(data) != total_elements:
-                        raise ValueError(f"[TYPE ERROR] Array initializer size mismatch: expected {total_elements}, got {len(data)}")
+                        raise ValueError(f"[SEMANTIC ERROR] Array initializer size mismatch: expected {total_elements}, got {len(data)}")
 
                     reshaped = []
                     for i in range(first_dimension):
@@ -921,9 +923,15 @@ class Compiler:
                 if isinstance(val, bool):
                     return "Win" if val else "Loss"
                 
-                if isinstance(val, int) or isinstance(val, float):
+                if isinstance(val, int):
                     if val < 0:
                         val = str(val).replace("-", "~")
+                    return str(val)
+                
+                if isinstance(val, float):
+                    if val < 0:
+                        return f"{-val:.6f}".replace("-", "~")
+                    return f"{val:.6f}"
                 return str(val)
             
 

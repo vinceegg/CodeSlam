@@ -307,7 +307,7 @@ FOLLOW_SETS = {
     
     # <array_man>
     'array_man': {TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, 
-                  TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT, 
+                  TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_OP, 
                   TokenType.SEMICOLON},
     
     # <array_elem>
