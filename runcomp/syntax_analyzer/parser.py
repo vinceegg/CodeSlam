@@ -753,7 +753,7 @@ def literal_chant(p):
 # Rule 163: literal → stat_value
 @pg.production("literal : stat_value")
 def literal_stat(p):
-    return ASTNode("literal", children=[p[0]])
+    return ASTNode("literal", value=p[0].value)
 
 # Rule 164: nega_feint_lit → NEGAFEINT
 @pg.production("nega_feint_lit : NEGAFEINT")

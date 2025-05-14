@@ -1503,6 +1503,12 @@ class Compiler:
         elif node.name == "literal":
             val = node.value
 
+            # Handle booleans WIN and LOSS
+            if val == "Win":
+                return True
+            elif val == "Loss":
+                return False
+            
             # Handle string literal (CHANTLIT)
             if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
                 return val.strip('"')
@@ -1511,11 +1517,6 @@ class Compiler:
                 val = val[1:]  # Translate ~ to -
                 return -int(val)            
             
-            # Handle booleans WIN and LOSS
-            if val == "WIN":
-                return True
-            elif val == "LOSS":
-                return False
 
             # Handle numbers
             try:
