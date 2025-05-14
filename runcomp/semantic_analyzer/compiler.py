@@ -18,23 +18,25 @@ class Environment:
     def get_var(self, name):
         var = self.variables.get(name)
         if var is None:
-            raise ValueError(f"[ERROR] Variable '{name}' not found.")
+            raise ValueError(f"[UNDECLARED VARIABLE] Variable '{name}' not found.")
         return var["value"]
 
     def get_type(self, name):
         var = self.variables.get(name)
         if var is None:
-            raise ValueError(f"[ERROR] Variable '{name}' not found.")
+            raise ValueError(f"[UNDECLARED VARIABLE] Variable '{name}' not found.")
         return var["type"]
 
     # --- Functions ---
     def set_func(self, name, func_node):
+        if name in self.functions:
+            raise ValueError(f"[DECLARATION ERROR] Function '{name}' is already declared.")
         self.functions[name] = func_node
 
     def get_func(self, name):
         func = self.functions.get(name)
         if func is None:
-            raise ValueError(f"[ERROR] Function '{name}' not found.")
+            raise ValueError(f"[UNDECLARED FUNCTION] Function '{name}' not found.")
         return func
 
 class Compiler:
@@ -796,30 +798,40 @@ class Compiler:
         elif node.name == "feint_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")
             self.env.functions[func_name] = {"node": node, "type": "Feint"} # Store the full function AST and return type
             return None
 
         elif node.name == "floater_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")            
             self.env.functions[func_name] = {"node": node, "type": "Floater"} # Store the full function AST and return type
             return None
         
         elif node.name == "chant_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")            
             self.env.functions[func_name] = {"node": node, "type": "Chant"} # Store the full function AST and return type
             return None
 
         elif node.name == "stat_function":
             func_name_token = node.children[0]  # Token('VAR_INIT', '@function')
             func_name = func_name_token.value   # Get the function name string
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")            
             self.env.functions[func_name] = {"node": node, "type": "Stat"} # Store the full function AST and return type
             return None
 
         elif node.name == "dunk_function":
             func_name_token = node.children[0]  # VAR_INIT token
             func_name = func_name_token.value
+            if func_name in self.env.functions:
+                raise ValueError(f"[DECLARATION ERROR] Function '{func_name}' is already declared.")            
             self.env.functions[func_name] = {"node": node, "type": "Dunk"}  # store as type Dunk
             return None
                                 
@@ -988,7 +1000,7 @@ class Compiler:
             if array_access_node.name == "no_array_access":
                 # ---PREVENT CONSTANT REASSIGNMENT ---
                 if var_type in ["ConstFeint", "ConstFloater", "ConstChant", "ConstStat"]:
-                    raise ValueError(f"[ERROR] Cannot reassign to constant variable '{var_name}' ({var_type}).")
+                    raise ValueError(f"[CONSTANT MODIFICATION] Cannot reassign to constant variable '{var_name}' ({var_type}).")
 
                 # --- Type Compatibility Check ---
                 # rhs is the evaluated value, infer its type
@@ -1026,6 +1038,16 @@ class Compiler:
                 # Perform the operation
                 new_val = op_map[assign_op](current_val, rhs)
 
+                # --- Feint boundary check ---
+                if var_type == "Feint" and isinstance(new_val, int):
+                    if not -9999999999999 <= new_val <= 9999999999999:
+                        raise ValueError(f"[FEINT OVERFLOW ERROR] Feint value out of bounds: {new_val}")
+                # --- Floater boundary check ---
+                if var_type == "Floater" and isinstance(new_val, float):                   
+                    if not -9999999999999.999999 <= new_val <= 9999999999999.999999:
+                        raise ValueError(f"[FLOATER OVERFLOW ERROR] Floater value out of bounds: {format(new_val, '.7f')}")
+
+                    
                 # Store the result back with the original variable type
                 self.env.set_var(var_name, new_val, var_type)
 
@@ -1327,15 +1349,49 @@ class Compiler:
             expected_type = self.env.get_type(var_name)
             if not expected_type:
                 raise ValueError(f"[ERROR] Variable {var_name} not declared before Inbound().")
-
-            user_input = self.get_input(f"{prompt} ")
+            # Reject arrays and function names explicitly
+            if expected_type.endswith("Array"):
+                raise ValueError(f"[SEMANTIC ERROR] Inbound() cannot assign to an array identifier: {var_name}")
+            
+            user_input = self.get_input(f"{prompt} ").strip()
 
             # Type-check based on expected type
             try:
+                # Normalize tilde
+                normalized_input = user_input.replace("~", "-")                
+                
                 if expected_type == "Feint":
-                    value = int(user_input)
+                    if normalized_input.lstrip("-").startswith("0") and len(normalized_input.lstrip("-")) > 1:
+                        normalized_input = "-" + normalized_input.lstrip("-").lstrip("0") if normalized_input.startswith("-") else normalized_input.lstrip("0")
+
+                    value = int(normalized_input)
+
+                    # Check overflow
+                    if not (-9999999999999 <= value <= 9999999999999):
+                        raise OverflowError(f"[FEINT OVERFLOW ERROR] Feint value out of bounds: {value}")
+
+                    # Reject negative zero
+                    if value == 0 and normalized_input.startswith("-"):
+                        raise ValueError("[SEMANTIC ERROR] Negative zero (-0) is not allowed.")
+                
                 elif expected_type == "Floater":
-                    value = float(user_input)
+                    if '.' not in normalized_input:
+                        raise ValueError("[SEMANTIC ERROR] Floater must contain a decimal point.")
+
+                    # Reject cases like '.5' or '-.7'
+                    if normalized_input.startswith('.') or normalized_input.startswith('-.'):
+                        raise ValueError("[SEMANTIC ERROR] Floater must include a whole number before the decimal point.")
+
+                    whole, frac = normalized_input.split('.', 1)
+                    if frac == '':
+                        raise ValueError("[SEMANTIC ERROR] Floater must include digits after the decimal point.")
+
+                    value = round(float(normalized_input), 6)
+
+                    # Check overflow
+                    if not (-9999999999999.999999 <= value <= 9999999999999.999999):
+                        raise OverflowError(f"[FLOATER OVERFLOW ERROR] Floater value out of bounds: {value}")
+
                 elif expected_type == "Stat":
                     if user_input == "Win":
                         value = "Win"
@@ -1347,8 +1403,10 @@ class Compiler:
                     value = user_input
                 else:
                     raise ValueError(f"[ERROR] Unsupported type '{expected_type}'")
+            except OverflowError as oe:
+                raise oe  # Let overflow errors be directly shown
             except ValueError as ve:
-                raise ValueError(f"[SEMANTIC ERROR] Input type mismatch: {var_name} expects {expected_type} input, but got '{user_input}'.") from ve
+                raise ValueError(f"[SEMANTIC ERROR] HERE Input type mismatch: {var_name} expects {expected_type} input, but got '{user_input}'.") from ve
 
             self.env.set_var(var_name, value, expected_type)
             # print(f"[INBOUND] {var_name} = {value} ({expected_type})")
@@ -1661,7 +1719,7 @@ class Compiler:
     def call_function(self, func_name, args):
         func_info = self.env.functions.get(func_name)
         if func_info is None:
-            raise ValueError(f"[ERROR] Function '{func_name}' not found.")
+            raise ValueError(f"[UNDECLARED FUNCTION] Function '{func_name}' not found.")
 
         func_node = func_info["node"]
         expected_type = func_info["type"]
@@ -1679,7 +1737,7 @@ class Compiler:
         param_names = [child.value for child in param_node.children]  # list of parameter names (@arg, @x, etc.)
 
         if len(param_names) != len(args):
-            raise ValueError(f"[ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
+            raise ValueError(f"[SEMANTIC ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
 
         for name, value in zip(param_names, args):
             self.env.set_var(name, value)  # or None if you want to omit type for now
@@ -1704,15 +1762,15 @@ class Compiler:
         # Type checking
         if expected_type == "Feint":
             if not isinstance(rebound_value, int):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Feint (integer), got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Feint, got {type(rebound_value).__name__}")
         elif expected_type == "Floater":
             if not isinstance(rebound_value, float):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Floater (float), got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Floater, got {type(rebound_value).__name__}")
         elif expected_type == "Chant":
             if not isinstance(rebound_value, str):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Chant (string), got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Chant, got {type(rebound_value).__name__}")
         elif expected_type == "Stat":
             if not isinstance(rebound_value, bool):
-                raise TypeError(f"[ERROR] Function '{func_name}' must return Stat (boolean), got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Stat, got {type(rebound_value).__name__}")
 
         return rebound_value

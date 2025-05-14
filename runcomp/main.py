@@ -43,8 +43,9 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team(){
-Zone Feint @scores[10];
-Inbound("Enter ID: ", @scores); 
+Floater @num;
+Inbound("Enter num" ,@num);
+Announce(@num);
 }
  '''
  
