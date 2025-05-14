@@ -17,14 +17,14 @@ FOLLOW_SETS = {
                     TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
                     TokenType.TEAM, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                     TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
-                    TokenType.VAR_INIT},
+                    TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
                     
     # <feint_dec>
     'feint_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
                  TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
                  TokenType.TEAM, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                  TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
-                 TokenType.VAR_INIT},
+                 TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
                  
     # <more_feint>
     'more_feint': {TokenType.SEMICOLON, TokenType.COMMA},
@@ -37,7 +37,7 @@ FOLLOW_SETS = {
                  TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.ADD, TokenType.SUB,
                  TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL,
                  TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.AND_OP, TokenType.OR_OP,
-                 TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT, TokenType.COLON},
+                 TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT, TokenType.COLON, TokenType.COMMA},
                  
     # <feint_init_end>
     'feint_init_end': {TokenType.SEMICOLON, TokenType.COMMA},
@@ -47,7 +47,7 @@ FOLLOW_SETS = {
                    TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
                    TokenType.TEAM, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                    TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
-                   TokenType.VAR_INIT},
+                   TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
                    
     # <more_floater>
     'more_floater': {TokenType.SEMICOLON, TokenType.COMMA},
@@ -56,20 +56,20 @@ FOLLOW_SETS = {
     'floater_init': {TokenType.SEMICOLON, TokenType.COMMA},
     
     # <floater_lit>
-    'floater_lit': {TokenType.COMMA, TokenType.CODE_BLOCK_RIGHT, TokenType.MUL, TokenType.DIV, 
-                   TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, 
-                   TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-                   TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL},
+    'floater_lit': {TokenType.COMMA, TokenType.ASSIGN, TokenType.SEMICOLON, TokenType.COLON, TokenType.MUL, TokenType.DIV,
+                    TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
+                    TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.AND_OP, TokenType.OR_OP,
+                    TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT, TokenType.CODE_BLOCK_RIGHT},
                    
     # <floater_init_end>
-    'floater_init_end': {TokenType.SEMICOLON},
+    'floater_init_end': {TokenType.COMMA, TokenType.SEMICOLON},
     
     # <chant_dec>
     'chant_dec': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
                  TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
                  TokenType.TEAM, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                  TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
-                 TokenType.VAR_INIT},
+                 TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
                  
     # <more_chant>
     'more_chant': {TokenType.COMMA, TokenType.SEMICOLON},
@@ -78,10 +78,11 @@ FOLLOW_SETS = {
     'chant_init': {TokenType.COMMA, TokenType.SEMICOLON},
 
     # <chant_lit>
-    'chant_lit': {TokenType.COMMA, TokenType.SEMICOLON, TokenType.MUL, TokenType.DIV,
-                 TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN, TokenType.GREATER_THAN,
-                 TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.AND_OP,
-                 TokenType.OR_OP, TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT},
+    'chant_lit': {TokenType.COMMA, TokenType.CODE_BLOCK_RIGHT, TokenType.COLON, TokenType.ADD, TokenType.SUB,
+                  TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT,
+                  TokenType.ASSIGN, TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.LESS_THAN,
+                  TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL,
+                  TokenType.NOT_EQUAL},
                   
     # <chant_init_end>
     'chant_init_end': {TokenType.COMMA, TokenType.SEMICOLON},
@@ -91,7 +92,7 @@ FOLLOW_SETS = {
                 TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
                 TokenType.TEAM, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                 TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
-                TokenType.VAR_INIT},
+                TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
                 
     # <more_stat>
     'more_stat': {TokenType.COMMA, TokenType.SEMICOLON},
@@ -100,11 +101,11 @@ FOLLOW_SETS = {
     'stat_init': {TokenType.COMMA, TokenType.SEMICOLON},
     
     # <stat_value>
-    'stat_value': {TokenType.COMMA, TokenType.SEMICOLON, TokenType.MUL, TokenType.DIV, 
-                  TokenType.MOD, TokenType.ADD, TokenType.SUB, TokenType.LESS_THAN,
-                  TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, 
-                  TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL, TokenType.AND_OP, 
-                  TokenType.OR_OP, TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT},
+    'stat_value': {TokenType.COMMA, TokenType.CODE_BLOCK_RIGHT, TokenType.COLON, TokenType.ADD, TokenType.SUB,
+                  TokenType.AND_OP, TokenType.OR_OP, TokenType.SEMICOLON, TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT,
+                  TokenType.ASSIGN, TokenType.MUL, TokenType.DIV, TokenType.MOD, TokenType.LESS_THAN,
+                  TokenType.GREATER_THAN, TokenType.EQUAL, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL,
+                  TokenType.NOT_EQUAL},
                   
     # <stat_init_end>
     'stat_init_end': {TokenType.COMMA, TokenType.SEMICOLON},
@@ -175,17 +176,17 @@ FOLLOW_SETS = {
                  TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
                  TokenType.TEAM, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                  TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
-                 TokenType.VAR_INIT, TokenType.REBOUND},
+                 TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
                  
     # <feint_array>
     'feint_array': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT, 
                    TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
                    TokenType.TEAM, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                    TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
-                   TokenType.VAR_INIT, TokenType.REBOUND},
+                   TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
                    
     # <array_size>
-    'array_size': {TokenType.ARRAY_INDEX_RIGHT, TokenType.ARRAY_INDEX_LEFT},
+    'array_size': {TokenType.ARRAY_INDEX_RIGHT},
     
     # <2D_array>
     '2D_array': {TokenType.ASSIGN, TokenType.SEMICOLON},
@@ -207,7 +208,7 @@ FOLLOW_SETS = {
                      TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
                      TokenType.TEAM, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                      TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
-                     TokenType.VAR_INIT, TokenType.REBOUND},
+                     TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
     
     # <floater_array_init>
     'floater_array_init': {TokenType.SEMICOLON},
@@ -226,7 +227,7 @@ FOLLOW_SETS = {
                    TokenType.CONST, TokenType.ZONE, TokenType.WILT, TokenType.DUNK, 
                    TokenType.TEAM, TokenType.ANNOUNCE, TokenType.INBOUND, TokenType.DRIBBLE,
                    TokenType.SWITCH, TokenType.FORWARD, TokenType.PLAY, TokenType.RUN,
-                   TokenType.VAR_INIT, TokenType.REBOUND},
+                   TokenType.VAR_INIT, TokenType.REBOUND, TokenType.CODE_BLOCK_RIGHT},
     
     # <chant_array_init>
     'chant_array_init': {TokenType.SEMICOLON},
@@ -244,25 +245,25 @@ FOLLOW_SETS = {
     'function_def': {TokenType.TEAM},
     
     # <function_declared>
-    'function_declared': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'function_declared': {TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
     
     # <dunk_func_declared>
-    'dunk_func_declared': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'dunk_func_declared': {TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
     
     # <feint_function>
-    'feint_function': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'feint_function': {TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
     
     # <floater_function>
-    'floater_function': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'floater_function': {TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
     
     # <chant_function>
-    'chant_function': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'chant_function': {TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
     
     # <stat_function>
-    'stat_function': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'stat_function': {TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
     
     # <dunk_function>
-    'dunk_function': {TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT},
+    'dunk_function': {TokenType.WILT, TokenType.DUNK, TokenType.TEAM},
     
     # <func_parameters>
     'func_parameters': {TokenType.CODE_BLOCK_RIGHT},
