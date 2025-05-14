@@ -1252,8 +1252,16 @@ class Compiler:
             
             try:
                 if target_type == "FEINT":
+                    if value == "Win":
+                        return 1
+                    elif value == "Loss":
+                        return 0
                     return int(float(value))
                 elif target_type == "FLOATER":
+                    if value == "Win":
+                        return 1.0
+                    elif value == "Loss":
+                        return 0.0
                     return float(value)
                 elif target_type == "CHANT":
                     # Handle stat to chant properly (Win/Loss)

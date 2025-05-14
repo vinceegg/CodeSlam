@@ -43,11 +43,11 @@ def run_compiler(code, input_func=None):
 def main():
     code = '''
 Team() {
-Stat @test;
-Chant @str = "";
-@test = Stat(@str);
-Announce (@test);
-Announce(Stat(5) ==  Win);
+Stat @test = Loss;
+Feint @float = 3;
+
+@float = Feint(@test);
+Announce (@float);
 }
 
  '''
