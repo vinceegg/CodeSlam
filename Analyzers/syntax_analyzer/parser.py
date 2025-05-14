@@ -244,10 +244,6 @@ class Parser:
         """<program> → <global_decl> <function_def> <team_block>"""
         self.current_nonterminal = "program"
         expected_tokens = self.get_expected_tokens("program")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("program"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("program", expected_tokens)
@@ -303,10 +299,6 @@ class Parser:
         """<global_decl> → <global_declaration><global_decl> | λ"""
         self.current_nonterminal = "global_decl"
         expected_tokens = self.get_expected_tokens("global_decl")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("global_decl"))
         
         # If we have a token that's in FIRST(global_declaration)
         if self.current_token and any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -318,10 +310,6 @@ class Parser:
         """<global_declaration> → <variable_dec> | Const <const_dec> | Zone <array_dec>"""
         self.current_nonterminal = "global_declaration"
         expected_tokens = self.get_expected_tokens("global_declaration")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("global_declaration"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("global_declaration", expected_tokens)
@@ -355,10 +343,6 @@ class Parser:
         """<variable_dec> → <feint_dec> | <floater_dec> | <chant_dec> | <stat_dec>"""
         self.current_nonterminal = "variable_dec"
         expected_tokens = self.get_expected_tokens("variable_dec")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("variable_dec"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("variable_dec", expected_tokens)
@@ -378,10 +362,6 @@ class Parser:
         """<feint_dec> → Feint @identifier <more_feint>;"""
         self.current_nonterminal = "feint_dec"
         expected_tokens = self.get_expected_tokens("feint_dec")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_dec"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("feint_dec", expected_tokens)
@@ -395,10 +375,6 @@ class Parser:
         """<more_feint> → λ | <feint_init> <feint_init_end>"""
         self.current_nonterminal = "more_feint"
         expected_tokens = self.get_expected_tokens("more_feint")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_feint"))
         
         # If we don't have tokens in FIRST(feint_init), return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -411,10 +387,6 @@ class Parser:
         """<feint_init> → λ | = <feint_lit> <feint_init_end>"""
         self.current_nonterminal = "feint_init"
         expected_tokens = self.get_expected_tokens("feint_init")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_init"))
         
         # If we don't have an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
@@ -428,10 +400,6 @@ class Parser:
         """<feint_lit> → Feint Literal | <nega_feint_lit>"""
         self.current_nonterminal = "feint_lit"
         expected_tokens = self.get_expected_tokens("feint_lit")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_lit"))
         
         if self.current_token and self.match_token_type(self.current_token, TokenType.NEGAFEINT):
             # Handle negation case
@@ -446,10 +414,6 @@ class Parser:
         """<feint_init_end> → λ | , @identifier <more_feint>"""
         self.current_nonterminal = "feint_init_end"
         expected_tokens = self.get_expected_tokens("feint_init_end")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_init_end"))
         
         # If we don't have a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
@@ -463,10 +427,6 @@ class Parser:
         """<floater_dec> → Floater @identifier <more_floater>;"""
         self.current_nonterminal = "floater_dec"
         expected_tokens = self.get_expected_tokens("floater_dec")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_dec"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("floater_dec", expected_tokens)
@@ -480,10 +440,6 @@ class Parser:
         """<more_floater> → λ | <floater_init> <floater_init_end>"""
         self.current_nonterminal = "more_floater"
         expected_tokens = self.get_expected_tokens("more_floater")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_floater"))
         
         # If we don't have tokens in FIRST(floater_init), return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -496,10 +452,6 @@ class Parser:
         """<floater_init> → λ | = <floater_lit> <floater_init_end>"""
         self.current_nonterminal = "floater_init"
         expected_tokens = self.get_expected_tokens("floater_init")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_init"))
         
         # If we don't have an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
@@ -513,10 +465,6 @@ class Parser:
         """<floater_lit> → Floater Literal | <nega_floater_lit>"""
         self.current_nonterminal = "floater_lit"
         expected_tokens = self.get_expected_tokens("floater_lit")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_lit"))
 
         if self.current_token and self.match_token_type(self.current_token, TokenType.NEGAFLOATER):
             # Handle negation case
@@ -531,10 +479,6 @@ class Parser:
         """<floater_init_end> → λ | , @identifier <more_floater>"""
         self.current_nonterminal = "floater_init_end"
         expected_tokens = self.get_expected_tokens("floater_init_end")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_init_end"))
         
         # If we don't have a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
@@ -548,10 +492,6 @@ class Parser:
         """<chant_dec> → Chant @identifier <more_chant>;"""
         self.current_nonterminal = "chant_dec"
         expected_tokens = self.get_expected_tokens("chant_dec")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_dec"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("chant_dec", expected_tokens)
@@ -565,10 +505,6 @@ class Parser:
         """<more_chant> → λ | <chant_init> <chant_init_end>"""
         self.current_nonterminal = "more_chant"
         expected_tokens = self.get_expected_tokens("more_chant")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_chant"))
         
         # If we don't have tokens in FIRST(chant_init), return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -581,10 +517,6 @@ class Parser:
         """<chant_init> → λ | = <chant_lit> <chant_init_end>"""
         self.current_nonterminal = "chant_init"
         expected_tokens = self.get_expected_tokens("chant_init")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_init"))
         
         # If we don't have an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
@@ -598,10 +530,6 @@ class Parser:
         """<chant_lit> → Chant Literal"""
         self.current_nonterminal = "chant_lit"
         expected_tokens = self.get_expected_tokens("chant_lit")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_lit"))
         
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.CHANTLIT):
             self.error_handler("chant_lit", expected_tokens)
@@ -612,10 +540,6 @@ class Parser:
         """<chant_init_end> → λ | , @identifier <more_chant>"""
         self.current_nonterminal = "chant_init_end"
         expected_tokens = self.get_expected_tokens("chant_init_end")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_init_end"))
         
         # If we don't have a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
@@ -629,10 +553,6 @@ class Parser:
         """<stat_dec> → Stat @identifier <more_stat>;"""
         self.current_nonterminal = "stat_dec"
         expected_tokens = self.get_expected_tokens("stat_dec")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("stat_dec"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("stat_dec", expected_tokens)
@@ -646,10 +566,6 @@ class Parser:
         """<more_stat> → λ | <stat_init> <stat_init_end>"""
         self.current_nonterminal = "more_stat"
         expected_tokens = self.get_expected_tokens("more_stat")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_stat"))
         
         # If we don't have tokens in FIRST(stat_init), return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -662,10 +578,6 @@ class Parser:
         """<stat_init> → λ | = <stat_value> <stat_init_end>"""
         self.current_nonterminal = "stat_init"
         expected_tokens = self.get_expected_tokens("stat_init")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("stat_init"))
             
         # If we don't have an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
@@ -679,10 +591,6 @@ class Parser:
         """<stat_value> → Win | Loss"""
         self.current_nonterminal = "stat_value"
         expected_tokens = self.get_expected_tokens("stat_value")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("stat_value"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("stat_value", expected_tokens)
@@ -698,10 +606,6 @@ class Parser:
         """<stat_init_end> → λ | , @identifier <more_stat>"""
         self.current_nonterminal = "stat_init_end"
         expected_tokens = self.get_expected_tokens("stat_init_end")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("stat_init_end"))
         
         # If we don't have a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
@@ -715,10 +619,6 @@ class Parser:
         """<const_dec> → <const_feint> | <const_floater> | <const_chant> | <const_stat>"""
         self.current_nonterminal = "const_dec"
         expected_tokens = self.get_expected_tokens("const_dec")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("const_dec"))
         
         # Expect CONST token
         self.expect(TokenType.CONST)
@@ -740,10 +640,6 @@ class Parser:
         self.current_nonterminal = "const_feint"
         expected_tokens = self.get_expected_tokens("const_feint")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("const_feint"))
-        
         self.expect(TokenType.FEINT)
         self.expect(TokenType.VAR_INIT)
         self.parse_feint_const_init()
@@ -754,10 +650,6 @@ class Parser:
         self.current_nonterminal = "feint_const_init"
         expected_tokens = self.get_expected_tokens("feint_const_init")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_const_init"))
-        
         self.parse_feint_const()
         self.parse_feint_const_end()
         
@@ -766,10 +658,6 @@ class Parser:
         self.current_nonterminal = "feint_const"
         expected_tokens = self.get_expected_tokens("feint_const")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_const"))
-        
         self.expect(TokenType.ASSIGN)
         self.parse_feint_lit()
         
@@ -777,10 +665,6 @@ class Parser:
         """<feint_const_end> → ", @identifier <feint_const_init>" | λ"""
         self.current_nonterminal = "feint_const_end"
         expected_tokens = self.get_expected_tokens("feint_const_end")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_const_end"))
         
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -794,10 +678,6 @@ class Parser:
         self.current_nonterminal = "const_floater"
         expected_tokens = self.get_expected_tokens("const_floater")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("const_floater"))
-        
         self.expect(TokenType.FLOATER)
         self.expect(TokenType.VAR_INIT)
         self.parse_floater_const_init()
@@ -808,10 +688,6 @@ class Parser:
         self.current_nonterminal = "floater_const_init"
         expected_tokens = self.get_expected_tokens("floater_const_init")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_const_init"))
-        
         self.parse_floater_const()
         self.parse_floater_const_end()
         
@@ -820,10 +696,6 @@ class Parser:
         self.current_nonterminal = "floater_const"
         expected_tokens = self.get_expected_tokens("floater_const")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_const"))
-        
         self.expect(TokenType.ASSIGN)
         self.parse_floater_lit()
         
@@ -831,10 +703,6 @@ class Parser:
         """<floater_const_end> → ", @identifier <floater_const_init>" | λ"""
         self.current_nonterminal = "floater_const_end"
         expected_tokens = self.get_expected_tokens("floater_const_end")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_const_end"))
         
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -848,10 +716,6 @@ class Parser:
         self.current_nonterminal = "const_chant"
         expected_tokens = self.get_expected_tokens("const_chant")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("const_chant"))
-        
         self.expect(TokenType.CHANT)
         self.expect(TokenType.VAR_INIT)
         self.parse_chant_const_init()
@@ -862,10 +726,6 @@ class Parser:
         self.current_nonterminal = "chant_const_init"
         expected_tokens = self.get_expected_tokens("chant_const_init")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_const_init"))
-        
         self.parse_chant_const()
         self.parse_chant_const_end()
         
@@ -874,10 +734,6 @@ class Parser:
         self.current_nonterminal = "chant_const"
         expected_tokens = self.get_expected_tokens("chant_const")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_const"))
-        
         self.expect(TokenType.ASSIGN)
         self.parse_chant_lit()
         
@@ -885,10 +741,6 @@ class Parser:
         """<chant_const_end> → ", @identifier <chant_const_init>" | λ"""
         self.current_nonterminal = "chant_const_end"
         expected_tokens = self.get_expected_tokens("chant_const_end")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_const_end"))
         
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -902,10 +754,6 @@ class Parser:
         self.current_nonterminal = "const_stat"
         expected_tokens = self.get_expected_tokens("const_stat")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("const_stat"))
-        
         self.expect(TokenType.STAT)
         self.expect(TokenType.VAR_INIT)
         self.parse_stat_const_init()
@@ -916,10 +764,6 @@ class Parser:
         self.current_nonterminal = "stat_const_init"
         expected_tokens = self.get_expected_tokens("stat_const_init")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("stat_const_init"))
-        
         self.parse_stat_const()
         self.parse_stat_const_end()
         
@@ -928,10 +772,6 @@ class Parser:
         self.current_nonterminal = "stat_const"
         expected_tokens = self.get_expected_tokens("stat_const")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("stat_const"))
-        
         self.expect(TokenType.ASSIGN)
         self.parse_stat_value()
         
@@ -939,10 +779,6 @@ class Parser:
         """<stat_const_end> → ", @identifier <stat_const_init>" | λ"""
         self.current_nonterminal = "stat_const_end"
         expected_tokens = self.get_expected_tokens("stat_const_end")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("stat_const_end"))
         
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -955,10 +791,6 @@ class Parser:
         """<array_dec> → <feint_array> | <floater_array> | <chant_array>"""
         self.current_nonterminal = "array_dec"
         expected_tokens = self.get_expected_tokens("array_dec")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("array_dec"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("array_dec", expected_tokens)
@@ -979,10 +811,6 @@ class Parser:
         """<feint_array> → Feint @identifier [<array_size>] <2D_array> <feint_array_init>;"""
         self.current_nonterminal = "feint_array"
         expected_tokens = self.get_expected_tokens("feint_array")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_array"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("feint_array", expected_tokens)
@@ -1009,10 +837,6 @@ class Parser:
         self.current_nonterminal = "2D_array"
         expected_tokens = self.get_expected_tokens("2D_array")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("2D_array"))
-        
         # If we don't see an ARRAY_INDEX_LEFT token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ARRAY_INDEX_LEFT):
             return  # λ case
@@ -1026,10 +850,6 @@ class Parser:
         """<feint_array_init> → λ | = {<feint_row>}"""
         self.current_nonterminal = "feint_array_init"
         expected_tokens = self.get_expected_tokens("feint_array_init")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_array_init"))
         
         # If we don't see an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
@@ -1045,10 +865,6 @@ class Parser:
         """<feint_row> → <feint_lit> <more_feint_lit> | {<feint_lit> <more_feint_lit>} <2D_feint_row>"""
         self.current_nonterminal = "feint_row"
         expected_tokens = self.get_expected_tokens("feint_row")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_row"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("feint_row", expected_tokens)
@@ -1070,10 +886,6 @@ class Parser:
         self.current_nonterminal = "2D_feint_row"
         expected_tokens = self.get_expected_tokens("2D_feint_row")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("2D_feint_row"))
-        
         # If we don't see a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -1091,10 +903,6 @@ class Parser:
         self.current_nonterminal = "more_feint_lit"
         expected_tokens = self.get_expected_tokens("more_feint_lit")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_feint_lit"))
-        
         # If we don't see a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -1108,10 +916,6 @@ class Parser:
         """<floater_array> → Floater @identifier [<array_size>] <2D_array> <floater_array_init>;"""
         self.current_nonterminal = "floater_array"
         expected_tokens = self.get_expected_tokens("floater_array")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_array"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("floater_array", expected_tokens)
@@ -1138,10 +942,6 @@ class Parser:
         self.current_nonterminal = "floater_array_init"
         expected_tokens = self.get_expected_tokens("floater_array_init")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_array_init"))
-        
         # If we don't see an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
             return  # λ case
@@ -1156,10 +956,6 @@ class Parser:
         """<floater_row> → <floater_lit> <more_floater_lit> | {<floater_lit> <more_floater_lit>} <2D_floater_row>"""
         self.current_nonterminal = "floater_row"
         expected_tokens = self.get_expected_tokens("floater_row")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_row"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("floater_row", expected_tokens)
@@ -1181,10 +977,6 @@ class Parser:
         self.current_nonterminal = "2D_floater_row"
         expected_tokens = self.get_expected_tokens("2D_floater_row")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("2D_floater_row"))
-        
         # If we don't see a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -1202,10 +994,6 @@ class Parser:
         self.current_nonterminal = "more_floater_lit"
         expected_tokens = self.get_expected_tokens("more_floater_lit")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_floater_lit"))
-        
         # If we don't see a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -1219,10 +1007,6 @@ class Parser:
         """<chant_array> → Chant @identifier [<array_size>] <2D_array> <chant_array_init>;"""
         self.current_nonterminal = "chant_array"
         expected_tokens = self.get_expected_tokens("chant_array")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_array"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("chant_array", expected_tokens)
@@ -1249,10 +1033,6 @@ class Parser:
         self.current_nonterminal = "chant_array_init"
         expected_tokens = self.get_expected_tokens("chant_array_init")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_array_init"))
-        
         # If we don't see an ASSIGN token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
             return  # λ case
@@ -1267,10 +1047,6 @@ class Parser:
         """<chant_row> → <chant_lit> <more_chant_lit> | {<chant_lit> <more_chant_lit>} <2D_chant_row>"""
         self.current_nonterminal = "chant_row"
         expected_tokens = self.get_expected_tokens("chant_row")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_row"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("chant_row", expected_tokens)
@@ -1292,10 +1068,6 @@ class Parser:
         self.current_nonterminal = "2D_chant_row"
         expected_tokens = self.get_expected_tokens("2D_chant_row")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("2D_chant_row"))
-        
         # If we don't see a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -1313,10 +1085,6 @@ class Parser:
         self.current_nonterminal = "more_chant_lit"
         expected_tokens = self.get_expected_tokens("more_chant_lit")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_chant_lit"))
-        
         # If we don't see a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
             return  # λ case
@@ -1330,10 +1098,6 @@ class Parser:
         """<array_size> → <feint_lit> | @identifier"""
         self.current_nonterminal = "array_size"
         expected_tokens = self.get_expected_tokens("array_size")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("array_size"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("array_size", expected_tokens)
@@ -1349,10 +1113,6 @@ class Parser:
         """<function_def> → λ | Wilt <function_declared> <function_def> | Dunk <dunk_func_declared> <function_def>"""
         self.current_nonterminal = "function_def"
         expected_tokens = self.get_expected_tokens("function_def")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("function_def"))
         
         # If we don't see a WILT or DUNK token, return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -1373,10 +1133,6 @@ class Parser:
         self.current_nonterminal = "function_declared"
         expected_tokens = self.get_expected_tokens("function_declared")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("function_declared"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("function_declared", expected_tokens)
         
@@ -1396,10 +1152,6 @@ class Parser:
         self.current_nonterminal = "dunk_func_declared"
         expected_tokens = self.get_expected_tokens("dunk_func_declared")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("dunk_func_declared"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("dunk_func_declared", expected_tokens)
         
@@ -1409,10 +1161,6 @@ class Parser:
         """<feint_function> → Feint @identifier(<func_parameters>) {<decl> <function_statement> <rebound_statement>}"""
         self.current_nonterminal = "feint_function"
         expected_tokens = self.get_expected_tokens("feint_function")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("feint_function"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("feint_function", expected_tokens)
@@ -1433,10 +1181,6 @@ class Parser:
         self.current_nonterminal = "floater_function"
         expected_tokens = self.get_expected_tokens("floater_function")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("floater_function"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("floater_function", expected_tokens)
         
@@ -1455,10 +1199,6 @@ class Parser:
         """<chant_function> → Chant @identifier(<func_parameters>) {<decl> <function_statement> <rebound_statement>}"""
         self.current_nonterminal = "chant_function"
         expected_tokens = self.get_expected_tokens("chant_function")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("chant_function"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("chant_function", expected_tokens)
@@ -1479,10 +1219,6 @@ class Parser:
         self.current_nonterminal = "stat_function"
         expected_tokens = self.get_expected_tokens("stat_function")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("stat_function"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("stat_function", expected_tokens)
         
@@ -1502,10 +1238,6 @@ class Parser:
         self.current_nonterminal = "dunk_function"
         expected_tokens = self.get_expected_tokens("dunk_function")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("dunk_function"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("dunk_function", expected_tokens)
         
@@ -1523,10 +1255,6 @@ class Parser:
         self.current_nonterminal = "func_parameters"
         expected_tokens = self.get_expected_tokens("func_parameters")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("func_parameters"))
-        
         # If we don't see a VAR_INIT token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.VAR_INIT):
             return  # λ case
@@ -1539,10 +1267,6 @@ class Parser:
         """<param_end> → λ | , @identifier <param_end>"""
         self.current_nonterminal = "param_end"
         expected_tokens = self.get_expected_tokens("param_end")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("param_end"))
         
         # If we don't see a COMMA token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
@@ -1558,10 +1282,6 @@ class Parser:
         self.current_nonterminal = "function_statement"
         expected_tokens = self.get_expected_tokens("function_statement")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("function_statement"))
-        
         # If no current token or token not in FIRST(statement), we're in the λ case
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
@@ -1574,10 +1294,6 @@ class Parser:
         """<team_statement> → <statement> <team_statement> | λ"""
         self.current_nonterminal = "team_statement"
         expected_tokens = self.get_expected_tokens("team_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("team_statement"))
         
         # If no current token or token not in FIRST(statement), we're in the λ case
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -1593,10 +1309,6 @@ class Parser:
                         <run_play_statement> | @identifier <follow_statement>;"""
         self.current_nonterminal = "statement"
         expected_tokens = self.get_expected_tokens("statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("statement"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("statement", expected_tokens)
@@ -1636,10 +1348,6 @@ class Parser:
                             [<element_index>] <2d_manipulation> <array_man>"""
         self.current_nonterminal = "follow_statement"
         expected_tokens = self.get_expected_tokens("follow_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("follow_statement"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("follow_statement", expected_tokens)
@@ -1682,10 +1390,6 @@ class Parser:
         self.current_nonterminal = "element_index"
         expected_tokens = self.get_expected_tokens("element_index")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("element_index"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("element_index", expected_tokens)
         
@@ -1701,10 +1405,6 @@ class Parser:
         self.current_nonterminal = "2d_manipulation"
         expected_tokens = self.get_expected_tokens("2d_manipulation")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("2d_manipulation"))
-        
         # If not an array index left bracket, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ARRAY_INDEX_LEFT):
             return  # λ case
@@ -1719,10 +1419,6 @@ class Parser:
         self.current_nonterminal = "array_man"
         expected_tokens = self.get_expected_tokens("array_man")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("array_man"))
-        
         # If not an assignment operator, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.ASSIGN):
             return  # λ case
@@ -1736,20 +1432,12 @@ class Parser:
         self.current_nonterminal = "array_elem"
         expected_tokens = self.get_expected_tokens("array_elem")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("array_elem"))
-        
         self.parse_expression()
     
     def parse_rebound_statement(self) -> None:
         """<rebound_statement> → Rebound <expression>;"""
         self.current_nonterminal = "rebound_statement"
         expected_tokens = self.get_expected_tokens("rebound_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("rebound_statement"))
         
         self.expect(TokenType.REBOUND)
         self.parse_expression()
@@ -1759,10 +1447,6 @@ class Parser:
         """<announce_statement> → Announce(<otpt>);"""
         self.current_nonterminal = "announce_statement"
         expected_tokens = self.get_expected_tokens("announce_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("announce_statement"))
         
         self.expect(TokenType.ANNOUNCE)
         self.expect(TokenType.LEFT_PAREN)
@@ -1775,10 +1459,6 @@ class Parser:
         self.current_nonterminal = "otpt"
         expected_tokens = self.get_expected_tokens("otpt")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("otpt"))
-        
         self.parse_outputs()
         self.parse_other_outputs()
     
@@ -1787,20 +1467,12 @@ class Parser:
         self.current_nonterminal = "outputs"
         expected_tokens = self.get_expected_tokens("outputs")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("outputs"))
-        
         self.parse_expression()
     
     def parse_other_outputs(self) -> None:
         """<other_outputs> → λ | & <otpt>"""
         self.current_nonterminal = "other_outputs"
         expected_tokens = self.get_expected_tokens("other_outputs")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("other_outputs"))
         
         # If not a concatenation operator, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.CHANT_CONCAT):
@@ -1814,10 +1486,6 @@ class Parser:
         """<literal> → <feint_lit> | <floater_lit> | <nega_feint_lit> | <nega_floater_lit> | <chant_lit> | <stat_value>"""
         self.current_nonterminal = "literal"
         expected_tokens = self.get_expected_tokens("literal")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("literal"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("literal", expected_tokens)
@@ -1842,10 +1510,6 @@ class Parser:
         self.current_nonterminal = "nega_feint_lit"
         expected_tokens = self.get_expected_tokens("nega_feint_lit")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("nega_feint_lit"))
-        
         self.expect(TokenType.NEGAFEINT)
     
     def parse_nega_floater_lit(self) -> None:
@@ -1853,20 +1517,12 @@ class Parser:
         self.current_nonterminal = "nega_floater_lit"
         expected_tokens = self.get_expected_tokens("nega_floater_lit")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("nega_floater_lit"))
-        
         self.expect(TokenType.NEGAFLOATER)
 
     def parse_expression(self) -> None:
         """<expression> → <logical_expression>"""
         self.current_nonterminal = "expression"
         expected_tokens = self.get_expected_tokens("expression")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("expression"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("expression", expected_tokens)
@@ -1878,10 +1534,6 @@ class Parser:
         self.current_nonterminal = "logical_expression"
         expected_tokens = self.get_expected_tokens("logical_expression")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("logical_expression"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("logical_expression", expected_tokens)
         
@@ -1892,10 +1544,6 @@ class Parser:
         """<more_logical> → <log_operator> <relational_expression> <more_logical> | λ"""
         self.current_nonterminal = "more_logical"
         expected_tokens = self.get_expected_tokens("more_logical")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_logical"))
         
         # If we don't have a logical operator, we return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -1910,10 +1558,6 @@ class Parser:
         """<log_operator> → AND | OR"""
         self.current_nonterminal = "log_operator"
         expected_tokens = self.get_expected_tokens("log_operator")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("log_operator"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("log_operator", expected_tokens)
@@ -1930,10 +1574,6 @@ class Parser:
         self.current_nonterminal = "relational_expression"
         expected_tokens = self.get_expected_tokens("relational_expression")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("relational_expression"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("relational_expression", expected_tokens)
         
@@ -1944,10 +1584,6 @@ class Parser:
         """<more_relational> → <relational_operator> <arithmetic_expression> | λ"""
         self.current_nonterminal = "more_relational"
         expected_tokens = self.get_expected_tokens("more_relational")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_relational"))
         
         # If we don't have a relational operator, we return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -1962,10 +1598,6 @@ class Parser:
         self.current_nonterminal = "arithmetic_expression"
         expected_tokens = self.get_expected_tokens("arithmetic_expression")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("arithmetic_expression"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("arithmetic_expression", expected_tokens)
         
@@ -1976,10 +1608,6 @@ class Parser:
         """<more_term> → + <term> <more_term> | - <term> <more_term> | λ"""
         self.current_nonterminal = "more_term"
         expected_tokens = self.get_expected_tokens("more_term")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_term"))
         
         # If we don't have a +/- operator, we return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -2001,10 +1629,6 @@ class Parser:
         self.current_nonterminal = "term"
         expected_tokens = self.get_expected_tokens("term")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("term"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("term", expected_tokens)
         
@@ -2015,10 +1639,6 @@ class Parser:
         """<more_factor> → * <factor> <more_factor> | / <factor> <more_factor> | % <factor> <more_factor> | λ"""
         self.current_nonterminal = "more_factor"
         expected_tokens = self.get_expected_tokens("more_factor")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_factor"))
         
         # If we don't have a */% operator, we return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
@@ -2041,10 +1661,6 @@ class Parser:
         """<factor> → <literal> | @identifier<follow_factor> | (<expression>) | NOT <factor> | <type_casting>"""
         self.current_nonterminal = "factor"
         expected_tokens = self.get_expected_tokens("factor")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("factor"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("factor", expected_tokens)
@@ -2098,10 +1714,6 @@ class Parser:
         """<factor> → <literal> | @identifier<follow_factor> | (<expression>) | NOT <factor> | <type_casting>"""
         self.current_nonterminal = "factor"
         expected_tokens = self.get_expected_tokens("factor")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("factor"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("factor", expected_tokens)
@@ -2130,10 +1742,6 @@ class Parser:
         """<follow_factor> → [<element_index>] <2d_manipulation> <array_man> | <function_call>"""
         self.current_nonterminal = "follow_factor"
         expected_tokens = self.get_expected_tokens("follow_factor")
-    
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("follow_factor"))
         
         # Check if this is a function call
         if self.current_token and self.match_token_type(self.current_token, TokenType.LEFT_PAREN):
@@ -2160,10 +1768,6 @@ class Parser:
         """<relational_operator> → < | > | == | <= | >= | !="""
         self.current_nonterminal = "relational_operator"
         expected_tokens = self.get_expected_tokens("relational_operator")
-
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("relational_operator"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("relational_operator", expected_tokens)
@@ -2239,10 +1843,6 @@ class Parser:
                             Chant(<typecast_value>) | Stat(<typecast_value>)"""
         self.current_nonterminal = "type_casting"
         expected_tokens = [TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT]
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = set(expected_tokens).copy()
-        combined_tokens.update(self.get_follow_tokens("type_casting"))
 
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("type_casting", expected_tokens)
@@ -2275,10 +1875,6 @@ class Parser:
         self.current_nonterminal = "assign_operand"
         expected_tokens = self.get_expected_tokens("assign_operand")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("assign_operand"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("assign_operand", expected_tokens)
         
@@ -2288,10 +1884,6 @@ class Parser:
         """<function_call> → (<arguments>) | λ"""
         self.current_nonterminal = "function_call"
         expected_tokens = self.get_expected_tokens("function_call")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("function_call"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
@@ -2306,10 +1898,6 @@ class Parser:
         self.current_nonterminal = "arguments"
         expected_tokens = self.get_expected_tokens("arguments")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("arguments"))
-        
         # If we don't have a token that could be an argument, return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
@@ -2322,10 +1910,6 @@ class Parser:
         self.current_nonterminal = "arg"
         expected_tokens = self.get_expected_tokens("arg")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("arg"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("arg", expected_tokens)
         
@@ -2335,10 +1919,6 @@ class Parser:
         """<more_args> → , <arg> <more_args> | λ"""
         self.current_nonterminal = "more_args"
         expected_tokens = self.get_expected_tokens("more_args")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("more_args"))
         
         # If there's no comma, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.COMMA):
@@ -2352,10 +1932,6 @@ class Parser:
         """<inbound_statement> → Inbound(<chant_lit>, @identifier);"""
         self.current_nonterminal = "inbound_statement"
         expected_tokens = self.get_expected_tokens("inbound_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("inbound_statement"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("inbound_statement", expected_tokens)
@@ -2373,10 +1949,6 @@ class Parser:
         self.current_nonterminal = "dribble_statement"
         expected_tokens = self.get_expected_tokens("dribble_statement")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("dribble_statement"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("dribble_statement", expected_tokens)
         
@@ -2393,10 +1965,6 @@ class Parser:
         """<add_condition> → Pass (<expression>) {<loop_statements>} <add_condition> | Shoot {<loop_statements>} | λ"""
         self.current_nonterminal = "add_condition"
         expected_tokens = self.get_expected_tokens("add_condition")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("add_condition"))
         
         # If no Pass or Shoot token, return (λ case)
         if not self.current_token:
@@ -2423,10 +1991,6 @@ class Parser:
         self.current_nonterminal = "loop_statements"
         expected_tokens = self.get_expected_tokens("loop_statements")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("loop_statements"))
-        
         # If we don't have a token that could be a loop statement, return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
@@ -2438,10 +2002,6 @@ class Parser:
         """<loop_statement> → <statement> | <resume_statement> | <timeout_statement>"""
         self.current_nonterminal = "loop_statement"
         expected_tokens = self.get_expected_tokens("loop_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("loop_statement"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("loop_statement", expected_tokens)
@@ -2457,10 +2017,6 @@ class Parser:
         """<switch_statement> → Switch (@identifier) { <get_case> <get_default> }"""
         self.current_nonterminal = "switch_statement"
         expected_tokens = self.get_expected_tokens("switch_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("switch_statement"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("switch_statement", expected_tokens)
@@ -2479,10 +2035,6 @@ class Parser:
         self.current_nonterminal = "get_case"
         expected_tokens = self.get_expected_tokens("get_case")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("get_case"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("get_case", expected_tokens)
         
@@ -2497,10 +2049,6 @@ class Parser:
         """<get_value> → <feint_lit> | <chant_lit>"""
         self.current_nonterminal = "get_value"
         expected_tokens = self.get_expected_tokens("get_value")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("get_value"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("get_value", expected_tokens)
@@ -2517,10 +2065,6 @@ class Parser:
         self.current_nonterminal = "timeout_statement"
         expected_tokens = self.get_expected_tokens("timeout_statement")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("timeout_statement"))
-        
         # If no Timeout token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.TIMEOUT):
             return  # λ case
@@ -2533,10 +2077,6 @@ class Parser:
         self.current_nonterminal = "get_case_end"
         expected_tokens = self.get_expected_tokens("get_case_end")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("get_case_end"))
-        
         # If no Get token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.GET):
             return  # λ case
@@ -2547,10 +2087,6 @@ class Parser:
         """<get_default> → Default: <team_statement> | λ"""
         self.current_nonterminal = "get_default"
         expected_tokens = self.get_expected_tokens("get_default")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("get_default"))
         
         # If no Default token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.DEFAULT):
@@ -2564,10 +2100,6 @@ class Parser:
         """<forward_statement> → Forward (@identifier = <forward_lit>; <expression>; @identifier <forward_inc_dec>) {<team_statement>}"""
         self.current_nonterminal = "forward_statement"
         expected_tokens = self.get_expected_tokens("forward_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("forward_statement"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("forward_statement", expected_tokens)
@@ -2592,10 +2124,6 @@ class Parser:
         self.current_nonterminal = "forward_lit"
         expected_tokens = self.get_expected_tokens("forward_lit")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("forward_lit"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("forward_lit", expected_tokens)
         
@@ -2610,10 +2138,6 @@ class Parser:
         """<forward_inc_dec> → <increment> | <decrement> | <forward_assign_operator> <forward_lit>"""
         self.current_nonterminal = "forward_inc_dec"
         expected_tokens = self.get_expected_tokens("forward_inc_dec")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("forward_inc_dec"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("forward_inc_dec", expected_tokens)
@@ -2631,10 +2155,6 @@ class Parser:
         self.current_nonterminal = "increment"
         expected_tokens = self.get_expected_tokens("increment")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("increment"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("increment", expected_tokens)
         
@@ -2645,10 +2165,6 @@ class Parser:
         self.current_nonterminal = "decrement"
         expected_tokens = self.get_expected_tokens("decrement")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("decrement"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("decrement", expected_tokens)
         
@@ -2658,10 +2174,6 @@ class Parser:
         """<forward_assign_operator> → += | -="""
         self.current_nonterminal = "forward_assign_operator"
         expected_tokens = self.get_expected_tokens("forward_assign_operator")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("forward_assign_operator"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("forward_assign_operator", expected_tokens)
@@ -2678,10 +2190,6 @@ class Parser:
         self.current_nonterminal = "resume_statement"
         expected_tokens = self.get_expected_tokens("resume_statement")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("resume_statement"))
-        
         # If no Resume token, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.RESUME):
             return  # λ case
@@ -2693,10 +2201,6 @@ class Parser:
         """<play_statement> → Play (<expression>) {<team_statement>}"""
         self.current_nonterminal = "play_statement"
         expected_tokens = self.get_expected_tokens("play_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("play_statement"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("play_statement", expected_tokens)
@@ -2713,10 +2217,6 @@ class Parser:
         """<run_play_statement> → Run {<team_statement>} Play (<expression>);"""
         self.current_nonterminal = "run_play_statement"
         expected_tokens = self.get_expected_tokens("run_play_statement")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("run_play_statement"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("run_play_statement", expected_tokens)
@@ -2736,10 +2236,6 @@ class Parser:
         self.current_nonterminal = "team_block"
         expected_tokens = self.get_expected_tokens("team_block")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("team_block"))
-        
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("team_block", expected_tokens)
         
@@ -2756,10 +2252,6 @@ class Parser:
         self.current_nonterminal = "decl"
         expected_tokens = self.get_expected_tokens("decl")
         
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("decl"))
-        
         # If we don't have a token that could be a local declaration, return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             return  # λ case
@@ -2771,10 +2263,6 @@ class Parser:
         """<declaration> → <variable_dec> | <array_dec>"""
         self.current_nonterminal = "declaration"
         expected_tokens = self.get_expected_tokens("declaration")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("declaration"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("declaration", expected_tokens)
@@ -2806,10 +2294,6 @@ class Parser:
         """<typecast_value> → <feint_lit> | <floater_lit> | <chant_lit> | <stat_value> | @identifier"""
         self.current_nonterminal = "typecast_value"
         expected_tokens = self.get_expected_tokens("typecast_value")
-        
-        # Add FOLLOW tokens to improve error messages
-        combined_tokens = expected_tokens.copy()
-        combined_tokens.update(self.get_follow_tokens("typecast_value"))
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("typecast_value", expected_tokens)
