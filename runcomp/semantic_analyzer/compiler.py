@@ -224,7 +224,10 @@ class Compiler:
                 self.env.set_var(var_name, val, type_name="Stat")
 
         elif node.name == "stat_init":
-            return node.value
+            if node.value == "Win":
+                return True
+            elif node.value == "Loss":
+                return False
         
         elif node.name == "more_stat":
             if not node.children:
@@ -951,6 +954,9 @@ class Compiler:
 
             var_name = var_token.value
             var_type = self.env.get_type(var_name)
+            
+            if var_type == "Stat" and isinstance(rhs, str):
+                rhs = True if rhs.lower() == "win" else False
 
             # Define operator behavior
             op_map = {
@@ -1105,7 +1111,7 @@ class Compiler:
 
                 operator = op_node.name
                 right = self.eval(op_node.children[0])
-
+                # print(f"[DEBUG] Comparing: {left} ({type(left)}) {operator} {right} ({type(right)})")
                 if operator == "EQUAL":
                     return left == right
                 elif operator == "NOT_EQUAL":
@@ -1504,9 +1510,9 @@ class Compiler:
             val = node.value
 
             # Handle booleans WIN and LOSS
-            if val == "Win":
+            if isinstance(val, str) and val.lower() == "win":
                 return True
-            elif val == "Loss":
+            elif isinstance(val, str) and val.lower() == "loss":
                 return False
             
             # Handle string literal (CHANTLIT)

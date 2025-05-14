@@ -68,6 +68,7 @@ Announce("Average or Needs Improvement.\n");
 
 Announce("Your scaled score is: " & @scaledScore);
 }
+
  '''
  
      # Build lexer and tokenize input
