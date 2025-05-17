@@ -2,102 +2,100 @@ from enum import Enum
 
 class TokenType(Enum):
     # Data Types
-    FEINT = "FEINT"       # Equivalent to int
-    CHANT = "CHANT"       # Equivalent to str
-    FLOATER = "FLOATER"   # Equivalent to float
-    STAT = "STAT"         # Equivalent to bool
-    CONST = "CONST"       # Equivalent to const
+    FEINT = "Feint"       # Equivalent to int
+    CHANT = "Chant"       # Equivalent to str
+    FLOATER = "Floater"   # Equivalent to float
+    STAT = "Stat"         # Equivalent to bool
+    CONST = "Const"       # Equivalent to const
 
     # Input/Output Statements
-    INBOUND = "INBOUND"   # Equivalent to input
-    ANNOUNCE = "ANNOUNCE" # Equivalent to print
+    INBOUND = "Inbound"   # Equivalent to input
+    ANNOUNCE = "Announce" # Equivalent to print
 
     # Control Statements
-    DRIBBLE = "DRIBBLE"   # Equivalent to if
-    SHOOT = "SHOOT"       # Equivalent to else
-    PASS = "PASS"         # Equivalent to else if
-    DEFAULT = "DEFAULT"   # Equivalent to default
-    SWITCH = "SWITCH"     # Equivalent to switch
-    GET = "GET"           # Equivalent to case
+    DRIBBLE = "Dribble"   # Equivalent to if
+    SHOOT = "Shoot"       # Equivalent to else
+    PASS = "Pass"         # Equivalent to else if
+    DEFAULT = "Default"   # Equivalent to default
+    SWITCH = "Switch"     # Equivalent to switch
+    GET = "Get"           # Equivalent to case
 
     # Loop Statements
-    FORWARD = "FORWARD"     # Equivalent to for
-    PLAY = "PLAY"           # Equivalent to while
-    TIMEOUT = "TIMEOUT"     # Equivalent to break
-    RESUME = "RESUME"       # Equivalent to continue
-    RUN = "RUN"             # Equivalent to do-while
+    FORWARD = "Forward"     # Equivalent to for
+    PLAY = "Play"           # Equivalent to while
+    TIMEOUT = "Timeout"     # Equivalent to break
+    RESUME = "Resume"       # Equivalent to continue
+    RUN = "Run"             # Equivalent to do-while
 
     # Others/Functions
-    REBOUND = "REBOUND"   # Equivalent to return
-    WIN = "WIN"           # Equivalent to True
-    LOSS = "LOSS"         # Equivalent to False
-    TEAM = "TEAM"         # Equivalent to Main
-    DUNK = "DUNK"         # Equivalent to Void
+    REBOUND = "Rebound"   # Equivalent to return
+    WIN = "Win"           # Equivalent to True
+    LOSS = "Loss"         # Equivalent to False
+    TEAM = "Team"         # Equivalent to Main
+    DUNK = "Dunk"         # Equivalent to Void
 
     # Reserved Symbols
     # Assignment Operators
-    ASSIGN = "ASSIGN"          # Assignment: Assigns a value to a variable =
-    ADD_ASSIGN = "ADD_ASSIGN"  # Add and Assign: Adds and assigns the result to a variable +=
-    SUB_ASSIGN = "SUB_ASSIGN"  # Subtract and Assign: Subtracts and assigns the result to a variable -=
-    MUL_ASSIGN = "MUL_ASSIGN"  # Multiply and Assign: Multiplies and assigns the result to a variable *=
-    DIV_ASSIGN = "DIV_ASSIGN"  # Divide and Assign: Divides and assigns the result to a variable /=
-    MOD_ASSIGN = "MOD_ASSIGN"  # Modulus and Assign: Finds modulus and assigns the result to a variable %=
+    ASSIGN = "="          # Assignment: Assigns a value to a variable =
+    ADD_ASSIGN = "+="  # Add and Assign: Adds and assigns the result to a variable +=
+    SUB_ASSIGN = "-="  # Subtract and Assign: Subtracts and assigns the result to a variable -=
+    MUL_ASSIGN = "*="  # Multiply and Assign: Multiplies and assigns the result to a variable *=
+    DIV_ASSIGN = "/+"  # Divide and Assign: Divides and assigns the result to a variable /=
+    MOD_ASSIGN = "%="  # Modulus and Assign: Finds modulus and assigns the result to a variable %=
 
     # Arithmetic Operators
-    ADD = "ADD"                     # Addition: Adds two values together 
-    SUB = "SUB"                     # Subtraction: Finds the difference between two values
-    NEG = "NEG"                     # Negative: Negative Symbol
-    MUL = "MUL"                     # Multiplication: Multiplies two values
-    DIV = "DIV"                     # Division: Divides one value by another
-    MOD = "MOD"                     # Modulus: Finds the remainder after division
-    FEINTLIT = "FEINTLIT"           # Integer Literal: Represents an integer value
-    FLOATERLIT = "FLOATERLIT"       # Float Literal: Represents a floating-point value
-    NEGAFEINT = "NEGAFEINT"         # Negative: Negates the numerical values, making positive negative and vice versa
-    NEGAFLOATER = "NEGAFLOATER"     # Negative: Negates the numerical values, making positive negative and vice versa
-    CHANTLIT = "CHANTLIT"           # String Literal: Represents a string value
+    ADD = "+"                     # Addition: Adds two values together 
+    SUB = "-"                     # Subtraction: Finds the difference between two values
+    NEG = "~"                     # Negative: Negative Symbol
+    MUL = "*"                     # Multiplication: Multiplies two values
+    DIV = "/"                     # Division: Divides one value by another
+    MOD = "%"                     # Modulus: Finds the remainder after division
+    FEINTLIT = "Feint Literal"           # Integer Literal: Represents an integer value
+    FLOATERLIT = "Floater Literal"       # Float Literal: Represents a floating-point value
+    NEGAFEINT = "Negative Feint Literal"         # Negative: Negates the numerical values, making positive negative and vice versa
+    NEGAFLOATER = "Negative Floater Literal"     # Negative: Negates the numerical values, making positive negative and vice versa
+    CHANTLIT = "Chant Literal"           # String Literal: Represents a string value
 
     # Relational Operators
-    EQUAL = "EQUAL"                    # Equal to: Checks if two values are equal
-    NOT_EQUAL = "NOT_EQUAL"            # Not equal to: Checks if two values are not equal
-    LESS_THAN = "LESS_THAN"            # Less than: Checks if one value is smaller than another
-    GREATER_THAN = "GREATER_THAN"      # Greater than: Checks if one value is larger than another
-    LESS_EQUAL = "LESS_EQUAL"          # Less than or equal to: Checks if one value is smaller or equal to another
-    GREATER_EQUAL = "GREATER_EQUAL"    # Greater than or equal to: Checks if one value is larger or equal to another
+    EQUAL = "=="                    # Equal to: Checks if two values are equal
+    NOT_EQUAL = "!="            # Not equal to: Checks if two values are not equal
+    LESS_THAN = "<"            # Less than: Checks if one value is smaller than another
+    GREATER_THAN = ">"      # Greater than: Checks if one value is larger than another
+    LESS_EQUAL = "<="          # Less than or equal to: Checks if one value is smaller or equal to another
+    GREATER_EQUAL = ">="    # Greater than or equal to: Checks if one value is larger or equal to another
 
     # Logical Operators
-    AND_OP = "AND_OP"        # Logical AND: Returns True if the value of both operands are True
-    OR_OP = "OR_OP"          # Logical OR: Returns True if at least one operand is True
-    NOT_OP = "NOT_OP"        # Logical NOT: Returns the opposite Boolean value of the operand
+    AND_OP = "AND"        # Logical AND: Returns True if the value of both operands are True
+    OR_OP = "OR"          # Logical OR: Returns True if at least one operand is True
+    NOT_OP = "NOT"        # Logical NOT: Returns the opposite Boolean value of the operand
 
     # Other Operators
-    CHANT_CONCAT = "CHANT_CONCAT"               # Chant Concatenation: Concatenates Chant together when working with Chant data types
-    ARRAY_INDEX_LEFT = "ARRAY_INDEX_LEFT"       # Array Size/Index: Used to specify the size or index of an array
-    ARRAY_INDEX_RIGHT = "ARRAY_INDEX_RIGHT"     # Array Size/Index: Used to specify the size or index of an array
-    CODE_BLOCK_LEFT = "CODE_BLOCK_LEFT"         # Code Blocks: Used to define the start and end points of a programming structure
-    CODE_BLOCK_RIGHT = "CODE_BLOCK_RIGHT"       # Code Blocks: Used to define the start and end points of a programming structure
-    LEFT_PAREN = "LEFT_PAREN"                   # Grouping: Used to group values or expressions
-    RIGHT_PAREN = "RIGHT_PAREN"                 # Grouping: Used to group values or expressions
+    CHANT_CONCAT = "&"               # Chant Concatenation: Concatenates Chant together when working with Chant data types
+    ARRAY_INDEX_LEFT = "["       # Array Size/Index: Used to specify the size or index of an array
+    ARRAY_INDEX_RIGHT = "]"     # Array Size/Index: Used to specify the size or index of an array
+    CODE_BLOCK_LEFT = "{"         # Code Blocks: Used to define the start and end points of a programming structure
+    CODE_BLOCK_RIGHT = "}"       # Code Blocks: Used to define the start and end points of a programming structure
+    LEFT_PAREN = "("                   # Grouping: Used to group values or expressions
+    RIGHT_PAREN = ")"                 # Grouping: Used to group values or expressions
     NEGATIVE = "NEGATIVE"                       # Negative: Negates the numerical values, making positive negative and vice versa
-    VAR_INIT = "VAR_INIT"                       # Variable Initialization: Every identifier must start with an "@" sign
+    VAR_INIT = "Variable"                       # Variable Initialization: Every identifier must start with an "@" sign
     SPACE = "SPACE"                             # Space: Used to separate tokens
-    COMMA = "COMMA"                             # Comma: Used to separate values in a list
-    COLON = "COLON"                             # Colon: Used to separate key-value pairs in a dictionary
-    SEMICOLON = "SEMICOLON"                     # Semicolon: Used to terminate statements
-    SINGLE_COMMENT = "SINGLE_COMMENT"           # Comment: Used to add comments in the code
-    MULTI_COMMENT = "MULTI_COMMENT"             # Multi-line Comment: Used to add multi-line comments in the code
+    COMMA = ","                             # Comma: Used to separate values in a list
+    COLON = ":"                             # Colon: Used to separate key-value pairs in a dictionary
+    SEMICOLON = ";"                     # Semicolon: Used to terminate statements
+    SINGLE_COMMENT = "#"           # Comment: Used to add comments in the code
+    MULTI_COMMENT = "|* *|"             # Multi-line Comment: Used to add multi-line comments in the code
     TAB = "TAB"                                 # Tab: Used to separate tokens
-    NEWLINE = "NEWLINE"                         # New Line: Used to separate tokens
-    UNDERSCORE = "UNDERSCORE"                   # Underscore: Used to separate words in identifiers
-    BACKSLASH = "BACKSLASH"                     # Backslash: Used to escape special characters
+    NEWLINE = "\n"                         # New Line: Used to separate tokens
+    UNDERSCORE = "_"                   # Underscore: Used to separate words in identifiers
+    BACKSLASH = "\""                     # Backslash: Used to escape special characters
     QUOTE = "QUOTE"                             # Quote: Used to define string literals
-    BACKSLASH_AND = "BACKSLASH_AND"             # Backslash And: Used to escape special characters
-    BACKSLASH_AT = "BACKSLASH_AT"               # Backslash At: Used to escape special characters
-    ESCAPE_SEQUENCE = "ESCAPE_SEQUENCE"         # Escape Sequence: Used to escape special characters
-    WILT = "WILT"                               # Wilt: Used to define a function
-    INCREMENT = "INCREMENT"                     # Increment: Increases the value of a variable by 1
-    DECREMENT = "DECREMENT"                     # Decrement: Decreases the value of a variable by 1
-    GET_LITERAL = "GET_LITERAL"                 # Get Literal: Used to get the value of a variable
-    ZONE = "ZONE"                               # Zone: Used to define an array
+    BACKSLASH_AND = "\&"             # Backslash And: Used to escape special characters
+    BACKSLASH_AT = "\@"               # Backslash At: Used to escape special characters
+    WILT = "Wilt"                               # Wilt: Used to define a function
+    INCREMENT = "++"                     # Increment: Increases the value of a variable by 1
+    DECREMENT = "--"                     # Decrement: Decreases the value of a variable by 1
+    ZONE = "Zone"                               # Zone: Used to define an array
 
 class Token:
     """
