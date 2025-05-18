@@ -40,7 +40,7 @@ class TokenType(Enum):
     ADD_ASSIGN = "+="  # Add and Assign: Adds and assigns the result to a variable +=
     SUB_ASSIGN = "-="  # Subtract and Assign: Subtracts and assigns the result to a variable -=
     MUL_ASSIGN = "*="  # Multiply and Assign: Multiplies and assigns the result to a variable *=
-    DIV_ASSIGN = "/+"  # Divide and Assign: Divides and assigns the result to a variable /=
+    DIV_ASSIGN = "/="  # Divide and Assign: Divides and assigns the result to a variable /=
     MOD_ASSIGN = "%="  # Modulus and Assign: Finds modulus and assigns the result to a variable %=
 
     # Arithmetic Operators
