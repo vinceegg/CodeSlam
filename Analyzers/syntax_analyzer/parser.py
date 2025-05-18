@@ -110,8 +110,8 @@ class Parser:
             error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
             error_msg += f"Unexpected Token: {token_value}\n"
             
-            # Remove "TokenType." prefix from token names in the expected tokens list
-            expected_tokens_str = ', '.join(str(t).replace('TokenType.', '') for t in expected_tokens)
+            # Use token values instead of enum names for expected tokens
+            expected_tokens_str = ', '.join(t.value for t in expected_tokens)
             error_msg += f"Expected Token: {{{expected_tokens_str}}}"
             
             # Raise the error with detailed information
@@ -119,7 +119,7 @@ class Parser:
                 error_msg,
                 self.line_number,
                 self.column,
-                expected=', '.join(str(t).replace('TokenType.', '') for t in expected_tokens),
+                expected=', '.join(t.value for t in expected_tokens),
                 token=token_value,
                 nonterminal=nonterminal,
                 production_rule=production_rule
@@ -128,15 +128,15 @@ class Parser:
             # We ran out of tokens unexpectedly (end of file)
             error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
             error_msg += f"Unexpected end of file while parsing {nonterminal}.\n"
-            # Remove "TokenType." prefix from token names in the expected tokens list
-            expected_tokens_str = ', '.join(str(t).replace('TokenType.', '') for t in expected_tokens)
+            # Use token values instead of enum names for expected tokens
+            expected_tokens_str = ', '.join(t.value for t in expected_tokens)
             error_msg += f"Expected Token: {{{expected_tokens_str}}}"
             
             raise SyntaxError(
                 error_msg,
                 self.line_number,
                 self.column,
-                expected=', '.join(str(t).replace('TokenType.', '') for t in expected_tokens),
+                expected=', '.join(t.value for t in expected_tokens),
                 token="EOF",
                 nonterminal=nonterminal
             )
