@@ -689,9 +689,28 @@ class App(customtkinter.CTk):
                 token_label = widget.winfo_children()[1]
                 
                 lexeme = lexeme_label.cget("text")
-                token_type = token_label.cget("text")
+                token_type_str = token_label.cget("text")
                 
-                token = Token(TokenType[token_type], token_type)
+                # Fix: Create Token using the original enum value, not the string representation
+                # Find the correct TokenType enum value based on the string representation
+                token_type_enum = None
+                for enum_value in TokenType:
+                    if enum_value.value == token_type_str:
+                        token_type_enum = enum_value
+                        break
+                
+                # If we couldn't find a matching enum value, try a simpler approach
+                if token_type_enum is None:
+                    try:
+                        # This will still work for enum names that match their string representation
+                        token_type_enum = TokenType[token_type_str]
+                    except KeyError:
+                        # If that fails too, log the error and skip this token
+                        self.append_terminal_output(f"Error: Cannot map token '{token_type_str}' to TokenType enum", text_color="red")
+                        continue
+                
+                # Create token with the correct enum value
+                token = Token(token_type_enum, lexeme)
                 tokens.append(token)
         
         if not tokens:
