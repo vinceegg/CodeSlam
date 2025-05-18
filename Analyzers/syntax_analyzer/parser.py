@@ -325,52 +325,6 @@ class Parser:
             print(f"Syntax Error: {str(e)}")
             raise
 
-    """OLD"""
-    # def parse_program(self) -> None:
-    #     """<program> → <global_decl> <function_def> <team_block>"""
-    #     self.current_nonterminal = "program"
-    #     expected_tokens = self.get_expected_tokens("program")
-        
-    #     if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-    #         self.error_handler("program", expected_tokens)
-
-    #     # Check if current token is in FIRST(global_decl)
-    #     if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("global_decl")):
-    #         self.parse_global_decl()
-        
-    #     # Check if current token is in FIRST(function_def)
-    #     if self.current_token and any(self.match_token_type(self.current_token, t) for t in self.get_expected_tokens("function_def")):
-    #         self.parse_function_def()
-            
-    #     # Team block is required
-    #     self.parse_team_block()
-
-    """NEW"""
-    # def parse_program(self) -> None:
-    #     """<program> → <global_decl> <function_def> <team_block>"""
-    #     self.current_nonterminal = "program"
-    #     expected_tokens = self.get_expected_tokens("program")
-        
-    #     if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-    #         self.error_handler("program", expected_tokens)
-
-    #     # First parse global declarations (which can be empty if λ)
-    #     self.parse_global_decl()
-        
-    #     # After global declarations, parse function definitions (which can be empty if λ)
-    #     self.parse_function_def()
-        
-    #     # Finally, parse the team block (required)
-    #     if not self.current_token or not self.match_token_type(self.current_token, TokenType.TEAM):
-    #         self.error_handler("program", {TokenType.TEAM})
-        
-    #     self.parse_team_block()
-        
-    #     # Ensure no tokens remain after the program
-    #     if self.current_token:
-    #         self.error_handler("program", set(), "Unexpected token after program end")
-
-    """UPDATED"""
     def parse_program(self) -> None:
         """<program> → <global_decl> <function_def> <team_block>"""
         self.current_nonterminal = "program"
