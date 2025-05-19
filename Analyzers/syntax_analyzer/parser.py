@@ -1588,11 +1588,11 @@ class Parser:
         self.current_nonterminal = "announce_statement"
         expected_tokens = self.get_expected_tokens("announce_statement")
         
-        self.expect(TokenType.ANNOUNCE)
-        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.ANNOUNCE, strict=True)
+        self.expect(TokenType.LEFT_PAREN, strict=True)
         self.parse_otpt()
-        self.expect(TokenType.RIGHT_PAREN)
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.RIGHT_PAREN, strict=True)
+        self.expect(TokenType.SEMICOLON, strict=True)
     
     def parse_otpt(self) -> None:
         """<otpt> → <outputs><other_outputs>"""
@@ -1751,6 +1751,9 @@ class Parser:
         
         # If we don't have a +/- operator, we return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            # If there's an unexpected token where we expect λ, use FOLLOW set for error reporting
+            if self.current_token and self.current_token.type not in self.get_follow_tokens("more_term"):
+                self.error_handler("more_term", "FOLLOW")
             return  # λ case
         
         # We have a +/- operator
@@ -2074,9 +2077,9 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("get_case", "FIRST", expected_tokens)
         
-        self.expect(TokenType.GET)
+        self.expect(TokenType.GET, strict=True)
         self.parse_get_value()
-        self.expect(TokenType.COLON)
+        self.expect(TokenType.COLON, strict=True)
         self.parse_team_statement()
         self.parse_timeout_statement()
         self.parse_get_case_end()
@@ -2230,8 +2233,8 @@ class Parser:
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.RESUME):
             return  # λ case
         
-        self.expect(TokenType.RESUME)
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.RESUME, strict=True)
+        self.expect(TokenType.SEMICOLON, strict=True)
 
     def parse_play_statement(self) -> None:
         """<play_statement> → Play (<expression>) {<team_statement>}"""
