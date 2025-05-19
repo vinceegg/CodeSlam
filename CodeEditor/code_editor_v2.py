@@ -744,46 +744,50 @@ class App(customtkinter.CTk):
         """Run semantic analysis using the runner compiler"""
         self.clear_terminal_output()
         self.editor_frame.clear_error_highlights()
-        
+
         # Get code from editor
         code = self.codebox.get("1.0", "end-1c")
-        
+
         try:
             from runcomp.main import run_compiler
-            
+
             # Define a custom input function that uses our command input box
             def get_terminal_input(prompt):
                 self.terminal_output.configure(state="normal")
                 # Show the prompt in terminal
                 self.terminal_output.insert(END, prompt)
                 self.terminal_output.see(END)
+                self.terminal_output.update_idletasks()  # Ensure GUI updates immediately
                 self.terminal_output.configure(state="disabled")
-                
+
                 # Reset input flags
                 self.input_processed.set(False)
                 self.waiting_for_input = True
-                
+
                 # Enable and focus the input box
                 self.command_input.configure(state="normal")
                 self.command_input.focus_set()
-                
+
                 # Wait for input to be processed
                 self.wait_variable(self.input_processed)
-                
+
                 return self.last_input
-            
-            # Run the compiler with our custom input function
-            output = run_compiler(code, input_func=get_terminal_input)
-            
-            # Display the output directly in the terminal
-            if output:
+
+            # Real-time output callback for the terminal
+            def output_callback(s):
                 self.terminal_output.configure(state="normal")
-                # Process the output to handle escape sequences
-                processed_output = bytes(output, "utf-8").decode("unicode_escape")
-                self.terminal_output.insert(END, processed_output)
+                # Interpret escape sequences
+                self.terminal_output.insert(END, s.encode('utf-8').decode('unicode_escape'))
                 self.terminal_output.see(END)
+                self.terminal_output.update_idletasks()  # Ensure GUI updates immediately
                 self.terminal_output.configure(state="disabled")
-                    
+
+            # Attach output_callback to input_func for run_compiler to detect
+            get_terminal_input.output_callback = output_callback
+
+            # Run the compiler with our custom input function and output callback
+            run_compiler(code, input_func=get_terminal_input)
+
         except ImportError as e:
             self.append_terminal_output("Error importing runcomp compiler:", text_color="red")
             self.append_terminal_output(str(e), text_color="red")
