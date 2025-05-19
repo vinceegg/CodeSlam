@@ -490,10 +490,10 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("feint_dec", "FIRST", expected_tokens)
         
-        self.expect(TokenType.FEINT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.FEINT)
+        self.expect(TokenType.VAR_INIT)
         self.parse_more_feint()
-        self.expect(TokenType.SEMICOLON, strict=True)   
+        self.expect(TokenType.SEMICOLON)   
         
     def parse_more_feint(self) -> None:
         """<more_feint> → λ | <feint_init> <feint_init_end>"""
@@ -505,8 +505,8 @@ class Parser:
             return  # λ case
         
         # If there's an error, use PREDICT set
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("more_feint", "PREDICT", expected_tokens)
+        # if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+        #     self.error_handler("more_feint", "PREDICT", expected_tokens)
         
         self.parse_feint_init()
         self.parse_feint_init_end()
@@ -559,10 +559,10 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("floater_dec", "FIRST", expected_tokens)
         
-        self.expect(TokenType.FLOATER, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.FLOATER)
+        self.expect(TokenType.VAR_INIT)
         self.parse_more_floater()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
 
     def parse_more_floater(self) -> None:
         """<more_floater> → λ | <floater_init> <floater_init_end>"""
@@ -628,10 +628,10 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("chant_dec", "FIRST", expected_tokens)
         
-        self.expect(TokenType.CHANT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.CHANT)
+        self.expect(TokenType.VAR_INIT)
         self.parse_more_chant()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
 
     def parse_more_chant(self) -> None:
         """<more_chant> → λ | <chant_init> <chant_init_end>"""
@@ -693,10 +693,10 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("stat_dec", "FIRST", expected_tokens)
         
-        self.expect(TokenType.STAT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.STAT)
+        self.expect(TokenType.VAR_INIT)
         self.parse_more_stat()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
 
     def parse_more_stat(self) -> None:
         """<more_stat> → λ | <stat_init> <stat_init_end>"""
@@ -780,10 +780,10 @@ class Parser:
         self.current_nonterminal = "const_feint"
         expected_tokens = self.get_expected_tokens("const_feint")
         
-        self.expect(TokenType.FEINT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.FEINT)
+        self.expect(TokenType.VAR_INIT)
         self.parse_feint_const_init()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
         
     def parse_feint_const_init(self) -> None:
         """<feint_const_init> → <feint_const><feint_const_end>"""
@@ -818,10 +818,10 @@ class Parser:
         self.current_nonterminal = "const_floater"
         expected_tokens = self.get_expected_tokens("const_floater")
         
-        self.expect(TokenType.FLOATER, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.FLOATER)
+        self.expect(TokenType.VAR_INIT)
         self.parse_floater_const_init()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
         
     def parse_floater_const_init(self) -> None:
         """<floater_const_init> → <floater_const><floater_const_end>"""
@@ -856,10 +856,10 @@ class Parser:
         self.current_nonterminal = "const_chant"
         expected_tokens = self.get_expected_tokens("const_chant")
         
-        self.expect(TokenType.CHANT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.CHANT)
+        self.expect(TokenType.VAR_INIT)
         self.parse_chant_const_init()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
         
     def parse_chant_const_init(self) -> None:
         """<chant_const_init> → <chant_const><chant_const_end>"""
@@ -894,10 +894,10 @@ class Parser:
         self.current_nonterminal = "const_stat"
         expected_tokens = self.get_expected_tokens("const_stat")
         
-        self.expect(TokenType.STAT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.STAT)
+        self.expect(TokenType.VAR_INIT)
         self.parse_stat_const_init()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
         
     def parse_stat_const_init(self) -> None:
         """<stat_const_init> → <stat_const><stat_const_end>"""
@@ -945,7 +945,7 @@ class Parser:
         elif self.match_token_type(self.current_token, TokenType.CHANT):
             self.parse_chant_array()
         else:
-            self.error_handler("array_dec")
+            self.error_handler("array_dec", "PREDICT")
     
     def parse_feint_array(self) -> None:
         """<feint_array> → Feint @identifier [<array_size>] <2D_array> <feint_array_init>;"""
@@ -970,7 +970,7 @@ class Parser:
         self.parse_feint_array_init()
         
         # Expect semicolon at the end
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.SEMICOLON, strict=True)
     
     def parse_2D_array(self) -> None:
         """<2D_array> → λ | [<feint_lit>]"""
@@ -1075,7 +1075,7 @@ class Parser:
         self.parse_floater_array_init()
         
         # Expect semicolon at the end
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.SEMICOLON, strict=True)
     
     def parse_floater_array_init(self) -> None:
         """<floater_array_init> → λ | = {<floater_row>}"""
@@ -1087,10 +1087,10 @@ class Parser:
             return  # λ case
         
         # Otherwise parse initialization
-        self.expect(TokenType.ASSIGN)
-        self.expect(TokenType.CODE_BLOCK_LEFT)
+        self.expect(TokenType.ASSIGN, strict=True)
+        self.expect(TokenType.CODE_BLOCK_LEFT, strict=True)
         self.parse_floater_row()
-        self.expect(TokenType.CODE_BLOCK_RIGHT)
+        self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
     
     def parse_floater_row(self) -> None:
         """<floater_row> → <floater_lit> <more_floater_lit> | {<floater_lit> <more_floater_lit>} <2D_floater_row>"""
@@ -1858,10 +1858,10 @@ class Parser:
     def parse_relational_operator(self) -> None:
         """<relational_operator> → < | > | == | <= | >= | !="""
         self.current_nonterminal = "relational_operator"
-        expected_tokens = self.get_expected_tokens("relational_operator")
+        expected_tokens = self.get_predict_tokens("relational_operator")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("relational_operator", "FIRST", expected_tokens)
+            self.error_handler("relational_operator", "PREDICT", expected_tokens)
         
         if self.match_token_type(self.current_token, TokenType.LESS_THAN):
             self.expect(TokenType.LESS_THAN)
@@ -1876,7 +1876,7 @@ class Parser:
         elif self.match_token_type(self.current_token, TokenType.NOT_EQUAL):
             self.expect(TokenType.NOT_EQUAL)
         else:
-            self.error_handler("relational_operator", "FIRST")
+            self.error_handler("relational_operator", "PREDICT")
 
     def parse_type_casting(self) -> None:
         """<type_casting> → Feint(<typecast_value>) | Floater(<typecast_value>) | 
@@ -1885,7 +1885,7 @@ class Parser:
         expected_tokens = [TokenType.FEINT, TokenType.FLOATER, TokenType.CHANT, TokenType.STAT]
 
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("type_casting", expected_tokens)
+            self.error_handler("type_casting", "FIRST", expected_tokens)
         
         if self.match_token_type(self.current_token, TokenType.FEINT):
             self.expect(TokenType.FEINT)
@@ -1908,7 +1908,7 @@ class Parser:
             self.parse_typecast_value()
             self.expect(TokenType.RIGHT_PAREN)
         else:
-            self.error_handler("type_casting", expected_tokens)
+            self.error_handler("type_casting", "FIRST")
 
     def parse_assign_operand(self) -> None:
         """<assign_operand> → <expression>"""
@@ -1995,7 +1995,7 @@ class Parser:
         self.expect(TokenType.DRIBBLE, strict=True)
         self.expect(TokenType.LEFT_PAREN, strict=True)
         self.parse_expression()
-        self.expect(TokenType.RIGHT_PAREN, strict=True)
+        self.expect(TokenType.RIGHT_PAREN)
         self.expect(TokenType.CODE_BLOCK_LEFT, strict=True)
         self.parse_loop_statements()
         self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
