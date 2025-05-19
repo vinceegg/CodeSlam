@@ -29,8 +29,9 @@ class Parser:
         self.line_starts = {1: 0}                                   # Track the starting position of each line
         self.current_line_content = ""                              # Track content of current line
         self.current_nonterminal = None                             # Track current nonterminal being parsed
-        
 
+        self.skip_whitespace_and_comments()
+        
     def get_expected_tokens(self, nonterminal: str) -> Set[TokenType]:
         """
             Get all tokens that can legally appear first in a grammar rule.
@@ -489,10 +490,10 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("feint_dec", "FIRST", expected_tokens)
         
-        self.expect(TokenType.FEINT)
-        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.FEINT, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
         self.parse_more_feint()
-        self.expect(TokenType.SEMICOLON)   
+        self.expect(TokenType.SEMICOLON, strict=True)   
         
     def parse_more_feint(self) -> None:
         """<more_feint> → λ | <feint_init> <feint_init_end>"""
@@ -558,10 +559,10 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("floater_dec", "FIRST", expected_tokens)
         
-        self.expect(TokenType.FLOATER)
-        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.FLOATER, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
         self.parse_more_floater()
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.SEMICOLON, strict=True)
 
     def parse_more_floater(self) -> None:
         """<more_floater> → λ | <floater_init> <floater_init_end>"""
@@ -627,10 +628,10 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("chant_dec", "FIRST", expected_tokens)
         
-        self.expect(TokenType.CHANT)
-        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.CHANT, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
         self.parse_more_chant()
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.SEMICOLON, strict=True)
 
     def parse_more_chant(self) -> None:
         """<more_chant> → λ | <chant_init> <chant_init_end>"""
@@ -692,10 +693,10 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("stat_dec", "FIRST", expected_tokens)
         
-        self.expect(TokenType.STAT)
-        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.STAT, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
         self.parse_more_stat()
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.SEMICOLON, strict=True)
 
     def parse_more_stat(self) -> None:
         """<more_stat> → λ | <stat_init> <stat_init_end>"""
@@ -779,10 +780,10 @@ class Parser:
         self.current_nonterminal = "const_feint"
         expected_tokens = self.get_expected_tokens("const_feint")
         
-        self.expect(TokenType.FEINT)
-        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.FEINT, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
         self.parse_feint_const_init()
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.SEMICOLON, strict=True)
         
     def parse_feint_const_init(self) -> None:
         """<feint_const_init> → <feint_const><feint_const_end>"""
@@ -817,10 +818,10 @@ class Parser:
         self.current_nonterminal = "const_floater"
         expected_tokens = self.get_expected_tokens("const_floater")
         
-        self.expect(TokenType.FLOATER)
-        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.FLOATER, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
         self.parse_floater_const_init()
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.SEMICOLON, strict=True)
         
     def parse_floater_const_init(self) -> None:
         """<floater_const_init> → <floater_const><floater_const_end>"""
@@ -855,10 +856,10 @@ class Parser:
         self.current_nonterminal = "const_chant"
         expected_tokens = self.get_expected_tokens("const_chant")
         
-        self.expect(TokenType.CHANT)
-        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.CHANT, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
         self.parse_chant_const_init()
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.SEMICOLON, strict=True)
         
     def parse_chant_const_init(self) -> None:
         """<chant_const_init> → <chant_const><chant_const_end>"""
@@ -893,10 +894,10 @@ class Parser:
         self.current_nonterminal = "const_stat"
         expected_tokens = self.get_expected_tokens("const_stat")
         
-        self.expect(TokenType.STAT)
-        self.expect(TokenType.VAR_INIT)
+        self.expect(TokenType.STAT, strict=True)
+        self.expect(TokenType.VAR_INIT, strict=True)
         self.parse_stat_const_init()
-        self.expect(TokenType.SEMICOLON)
+        self.expect(TokenType.SEMICOLON, strict=True)
         
     def parse_stat_const_init(self) -> None:
         """<stat_const_init> → <stat_const><stat_const_end>"""
