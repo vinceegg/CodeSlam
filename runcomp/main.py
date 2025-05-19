@@ -13,11 +13,30 @@ from semantic_analyzer.compiler import Compiler
 from rply import ParserGenerator
 
 def run_compiler(code, input_func=None):
-    # Create StringIO to capture output
-    output = io.StringIO()
+    # Allow for real-time output via output_callback
+    output_callback = None
+    # If the caller passes an output_callback as a kwarg, use it
+    if hasattr(input_func, "__self__") and hasattr(input_func.__self__, "output_callback"):
+        output_callback = input_func.__self__.output_callback
+    elif hasattr(input_func, "output_callback"):
+        output_callback = input_func.output_callback
+    # Or, if the caller passes output_callback directly (for future-proofing)
+    if hasattr(run_compiler, "output_callback"):
+        output_callback = run_compiler.output_callback
+
+    class CallbackWriter:
+        def write(self, s):
+            if output_callback:
+                output_callback(s)
+            else:
+                sys.__stdout__.write(s)
+            self.flush()
+        def flush(self):
+            if output_callback:
+                output_callback("")  # Trigger GUI update if needed
+
     old_stdout = sys.stdout
-    sys.stdout = output
-    
+    sys.stdout = CallbackWriter()
     try:
         # Build lexer and tokenize input
         lexer = build_lexer()
@@ -30,15 +49,15 @@ def run_compiler(code, input_func=None):
             compiler = Compiler()
             # Pass the input function to the compiler
             compiler.input_func = input_func
-            compiler.eval(ast)  # This will write to our StringIO
-            return output.getvalue()  # Return the captured output
-            
+            # Pass output_callback to the compiler if it supports it
+            if hasattr(compiler, 'set_output_callback'):
+                compiler.set_output_callback(output_callback)
+            compiler.eval(ast)
+            return None
         except Exception as e:
             return str(e)
-            
     finally:
         sys.stdout = old_stdout
-        output.close()
 
 def main():
     code = '''
