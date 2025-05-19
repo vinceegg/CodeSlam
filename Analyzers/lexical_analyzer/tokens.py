@@ -78,7 +78,7 @@ class TokenType(Enum):
     LEFT_PAREN = "("                   # Grouping: Used to group values or expressions
     RIGHT_PAREN = ")"                 # Grouping: Used to group values or expressions
     NEGATIVE = "NEGATIVE"                       # Negative: Negates the numerical values, making positive negative and vice versa
-    VAR_INIT = "Variable"                       # Variable Initialization: Every identifier must start with an "@" sign
+    VAR_INIT = "@variable"                       # Variable Initialization: Every identifier must start with an "@" sign
     SPACE = "SPACE"                             # Space: Used to separate tokens
     COMMA = ","                             # Comma: Used to separate values in a list
     COLON = ":"                             # Colon: Used to separate key-value pairs in a dictionary
