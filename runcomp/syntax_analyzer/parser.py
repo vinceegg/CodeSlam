@@ -1086,6 +1086,11 @@ def get_value_chant(p):
 def timeout_statement(p):
     return ASTNode("timeout_statement")
 
+# Rule: timeout_statement → λ
+@pg.production("timeout_statement : ")
+def timeout_statement_empty(p):
+    return ASTNode("timeout_statement", children=[])
+
 # Rule 254: get_case_end → λ
 @pg.production("get_case_end : ")
 def get_case_end_empty(p):
