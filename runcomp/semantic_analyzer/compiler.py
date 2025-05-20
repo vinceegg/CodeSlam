@@ -1739,6 +1739,14 @@ class Compiler:
         if len(param_names) != len(args):
             raise ValueError(f"[SEMANTIC ERROR] Function '{func_name}' expected {len(param_names)} arguments, got {len(args)}.")
 
+        # Argument type checking
+        type_map = {int: 'Feint', float: 'Floater', str: 'Chant', bool: 'Stat'}
+        for idx, (name, value) in enumerate(zip(param_names, args)):
+            actual_type = type_map.get(type(value), type(value).__name__)
+            expected_param_type = expected_type  # All params have the same type as the function's return type
+            if actual_type != expected_param_type:
+                raise TypeError(f"[ARGUMENT TYPE ERROR] Function '{func_name}' expects {expected_param_type} for parameter '{name}', got {actual_type}.")
+
         for name, value in zip(param_names, args):
             self.env.set_var(name, value)  # or None if you want to omit type for now
         
@@ -1762,15 +1770,15 @@ class Compiler:
         # Type checking
         if expected_type == "Feint":
             if not isinstance(rebound_value, int):
-                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Feint, got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Feint, got {type(rebound_value).__name__.replace('int', 'Feint').replace('float', 'Floater').replace('str', 'Chant').replace('bool', 'Stat')}")
         elif expected_type == "Floater":
             if not isinstance(rebound_value, float):
-                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Floater, got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Floater, got {type(rebound_value).__name__.replace('int', 'Feint').replace('float', 'Floater').replace('str', 'Chant').replace('bool', 'Stat')}")
         elif expected_type == "Chant":
             if not isinstance(rebound_value, str):
-                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Chant, got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Chant, got {type(rebound_value).__name__.replace('int', 'Feint').replace('float', 'Floater').replace('str', 'Chant').replace('bool', 'Stat')}")
         elif expected_type == "Stat":
             if not isinstance(rebound_value, bool):
-                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Stat, got {type(rebound_value).__name__}")
+                raise TypeError(f"[RETURN TYPE ERROR] Function '{func_name}' must return Stat, got {type(rebound_value).__name__.replace('int', 'Feint').replace('float', 'Floater').replace('str', 'Chant').replace('bool', 'Stat')}")
 
         return rebound_value
