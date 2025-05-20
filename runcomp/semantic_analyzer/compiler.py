@@ -1046,6 +1046,8 @@ class Compiler:
                 if var_type == "Floater" and isinstance(new_val, float):                   
                     if not -9999999999999.999999 <= new_val <= 9999999999999.999999:
                         raise ValueError(f"[FLOATER OVERFLOW ERROR] Floater value out of bounds: {format(new_val, '.7f')}")
+                # Convert to string without unnecessary trailing zeros
+                new_val = ('{0:.6f}'.format(new_val)).rstrip('0').rstrip('.')
 
                     
                 # Store the result back with the original variable type

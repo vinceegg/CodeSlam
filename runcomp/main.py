@@ -61,19 +61,15 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Wilt Feint @samplecode(){
-Zone Feint @arr[3] = {1,2,3};
-
-@arr[1] = 5;
-@arr[1] = @arr[2];
-
-Rebound @arr[3];
-}
-
 Team(){
-Feint @x;
-@x = @samplecode();
-Announce(@x);
+Feint @x = 42, @z;
+Floater @y = 3.14, @q;
+Chant @msg = "Hello!";
+@z = @y;
+@q = @x;
+Announce(@x & "\n");
+Announce(@z & "\n");
+Announce(@msg & "\n");
 }
 
 
