@@ -127,12 +127,12 @@ class Lexer:
             elif self.current_char in "\\":
                 self.advance()
                 match self.current_char:
-                    case "newline":
-                        tokens.append(Token(TokenType.NEWLINE.value, "\\n"))
-                        self.advance()
-                    case "tab":
-                        tokens.append(Token(TokenType.TAB.value, "\\t"))
-                        self.advance()
+                    # case "n":
+                    #     tokens.append(Token(TokenType.NEWLINE.value, "\\n"))
+                    #     self.advance()
+                    # case "t":
+                    #     tokens.append(Token(TokenType.TAB.value, "\\t"))
+                    #     self.advance()
                     case "\"":
                         tokens.append(Token(TokenType.BACKSLASH.value, "\\"))
                         self.advance()

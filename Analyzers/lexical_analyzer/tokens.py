@@ -86,7 +86,7 @@ class TokenType(Enum):
     SINGLE_COMMENT = "#"           # Comment: Used to add comments in the code
     MULTI_COMMENT = "|* *|"             # Multi-line Comment: Used to add multi-line comments in the code
     TAB = "TAB"                                 # Tab: Used to separate tokens
-    NEWLINE = "\n"                         # New Line: Used to separate tokens
+    NEWLINE = "NEWLINE"                         # New Line: Used to separate tokens
     UNDERSCORE = "_"                   # Underscore: Used to separate words in identifiers
     BACKSLASH = "\""                     # Backslash: Used to escape special characters
     QUOTE = "QUOTE"                             # Quote: Used to define string literals
