@@ -63,11 +63,11 @@ def main():
     code = '''
 Team(){
 Feint @x = 42, @z;
-Floater @y = 3.14, @q;
+Floater @y = 3.14, @q = 1.000;
 Chant @msg = "Hello!";
 @z = @y;
 @q = @x;
-Announce(@x & "\n");
+Announce(@q & "\n");
 Announce(@z & "\n");
 Announce(@msg & "\n");
 }

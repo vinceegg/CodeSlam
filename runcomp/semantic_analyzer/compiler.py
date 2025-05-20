@@ -1018,8 +1018,8 @@ class Compiler:
                 # Allow implicit promotion Feint → Floater
                 if inferred_type and not var_type.startswith("Const"):
                     if var_type == "Feint" and inferred_type == "Floater":
-                        rhs = float(rhs)
-                        inferred_type = "Floater"
+                        rhs = int(rhs)
+                        inferred_type = "Feint"
                     elif var_type == "Floater" and inferred_type == "Feint":
                         rhs = float(rhs)
                         inferred_type = "Floater"
@@ -1028,7 +1028,8 @@ class Compiler:
 
                 # Get current value
                 current_val = self.env.get_var(var_name)
-
+                raw = current_val
+                
                 # Implicit promotion for in-place arithmetic (Feint + Floater, etc.)
                 if isinstance(current_val, float) and isinstance(rhs, int):
                     rhs = float(rhs)
@@ -1047,7 +1048,14 @@ class Compiler:
                     if not -9999999999999.999999 <= new_val <= 9999999999999.999999:
                         raise ValueError(f"[FLOATER OVERFLOW ERROR] Floater value out of bounds: {format(new_val, '.7f')}")
                 # Convert to string without unnecessary trailing zeros
-                new_val = ('{0:.6f}'.format(new_val)).rstrip('0').rstrip('.')
+                if isinstance(raw, float) and '.' in str(raw):
+                    str_raw = str(raw)
+                    decimals = str_raw.split('.')[-1]
+                    new_val = f"{new_val:.{len(decimals)}f}"
+                else:
+                    new_val = ('{0:.6f}'.format(new_val)).rstrip('0')
+                    if new_val.endswith('.'):
+                        new_val += '0'
 
                     
                 # Store the result back with the original variable type
