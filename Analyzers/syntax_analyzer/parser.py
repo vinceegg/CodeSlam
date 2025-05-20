@@ -1600,23 +1600,84 @@ class Parser:
         self.current_nonterminal = "otpt"
         expected_tokens = self.get_expected_tokens("otpt")
         
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            self.error_handler("otpt", "FIRST", expected_tokens)
+        
+        # Save the current nonterminal to restore after we're done with outputs
+        # This ensures that errors in outputs don't get bubbled up with the wrong nonterminal
+        prev_nonterminal = self.current_nonterminal
+        
+        # Set a context flag to indicate we're parsing announce output
+        self.in_announce_context = True
         self.parse_outputs()
+        self.in_announce_context = False
+        
+        # Restore the current nonterminal
+        self.current_nonterminal = prev_nonterminal
         self.parse_other_outputs()
+    
     
     def parse_outputs(self) -> None:
         """<outputs> → <expression>"""
         self.current_nonterminal = "outputs"
         expected_tokens = self.get_expected_tokens("outputs")
         
-        self.parse_expression()
+        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            self.error_handler("outputs", "FIRST", expected_tokens)
+        
+        # Parse the expression with special handling for announce statements
+        try:
+            # Save the current position before parsing
+            initial_position = self.current
+            initial_token = self.current_token
+            
+            # Attempt to parse the expression
+            self.parse_expression()
+            
+            # If we're in an announce context and the current token is not one of the
+            # expected tokens after a valid expression in an announce statement,
+            # then raise an error
+            if hasattr(self, 'in_announce_context') and self.in_announce_context:
+                valid_follow_tokens = {TokenType.CHANT_CONCAT, TokenType.RIGHT_PAREN}
+                if self.current_token and self.current_token.type not in valid_follow_tokens:
+                    # Reset to the token that's causing the issue
+                    self.current = initial_position
+                    self.current_token = initial_token
+                    
+                    # Skip forward to the problematic token
+                    self.advance()
+                    
+                    # Now throw an error with the specific token context
+                    self.error_handler("other_outputs", "PREDICT", valid_follow_tokens)
+                    
+        except SyntaxError as e:
+            # If we get a syntax error in the expression, we need to check
+            # if we're specifically expecting only certain tokens after the expression
+            if self.current_token and self.current_token.type == TokenType.VAR_INIT:
+                # This is likely a variable outside an expression context
+                # Show a specific error for this common case
+                expected_after_expr = {TokenType.CHANT_CONCAT, TokenType.RIGHT_PAREN}
+                self.error_handler("other_outputs", "PREDICT", expected_after_expr)
+            else:
+                # Otherwise, re-raise the original error
+                raise
     
     def parse_other_outputs(self) -> None:
         """<other_outputs> → λ | & <otpt>"""
         self.current_nonterminal = "other_outputs"
-        expected_tokens = self.get_expected_tokens("other_outputs")
+        # Define the specific predict set for other_outputs (rather than using the generic get_expected_tokens)
+        expected_tokens = {TokenType.CHANT_CONCAT, TokenType.RIGHT_PAREN}
+        
+        # If the current token is a VAR_INIT (@identifier), give a specific error
+        if self.current_token and self.current_token.type == TokenType.VAR_INIT:
+            self.error_handler("other_outputs", "PREDICT", expected_tokens)
         
         # If not a concatenation operator, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.CHANT_CONCAT):
+            # Before returning, check that we're followed by a valid token
+            # If not in follow set, throw an error with the specific expected tokens
+            if self.current_token and self.current_token.type not in self.get_follow_tokens("other_outputs"):
+                self.error_handler("other_outputs", "PREDICT", expected_tokens)
             return  # λ case
         
         # Otherwise, parse & <otpts>
