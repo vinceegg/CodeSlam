@@ -1160,21 +1160,35 @@ class Compiler:
 
                 operator = op_node.name
                 right = self.eval(op_node.children[0])
+                left_type = type(left).__name__
+                right_type = type(right).__name__
+
+                python_to_custom_type = {
+                    'int': 'Feint',
+                    'float': 'Floater',
+                    'bool': 'Stat',
+                    'str': 'Chant',
+                }
+                left_type = python_to_custom_type.get(left_type, left_type)
+                right_type = python_to_custom_type.get(right_type, right_type)
                 # print(f"[DEBUG] Comparing: {left} ({type(left)}) {operator} {right} ({type(right)})")
-                if operator == "EQUAL":
-                    return left == right
-                elif operator == "NOT_EQUAL":
-                    return left != right
-                elif operator == "LESS_THAN":
-                    return left < right
-                elif operator == "GREATER_THAN":
-                    return left > right
-                elif operator == "LESS_EQUAL":
-                    return left <= right
-                elif operator == "GREATER_EQUAL":
-                    return left >= right
+                if left_type == right_type:
+                    if operator == "EQUAL":
+                        return left == right
+                    elif operator == "NOT_EQUAL":
+                        return left != right
+                    elif operator == "LESS_THAN":
+                        return left < right
+                    elif operator == "GREATER_THAN":
+                        return left > right
+                    elif operator == "LESS_EQUAL":
+                        return left <= right
+                    elif operator == "GREATER_EQUAL":
+                        return left >= right
+                    else:
+                        raise Exception(f"[EVAL ERROR] Unknown relational operator: {operator}")
                 else:
-                    raise Exception(f"[EVAL ERROR] Unknown relational operator: {operator}")
+                    raise ValueError(f"[SEMANTIC ERROR] Cannot compare {left_type} with {right_type} using operator '{operator}'")
             else:
                 # No relational tail at all
                 return left
@@ -1192,7 +1206,20 @@ class Compiler:
 
             right = self.eval(op_node.children[0])  # relational_expression inside OR_OP / AND_OP
             next_tail = op_node.children[1]
+            left_type = type(left).__name__
+            right_type = type(right).__name__
 
+            python_to_custom_type = {
+                'int': 'Feint',
+                'float': 'Floater',
+                'bool': 'Stat',
+                'str': 'Chant',
+            }
+            left_type = python_to_custom_type.get(left_type, left_type)
+            right_type = python_to_custom_type.get(right_type, right_type)
+            
+            if left_type != right_type:
+                raise ValueError(f"[SEMANTIC ERROR] Cannot compare {left_type} with {right_type} using operator '{op_type}'")
             if op_type == "AND_OP":
                 result = left and right
             elif op_type == "OR_OP":
