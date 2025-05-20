@@ -1160,6 +1160,26 @@ class Compiler:
 
                 operator = op_node.name
                 right = self.eval(op_node.children[0])
+                right_type = type(left).__name__
+                left_type = type(right).__name__
+
+                python_to_custom_type = {
+                    'int': 'Feint',
+                    'float': 'Floater',
+                    'bool': 'Stat',
+                    'str': 'Chant',
+                }
+                left_type = python_to_custom_type.get(left_type, left_type)
+                right_type = python_to_custom_type.get(right_type, right_type)
+                
+                if right_type == "Chant" or right_type == "Stat" or left_type == "Chant" or left_type == "Stat":
+                    if operator == "EQUAL":
+                        return left == right
+                    elif operator == "NOT_EQUAL":
+                        return left != right
+                    else:
+                        raise Exception(f"[SEMANTIC ERROR] Cannot use relational operator {operator} on Chant/Stat types.")
+                
                 # print(f"[DEBUG] Comparing: {left} ({type(left)}) {operator} {right} ({type(right)})")
                 if operator == "EQUAL":
                     return left == right
