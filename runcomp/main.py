@@ -61,11 +61,22 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Team(){
-Floater @num;
-Inbound("Enter num" ,@num);
-Announce(@num);
+Wilt Feint @samplecode(){
+Zone Feint @arr[3] = {1,2,3};
+
+@arr[1] = 5;
+@arr[1] = @arr[2];
+
+Rebound @arr[3];
 }
+
+Team(){
+Feint @x;
+@x = @samplecode();
+Announce(@x);
+}
+
+
  '''
  
      # Build lexer and tokenize input

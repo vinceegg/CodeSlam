@@ -786,7 +786,9 @@ class App(customtkinter.CTk):
             get_terminal_input.output_callback = output_callback
 
             # Run the compiler with our custom input function and output callback
-            run_compiler(code, input_func=get_terminal_input)
+            result = run_compiler(code, input_func=get_terminal_input)
+            if result is not None:
+                self.append_terminal_output(str(result), text_color="red")
 
         except ImportError as e:
             self.append_terminal_output("Error importing runcomp compiler:", text_color="red")
