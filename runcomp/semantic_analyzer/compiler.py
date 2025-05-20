@@ -443,7 +443,7 @@ class Compiler:
 
             if initializer.children:
                 data = self.eval(initializer)
-
+                first_dimension = first_dimension + 1
                 if second_dimension is None:
                     if not isinstance(data, list):
                         raise ValueError("[SEMANTIC ERROR] Expected list for 1D array initializer.")
@@ -452,6 +452,7 @@ class Compiler:
                     # print(f"[DEBUG] Storing 1D array {var_name}: {data}")
                     self.env.declare_var(var_name, data, type_name="FeintArray")
                 else:
+                    second_dimension = second_dimension + 1
                     if not isinstance(data, list):
                         raise ValueError("[SEMANTIC ERROR] Expected list for 2D array initializer.")
                     
