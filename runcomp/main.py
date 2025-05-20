@@ -61,18 +61,13 @@ def run_compiler(code, input_func=None):
 
 def main():
     code = '''
-Team(){
-    Stat @sat = Win;
-    Stat @sat2 = Loss;
-    
-    Dribble (@sat <= @sat2) {
-        Announce("Dribble");
-    }
-    Shoot {
-        Announce("Shoot");
-    }
-}
 
+Team() {
+Floater @x = ~2.03;
+
+Announce(Floater(@x));
+
+}
  '''
  
      # Build lexer and tokenize input

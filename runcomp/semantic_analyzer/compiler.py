@@ -948,9 +948,15 @@ class Compiler:
                     return str(val)
                 
                 if isinstance(val, float):
-                    if val < 0:
-                        return f"{-val:.6f}".replace("-", "~")
-                    return f"{val:.6f}"
+                    # Try to retain the decimal places if the value was originally a string
+                    # If not, fallback to default str(val)
+                    original = getattr(node.children[0], "value", None)
+                    if isinstance(original, str) and '.' in original:
+                        # Remove quotes if present
+                        original = original.strip('"')
+                        return original
+                    else:
+                        return str(val)
                 return str(val)
             
 
