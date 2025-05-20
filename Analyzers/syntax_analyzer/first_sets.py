@@ -140,7 +140,7 @@ FIRST_SETS = {
     'feint_array_init': {TokenType.ASSIGN},
     
     # <feint_row>
-    'feint_row': {TokenType.FEINTLIT, TokenType.CODE_BLOCK_LEFT},
+    'feint_row': {TokenType.FEINTLIT, TokenType.CODE_BLOCK_LEFT, TokenType.NEGAFEINT},
     
     # <2D_feint_row>
     '2D_feint_row': {TokenType.COMMA},
@@ -155,7 +155,7 @@ FIRST_SETS = {
     'floater_array_init': {TokenType.ASSIGN, },
     
     # <floater_row>
-    'floater_row': {TokenType.FLOATERLIT, TokenType.CODE_BLOCK_LEFT},
+    'floater_row': {TokenType.FLOATERLIT, TokenType.CODE_BLOCK_LEFT, TokenType.NEGAFLOATER},
     
     # <2D_floater_row>
     '2D_floater_row': {TokenType.COMMA},

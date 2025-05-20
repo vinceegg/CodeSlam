@@ -1449,10 +1449,10 @@ class Parser:
                         <switch_statement> | <forward_statement> | <play_statement> |
                         <run_play_statement> | @identifier <follow_statement>;"""
         self.current_nonterminal = "statement"
-        expected_tokens = self.get_expected_tokens("statement")
+        expected_tokens = self.get_predict_tokens("statement")
         
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("statement", "FIRST", expected_tokens)
+            self.error_handler("statement", "PREDICT", expected_tokens)
         
         # Check which statement type we're parsing
         if self.match_token_type(self.current_token, TokenType.ANNOUNCE):
@@ -1721,18 +1721,43 @@ class Parser:
         self.parse_arithmetic_expression()
         self.parse_more_relational()
     
+    # def parse_more_relational(self) -> None:
+    #     """<more_relational> → <relational_operator> <arithmetic_expression> | λ"""
+    #     self.current_nonterminal = "more_relational"
+    #     expected_tokens = self.get_expected_tokens("more_relational")
+        
+    #     # If we don't have a relational operator, we return (λ case)
+    #     if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+    #         return  # λ case
+        
+    #     # We have a relational operator
+    #     self.parse_relational_operator()
+    #     self.parse_arithmetic_expression()
+
     def parse_more_relational(self) -> None:
         """<more_relational> → <relational_operator> <arithmetic_expression> | λ"""
         self.current_nonterminal = "more_relational"
-        expected_tokens = self.get_expected_tokens("more_relational")
         
-        # If we don't have a relational operator, we return (λ case)
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            return  # λ case
-        
-        # We have a relational operator
-        self.parse_relational_operator()
-        self.parse_arithmetic_expression()
+        # Check if the current token is a relational operator
+        if self.current_token and self.current_token.type in [
+            TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
+            TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL
+        ]:
+            # We have a relational operator
+            self.parse_relational_operator()
+            self.parse_arithmetic_expression()
+        elif self.current_token and self.current_token.type == TokenType.ASSIGN:
+            # If we see an assignment operator where we expect a relational operator,
+            # generate a more helpful error message
+            expected_tokens = {
+                TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
+                TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL
+            }
+            self.error_handler("more_relational", "FIRST", expected_tokens)
+        # Otherwise, λ case (no relational operator)
+        else:
+            # λ case (no relational operator) - explicitly return
+            return
     
     def parse_arithmetic_expression(self) -> None:
         """<arithmetic_expression> → <term> <more_term>"""
@@ -2279,13 +2304,13 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("team_block", "FIRST", expected_tokens)
         
-        self.expect(TokenType.TEAM, strict=True)
-        self.expect(TokenType.LEFT_PAREN, strict=True)
-        self.expect(TokenType.RIGHT_PAREN, strict=True)
-        self.expect(TokenType.CODE_BLOCK_LEFT, strict=True)
+        self.expect(TokenType.TEAM)
+        self.expect(TokenType.LEFT_PAREN)
+        self.expect(TokenType.RIGHT_PAREN)
+        self.expect(TokenType.CODE_BLOCK_LEFT)
         self.parse_decl()
         self.parse_team_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
+        self.expect(TokenType.CODE_BLOCK_RIGHT)
     
     def parse_decl(self) -> None:
         """<decl> → <declaration> <local_dec> | λ"""
