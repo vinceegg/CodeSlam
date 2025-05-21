@@ -491,9 +491,9 @@ class Parser:
             self.error_handler("feint_dec", "FIRST", expected_tokens)
         
         self.expect(TokenType.FEINT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.VAR_INIT)
         self.parse_more_feint()
-        self.expect(TokenType.SEMICOLON, strict=True)   
+        self.expect(TokenType.SEMICOLON)   
         
     def parse_more_feint(self) -> None:
         """<more_feint> → λ | <feint_init> <feint_init_end>"""
@@ -560,9 +560,9 @@ class Parser:
             self.error_handler("floater_dec", "FIRST", expected_tokens)
         
         self.expect(TokenType.FLOATER, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.VAR_INIT)
         self.parse_more_floater()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
 
     def parse_more_floater(self) -> None:
         """<more_floater> → λ | <floater_init> <floater_init_end>"""
@@ -629,9 +629,9 @@ class Parser:
             self.error_handler("chant_dec", "FIRST", expected_tokens)
         
         self.expect(TokenType.CHANT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.VAR_INIT)
         self.parse_more_chant()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
 
     def parse_more_chant(self) -> None:
         """<more_chant> → λ | <chant_init> <chant_init_end>"""
@@ -694,9 +694,9 @@ class Parser:
             self.error_handler("stat_dec", "FIRST", expected_tokens)
         
         self.expect(TokenType.STAT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.VAR_INIT)
         self.parse_more_stat()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
 
     def parse_more_stat(self) -> None:
         """<more_stat> → λ | <stat_init> <stat_init_end>"""
@@ -781,9 +781,9 @@ class Parser:
         expected_tokens = self.get_expected_tokens("const_feint")
         
         self.expect(TokenType.FEINT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.VAR_INIT)
         self.parse_feint_const_init()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
         
     def parse_feint_const_init(self) -> None:
         """<feint_const_init> → <feint_const><feint_const_end>"""
@@ -819,9 +819,9 @@ class Parser:
         expected_tokens = self.get_expected_tokens("const_floater")
         
         self.expect(TokenType.FLOATER, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.VAR_INIT)
         self.parse_floater_const_init()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
         
     def parse_floater_const_init(self) -> None:
         """<floater_const_init> → <floater_const><floater_const_end>"""
@@ -857,9 +857,9 @@ class Parser:
         expected_tokens = self.get_expected_tokens("const_chant")
         
         self.expect(TokenType.CHANT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.VAR_INIT)
         self.parse_chant_const_init()
-        self.expect(TokenType.SEMICOLON, strict=True)
+        self.expect(TokenType.SEMICOLON)
         
     def parse_chant_const_init(self) -> None:
         """<chant_const_init> → <chant_const><chant_const_end>"""
@@ -895,7 +895,7 @@ class Parser:
         expected_tokens = self.get_expected_tokens("const_stat")
         
         self.expect(TokenType.STAT, strict=True)
-        self.expect(TokenType.VAR_INIT, strict=True)
+        self.expect(TokenType.VAR_INIT)
         self.parse_stat_const_init()
         self.expect(TokenType.SEMICOLON, strict=True)
         
@@ -1605,13 +1605,16 @@ class Parser:
         
         # Save the current nonterminal to restore after we're done with outputs
         prev_nonterminal = self.current_nonterminal
+        
+        # Set a context flag to indicate we're parsing announce output
+        self.in_announce_context = True
         self.parse_outputs()
+        self.parse_other_outputs()
+        # Reset the context flag
+        self.in_announce_context = False
+        
         # Restore the current nonterminal
         self.current_nonterminal = prev_nonterminal
-        
-        # The parse_other_outputs will handle nullable cases and report
-        # errors with the correct FIRST set when necessary
-        self.parse_other_outputs()
 
     def parse_outputs(self) -> None:
         """<outputs> → <expression>"""
@@ -1621,17 +1624,57 @@ class Parser:
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
             self.error_handler("outputs", "FIRST", expected_tokens)
         
-        # Create a custom context for expression parsing
+        # Save starting position before parsing the expression
+        initial_position = self.current
+        initial_token = self.current_token
+        
         try:
+            # Attempt to parse the expression
             self.parse_expression()
+            
+            # After parsing the expression in Announce context, we should see either a CHANT_CONCAT (&) or RIGHT_PAREN
+            if hasattr(self, 'in_announce_context') and self.in_announce_context:
+                expected_after_expr = {TokenType.CHANT_CONCAT, TokenType.RIGHT_PAREN}
+                if self.current_token and self.current_token.type not in expected_after_expr:
+                    # If we see a token that indicates a missing concatenation operator
+                    if self.current_token.type in {TokenType.CHANTLIT, TokenType.VAR_INIT, 
+                                                TokenType.FEINT, TokenType.FLOATER, 
+                                                TokenType.CHANT, TokenType.STAT}:
+                        # Create a custom error specifically for missing concatenation
+                        error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                        error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                        error_msg += "Expected Token: {&}"
+                        
+                        raise SyntaxError(
+                            error_msg,
+                            self.line_number,
+                            self.column,
+                            expected="&",
+                            token=self.current_token.value,
+                            nonterminal="other_outputs"
+                        )
         except SyntaxError as e:
-            # If we get a syntax error in the expression, we need to check
-            # if we're specifically expecting only certain tokens after the expression
-            if self.current_token and self.current_token.type == TokenType.VAR_INIT:
-                # This is likely a variable outside an expression context
-                # Show a specific error for this common case - ONLY show & as expected
-                first_tokens = {TokenType.CHANT_CONCAT}
-                self.error_handler("other_outputs", "FIRST", first_tokens)
+            # If the error is related to a missing concatenation operator
+            if self.current_token and self.current_token.type in {TokenType.CHANTLIT, TokenType.VAR_INIT, 
+                                                                TokenType.FEINT, TokenType.FLOATER, 
+                                                                TokenType.CHANT, TokenType.STAT}:
+                # Reset position
+                self.current = initial_position
+                self.current_token = initial_token
+                
+                # Create custom error for missing concatenation
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                error_msg += "Expected Token: {&}"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected="&",
+                    token=self.current_token.value,
+                    nonterminal="other_outputs"
+                )
             else:
                 # Otherwise, re-raise the original error
                 raise
@@ -1639,25 +1682,28 @@ class Parser:
     def parse_other_outputs(self) -> None:
         """<other_outputs> → λ | & <otpt>"""
         self.current_nonterminal = "other_outputs"
-        # Define the FIRST set for other_outputs - only includes the & (CHANT_CONCAT) token
-        first_tokens = {TokenType.CHANT_CONCAT}
-        # Note that this production can also be nullable (λ case)
-        
-        # If the current token is a VAR_INIT (@identifier), give a specific error
-        # This is where we ensure we ONLY show & as the expected token
-        if self.current_token and self.current_token.type == TokenType.VAR_INIT:
-            self.error_handler("other_outputs", "FIRST", first_tokens)
         
         # If not a concatenation operator, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.CHANT_CONCAT):
-            # Before returning, check that we're followed by a valid token in the FOLLOW set
-            if self.current_token and self.current_token.type not in self.get_follow_tokens("other_outputs"):
-                # Use FIRST set for error reporting instead of PREDICT
-                # This ensures only & is shown as expected, not )
-                self.error_handler("other_outputs", "FIRST", first_tokens)
+            # If we're in an announce context and see a token that suggests a missing &
+            if (hasattr(self, 'in_announce_context') and self.in_announce_context and
+                self.current_token and self.current_token.type not in {TokenType.RIGHT_PAREN}):
+                # Create a specific error for missing &
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                error_msg += "Expected Token: {&}"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected="&",
+                    token=self.current_token.value,
+                    nonterminal="other_outputs"
+                )
             return  # λ case
         
-        # Otherwise, parse & <otpts>
+        # Otherwise, parse & <otpt>
         self.expect(TokenType.CHANT_CONCAT)
         self.parse_otpt()
     
@@ -1954,22 +2000,22 @@ class Parser:
             self.expect(TokenType.FEINT)
             self.expect(TokenType.LEFT_PAREN)
             self.parse_typecast_value()
-            self.expect(TokenType.RIGHT_PAREN)
+            self.expect(TokenType.RIGHT_PAREN, strict=True)
         elif self.match_token_type(self.current_token, TokenType.FLOATER):
             self.expect(TokenType.FLOATER)
             self.expect(TokenType.LEFT_PAREN)
             self.parse_typecast_value()
-            self.expect(TokenType.RIGHT_PAREN)
+            self.expect(TokenType.RIGHT_PAREN, strict=True)
         elif self.match_token_type(self.current_token, TokenType.CHANT):
             self.expect(TokenType.CHANT)
             self.expect(TokenType.LEFT_PAREN)
             self.parse_typecast_value()
-            self.expect(TokenType.RIGHT_PAREN)
+            self.expect(TokenType.RIGHT_PAREN, strict=True)
         elif self.match_token_type(self.current_token, TokenType.STAT):
             self.expect(TokenType.STAT)
             self.expect(TokenType.LEFT_PAREN)
             self.parse_typecast_value()
-            self.expect(TokenType.RIGHT_PAREN)
+            self.expect(TokenType.RIGHT_PAREN, strict=True)
         else:
             self.error_handler("type_casting", "FIRST")
 
