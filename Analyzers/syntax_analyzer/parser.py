@@ -166,6 +166,37 @@ class Parser:
                 nonterminal=nonterminal
             )
 
+    def handle_announce_context_error(self) -> None:
+        """Handle errors specifically in announce context where we expect ) or &"""
+        expected_tokens = {TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT}
+        
+        if self.current_token:
+            token_value = self.current_token.value
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += f"Unexpected Token: {token_value}\n"
+            error_msg += "Expected Token: {), &}"
+            
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected="), &",
+                token=token_value,
+                nonterminal="announce_statement"
+            )
+        else:
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += "Unexpected end of file while parsing announce statement.\n"
+            error_msg += "Expected Token: {), &}"
+            
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected="), &",
+                token="EOF",
+                nonterminal="announce_statement"
+            )
 
     def skip_whitespace_and_comments(self):
         """
@@ -1591,7 +1622,32 @@ class Parser:
         
         self.expect(TokenType.ANNOUNCE, strict=True)
         self.expect(TokenType.LEFT_PAREN, strict=True)
-        self.parse_otpt()
+        
+        # Set announce context flag before parsing otpt
+        self.in_announce_context = True
+        
+        try:
+            self.parse_otpt()
+        except SyntaxError as e:
+            # Reset the context flag
+            self.in_announce_context = False
+            
+            # Only use announce context error for truly unexpected tokens at the top level
+            # Don't interfere with normal concatenation parsing
+            if (self.current_token and 
+                self.current_token.type not in {TokenType.RIGHT_PAREN, TokenType.CHANT_CONCAT} and
+                self.current_token.type not in {TokenType.SPACE, TokenType.TAB, TokenType.NEWLINE} and
+                # Only trigger if we're not in the middle of parsing a valid sequence
+                not (hasattr(e, 'nonterminal') and e.nonterminal in ['other_outputs', 'outputs', 'otpt'])):
+                # This is likely a context where we should show ) or & as expected tokens
+                self.handle_announce_context_error()
+            else:
+                # Re-raise the original error - let normal parsing handle it
+                raise
+        
+        # Reset the context flag
+        self.in_announce_context = False
+        
         self.expect(TokenType.RIGHT_PAREN, strict=True)
         self.expect(TokenType.SEMICOLON, strict=True)
 
@@ -1606,12 +1662,8 @@ class Parser:
         # Save the current nonterminal to restore after we're done with outputs
         prev_nonterminal = self.current_nonterminal
         
-        # Set a context flag to indicate we're parsing announce output
-        self.in_announce_context = True
         self.parse_outputs()
         self.parse_other_outputs()
-        # Reset the context flag
-        self.in_announce_context = False
         
         # Restore the current nonterminal
         self.current_nonterminal = prev_nonterminal
@@ -2166,6 +2218,33 @@ class Parser:
                     expected=expected_tokens_str,
                     token=self.current_token.value,
                     nonterminal="relational_operator"
+                )
+            # Check if we're missing an operand after a relational operator
+            elif (hasattr(e, 'nonterminal') and e.nonterminal == "arithmetic_expression" and 
+                self.current_token and self.current_token.type == TokenType.RIGHT_PAREN):
+                # We're likely missing the right operand after a relational operator
+                # Show only the tokens that can start an arithmetic expression
+                arithmetic_first_tokens = {
+                    TokenType.VAR_INIT,
+                    TokenType.FEINTLIT,
+                    TokenType.NEGAFEINT,
+                    TokenType.FLOATERLIT,
+                    TokenType.NEGAFLOATER,
+                    TokenType.LEFT_PAREN
+                }
+                
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                expected_tokens_str = ', '.join(t.value for t in arithmetic_first_tokens if hasattr(t, 'value'))
+                error_msg += f"Expected Token: {{{expected_tokens_str}}}"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected=expected_tokens_str,
+                    token=self.current_token.value,
+                    nonterminal="arithmetic_expression"
                 )
             else:
                 # Re-raise the original error
