@@ -74,65 +74,74 @@ class Lexer:
         tokens = [] # is an empty list that will eventually hold the tokens created from the text.
         errors = [] # is an empty list that will store any errors found during the tokenization
 
+        # Dictionary to track consecutive occurrences of symbols
+        consecutive_symbols = {}
+        # Define the maximum allowed consecutive occurrences
+        max_consecutive = 1  # Adjust this value as needed
+
         while self.current_char is not None:
             # SYMBOLS
             if self.current_char in " ":
                 tokens.append(Token(TokenType.SPACE.value, self.current_char))
                 self.advance()
+                consecutive_symbols = {}  # Reset tracking after a space
             elif self.current_char in "\n":
                 tokens.append(Token(TokenType.NEWLINE.value, self.current_char))
                 self.advance()
+                consecutive_symbols = {}  # Reset tracking after a newline
             elif self.current_char in "\t":
                 tokens.append(Token(TokenType.TAB.value, self.current_char))
                 self.advance()
-            elif self.current_char in "(":
-                tokens.append(Token(TokenType.LEFT_PAREN.value, self.current_char))
+                consecutive_symbols = {}  # Reset tracking after a tab
+            # Process symbols that are allowed to be consecutive without errors
+            elif self.current_char in ["(", ")", "[", "]", "{", "}", "_"]:
+                # Process these symbols normally without checking for consecutive occurrences
+                if self.current_char == ")":
+                    tokens.append(Token(TokenType.RIGHT_PAREN.value, self.current_char))
+                elif self.current_char == "(":
+                    tokens.append(Token(TokenType.LEFT_PAREN.value, self.current_char))
+                elif self.current_char == "[":
+                    tokens.append(Token(TokenType.ARRAY_INDEX_LEFT.value, self.current_char))
+                elif self.current_char == "]":
+                    tokens.append(Token(TokenType.ARRAY_INDEX_RIGHT.value, self.current_char))
+                elif self.current_char == "{":
+                    tokens.append(Token(TokenType.CODE_BLOCK_LEFT.value, self.current_char))
+                elif self.current_char == "}":
+                    tokens.append(Token(TokenType.CODE_BLOCK_RIGHT.value, self.current_char))
+                elif self.current_char == "_":
+                    tokens.append(Token(TokenType.UNDERSCORE.value, self.current_char))
                 self.advance()
-            elif self.current_char in ")":
-                tokens.append(Token(TokenType.RIGHT_PAREN.value, self.current_char))
-                self.advance()
-            elif self.current_char in "[":
-                tokens.append(Token(TokenType.ARRAY_INDEX_LEFT.value, self.current_char))
-                self.advance()
-            elif self.current_char in "]":
-                tokens.append(Token(TokenType.ARRAY_INDEX_RIGHT.value, self.current_char))
-                self.advance()
-            elif self.current_char in "{":
-                tokens.append(Token(TokenType.CODE_BLOCK_LEFT.value, self.current_char))
-                self.advance()
-            elif self.current_char in "}":
-                tokens.append(Token(TokenType.CODE_BLOCK_RIGHT.value, self.current_char))
-                self.advance()
-            elif self.current_char in ";":
-                tokens.append(Token(TokenType.SEMICOLON.value, self.current_char))
-                self.advance()
-            elif self.current_char in ":":
-                tokens.append(Token(TokenType.COLON.value, self.current_char))
-                self.advance()
-            elif self.current_char in ",":
-                tokens.append(Token(TokenType.COMMA.value, self.current_char))
-                self.advance()
-            # elif self.current_char in "~":
-            #     tokens.append(Token(TokenType.NEGATIVE.value, self.current_char))
-            #     self.advance()
-            elif self.current_char in "_":
-                tokens.append(Token(TokenType.UNDERSCORE.value, self.current_char))
-                self.advance()
-            elif self.current_char in "&":
-                tokens.append(Token(TokenType.CHANT_CONCAT.value, self.current_char))
-                self.advance()
-            # elif self.current_char in "@":
-            #     tokens.append(Token(TokenType.VAR_INIT.value, self.current_char))
-            #     self.advance()
+                
+            # Check for consecutive symbols and throw errors if needed
+            elif self.current_char in [";", ":", ",", "&"]:
+                # Update consecutive count for this symbol
+                if self.current_char in consecutive_symbols:
+                    consecutive_symbols[self.current_char] += 1
+                else:
+                    # Reset tracking for other symbols
+                    consecutive_symbols = {self.current_char: 1}
+                
+                # Check if we've exceeded the maximum allowed consecutive occurrences
+                if consecutive_symbols[self.current_char] > max_consecutive:
+                    pos_start = self.pos.copy()
+                    error_message = f"Too many consecutive '{self.current_char}' characters"
+                    errors.append(IllegalCharError(pos_start, self.pos, error_message).as_string())
+                    self.advance()
+                else:
+                    # Process symbol normally
+                    if self.current_char == ";":
+                        tokens.append(Token(TokenType.SEMICOLON.value, self.current_char))
+                    elif self.current_char == ":":
+                        tokens.append(Token(TokenType.COLON.value, self.current_char))
+                    elif self.current_char == ",":
+                        tokens.append(Token(TokenType.COMMA.value, self.current_char))
+                    elif self.current_char == "&":
+                        tokens.append(Token(TokenType.CHANT_CONCAT.value, self.current_char))
+                    self.advance()
             elif self.current_char in "\\":
+                consecutive_symbols = {}  # Reset tracking
                 self.advance()
                 match self.current_char:
-                    # case "n":
-                    #     tokens.append(Token(TokenType.NEWLINE.value, "\\n"))
-                    #     self.advance()
-                    # case "t":
-                    #     tokens.append(Token(TokenType.TAB.value, "\\t"))
-                    #     self.advance()
                     case "\"":
                         tokens.append(Token(TokenType.BACKSLASH.value, "\\"))
                         self.advance()
