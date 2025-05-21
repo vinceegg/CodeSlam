@@ -1594,7 +1594,7 @@ class Parser:
         self.parse_otpt()
         self.expect(TokenType.RIGHT_PAREN, strict=True)
         self.expect(TokenType.SEMICOLON, strict=True)
-    
+
     def parse_otpt(self) -> None:
         """<otpt> → <outputs><other_outputs>"""
         self.current_nonterminal = "otpt"
@@ -1604,11 +1604,13 @@ class Parser:
             self.error_handler("otpt", "FIRST", expected_tokens)
         
         # Save the current nonterminal to restore after we're done with outputs
-        # This ensures that errors in outputs don't get bubbled up with the wrong nonterminal
         prev_nonterminal = self.current_nonterminal
         self.parse_outputs()
         # Restore the current nonterminal
         self.current_nonterminal = prev_nonterminal
+        
+        # The parse_other_outputs will handle nullable cases and report
+        # errors with the correct FIRST set when necessary
         self.parse_other_outputs()
 
     def parse_outputs(self) -> None:
@@ -1620,7 +1622,6 @@ class Parser:
             self.error_handler("outputs", "FIRST", expected_tokens)
         
         # Create a custom context for expression parsing
-        # This will help us track where we are in the parse tree and provide better errors
         try:
             self.parse_expression()
         except SyntaxError as e:
@@ -1628,9 +1629,9 @@ class Parser:
             # if we're specifically expecting only certain tokens after the expression
             if self.current_token and self.current_token.type == TokenType.VAR_INIT:
                 # This is likely a variable outside an expression context
-                # Show a specific error for this common case
-                expected_after_expr = {TokenType.CHANT_CONCAT, TokenType.RIGHT_PAREN}
-                self.error_handler("other_outputs", "PREDICT", expected_after_expr)
+                # Show a specific error for this common case - ONLY show & as expected
+                first_tokens = {TokenType.CHANT_CONCAT}
+                self.error_handler("other_outputs", "FIRST", first_tokens)
             else:
                 # Otherwise, re-raise the original error
                 raise
@@ -1638,19 +1639,22 @@ class Parser:
     def parse_other_outputs(self) -> None:
         """<other_outputs> → λ | & <otpt>"""
         self.current_nonterminal = "other_outputs"
-        # Define the specific predict set for other_outputs (rather than using the generic get_expected_tokens)
-        expected_tokens = {TokenType.CHANT_CONCAT, TokenType.RIGHT_PAREN}
+        # Define the FIRST set for other_outputs - only includes the & (CHANT_CONCAT) token
+        first_tokens = {TokenType.CHANT_CONCAT}
+        # Note that this production can also be nullable (λ case)
         
         # If the current token is a VAR_INIT (@identifier), give a specific error
+        # This is where we ensure we ONLY show & as the expected token
         if self.current_token and self.current_token.type == TokenType.VAR_INIT:
-            self.error_handler("other_outputs", "PREDICT", expected_tokens)
+            self.error_handler("other_outputs", "FIRST", first_tokens)
         
         # If not a concatenation operator, return (λ case)
         if not self.current_token or not self.match_token_type(self.current_token, TokenType.CHANT_CONCAT):
-            # Before returning, check that we're followed by a valid token
-            # If not in follow set, throw an error with the specific expected tokens
+            # Before returning, check that we're followed by a valid token in the FOLLOW set
             if self.current_token and self.current_token.type not in self.get_follow_tokens("other_outputs"):
-                self.error_handler("other_outputs", "PREDICT", expected_tokens)
+                # Use FIRST set for error reporting instead of PREDICT
+                # This ensures only & is shown as expected, not )
+                self.error_handler("other_outputs", "FIRST", first_tokens)
             return  # λ case
         
         # Otherwise, parse & <otpts>
