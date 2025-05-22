@@ -533,11 +533,23 @@ class Parser:
         
         # If we don't have tokens in FIRST(feint_init), return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            # If we're at the end of a variable declaration and see a token that's not allowed,
+            # make sure we include all possible tokens in the error message
+            if self.current_token and self.current_token.type not in self.get_follow_tokens("more_feint"):
+                # Create a more specific error message that includes =, ,, and ;
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                error_msg += "Expected Token: {=, ,, ;}"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected="=, ,, ;",
+                    token=self.current_token.value,
+                    nonterminal="more_feint"
+                )
             return  # λ case
-        
-        # If there's an error, use PREDICT set
-        # if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-        #     self.error_handler("more_feint", "PREDICT", expected_tokens)
         
         self.parse_feint_init()
         self.parse_feint_init_end()
@@ -579,6 +591,23 @@ class Parser:
             return  # λ case
         
         self.expect(TokenType.COMMA)
+        
+        # After a comma, we strictly expect a variable identifier
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.VAR_INIT):
+            # Create a more specific error for this case
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}\n"
+            error_msg += "Expected Token: @variable"
+            
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected="@variable",
+                token=self.current_token.value if self.current_token else "EOF",
+                nonterminal="feint_init_end"
+            )
+        
         self.expect(TokenType.VAR_INIT)
         self.parse_more_feint()
 
@@ -598,15 +627,27 @@ class Parser:
     def parse_more_floater(self) -> None:
         """<more_floater> → λ | <floater_init> <floater_init_end>"""
         self.current_nonterminal = "more_floater"
-        expected_tokens = self.get_predict_tokens("more_floater")
+        expected_tokens = self.get_predict_tokens("more_floater")  # Using PREDICT set
         
         # If we don't have tokens in FIRST(floater_init), return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            # If we're at the end of a variable declaration and see a token that's not allowed,
+            # make sure we include all possible tokens in the error message
+            if self.current_token and self.current_token.type not in self.get_follow_tokens("more_floater"):
+                # Create a more specific error message that includes =, ,, and ;
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                error_msg += "Expected Token: {=, ,, ;}"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected="=, ,, ;",
+                    token=self.current_token.value,
+                    nonterminal="more_floater"
+                )
             return  # λ case
-        
-        # If there's an error, use PREDICT set
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("more_floater", "PREDICT", expected_tokens)
         
         self.parse_floater_init()
         self.parse_floater_init_end()
@@ -648,6 +689,23 @@ class Parser:
             return  # λ case
         
         self.expect(TokenType.COMMA)
+        
+        # After a comma, we strictly expect a variable identifier
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.VAR_INIT):
+            # Create a more specific error for this case
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}\n"
+            error_msg += "Expected Token: @variable"
+            
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected="@variable",
+                token=self.current_token.value if self.current_token else "EOF",
+                nonterminal="floater_init_end"
+            )
+        
         self.expect(TokenType.VAR_INIT)
         self.parse_more_floater()
 
@@ -667,15 +725,27 @@ class Parser:
     def parse_more_chant(self) -> None:
         """<more_chant> → λ | <chant_init> <chant_init_end>"""
         self.current_nonterminal = "more_chant"
-        expected_tokens = self.get_predict_tokens("more_chant")
+        expected_tokens = self.get_predict_tokens("more_chant")  # Using PREDICT set
         
         # If we don't have tokens in FIRST(chant_init), return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            # If we're at the end of a variable declaration and see a token that's not allowed,
+            # make sure we include all possible tokens in the error message
+            if self.current_token and self.current_token.type not in self.get_follow_tokens("more_chant"):
+                # Create a more specific error message that includes =, ,, and ;
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                error_msg += "Expected Token: {=, ,, ;}"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected="=, ,, ;",
+                    token=self.current_token.value,
+                    nonterminal="more_chant"
+                )
             return  # λ case
-        
-        # If there's an error, use PREDICT set
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("more_chant", "PREDICT", expected_tokens)
         
         self.parse_chant_init()
         self.parse_chant_init_end()
@@ -713,6 +783,23 @@ class Parser:
             return  # λ case
         
         self.expect(TokenType.COMMA)
+        
+        # After a comma, we strictly expect a variable identifier
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.VAR_INIT):
+            # Create a more specific error for this case
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}\n"
+            error_msg += "Expected Token: @variable"
+            
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected="@variable",
+                token=self.current_token.value if self.current_token else "EOF",
+                nonterminal="chant_init_end"
+            )
+        
         self.expect(TokenType.VAR_INIT)
         self.parse_more_chant()
 
@@ -732,15 +819,27 @@ class Parser:
     def parse_more_stat(self) -> None:
         """<more_stat> → λ | <stat_init> <stat_init_end>"""
         self.current_nonterminal = "more_stat"
-        expected_tokens = self.get_predict_tokens("more_stat")
+        expected_tokens = self.get_predict_tokens("more_stat")  # Using PREDICT set
         
         # If we don't have tokens in FIRST(stat_init), return (λ case)
         if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+            # If we're at the end of a variable declaration and see a token that's not allowed,
+            # make sure we include all possible tokens in the error message
+            if self.current_token and self.current_token.type not in self.get_follow_tokens("more_stat"):
+                # Create a more specific error message that includes =, ,, and ;
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                error_msg += "Expected Token: {=, ,, ;}"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected="=, ,, ;",
+                    token=self.current_token.value,
+                    nonterminal="more_stat"
+                )
             return  # λ case
-        
-        # If there's an error, use PREDICT set
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("more_stat", "PREDICT", expected_tokens)
         
         self.parse_stat_init()
         self.parse_stat_init_end()
@@ -783,6 +882,23 @@ class Parser:
             return  # λ case
         
         self.expect(TokenType.COMMA)
+        
+        # After a comma, we strictly expect a variable identifier
+        if not self.current_token or not self.match_token_type(self.current_token, TokenType.VAR_INIT):
+            # Create a more specific error for this case
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}\n"
+            error_msg += "Expected Token: @variable"
+            
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected="@variable",
+                token=self.current_token.value if self.current_token else "EOF",
+                nonterminal="stat_init_end"
+            )
+        
         self.expect(TokenType.VAR_INIT)
         self.parse_more_stat()
 
