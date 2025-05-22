@@ -246,7 +246,7 @@ FIRST_SETS = {
     # <follow_statement>
     'follow_statement': {TokenType.INCREMENT, TokenType.DECREMENT, TokenType.LEFT_PAREN, TokenType.ASSIGN, 
                         TokenType.ADD_ASSIGN, TokenType.SUB_ASSIGN, TokenType.MUL_ASSIGN, 
-                        TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN, TokenType.ARRAY_INDEX_LEFT, TokenType.VAR_INIT}, #BALIKAN array var init
+                        TokenType.DIV_ASSIGN, TokenType.MOD_ASSIGN, TokenType.ARRAY_INDEX_LEFT}, #BALIKAN array var init
 
     # <element_index>
     'element_index': {TokenType.FEINTLIT, TokenType.VAR_INIT},
