@@ -2246,6 +2246,36 @@ class Parser:
                     token=self.current_token.value,
                     nonterminal="arithmetic_expression"
                 )
+            # Handle unclosed condition parentheses - similar to announce statement
+            elif (self.current_token and self.current_token.type not in {TokenType.RIGHT_PAREN} and
+                self.current_token.type in {TokenType.COLON, TokenType.CODE_BLOCK_LEFT, TokenType.NEWLINE}):
+                # We're likely missing the closing parenthesis for the condition
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                error_msg += "Expected Token: {)}"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected=")",
+                    token=self.current_token.value,
+                    nonterminal="dribble_statement"
+                )
+            # Handle end of file while parsing condition
+            elif not self.current_token:
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += "Unexpected end of file while parsing dribble condition.\n"
+                error_msg += "Expected Token: {)}"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected=")",
+                    token="EOF",
+                    nonterminal="dribble_statement"
+                )
             else:
                 # Re-raise the original error
                 raise
