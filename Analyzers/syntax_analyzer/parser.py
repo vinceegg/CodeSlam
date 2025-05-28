@@ -1944,9 +1944,81 @@ class Parser:
         
         # We have a logical operator
         self.parse_log_operator()
+
+        valid_relational_start = {
+            TokenType.VAR_INIT,
+            TokenType.FEINTLIT,
+            TokenType.NEGAFEINT,
+            TokenType.FLOATERLIT,
+            TokenType.NEGAFLOATER,
+            TokenType.LEFT_PAREN
+        }
+        if not self.current_token or self.current_token.type not in valid_relational_start:
+            error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+            error_msg += f"Unexpected Token: {self.current_token.value if self.current_token else 'EOF'}\n"
+            error_msg += "Missing operand after logical operator.\n"
+            expected_tokens_str = ', '.join([
+                "@variable",
+                "Feint Literal",
+                "Negative Feint Literal",
+                "Floater Literal",
+                "Negative Floater Literal",
+                "("
+            ])
+            error_msg += f"Expected Token: {{{expected_tokens_str}}}"
+            raise SyntaxError(
+                error_msg,
+                self.line_number,
+                self.column,
+                expected=expected_tokens_str,
+                token=self.current_token.value if self.current_token else "EOF",
+                nonterminal="logical_expression"
+            )
+
+        # --- Parse the relational expression ---
+        # Save the token to check if it's just a variable
+        start_token = self.current_token
         self.parse_relational_expression()
-        self.parse_more_logical()  # Recursive call
-    
+
+        # --- NEW: Disallow just a variable after OR/AND ---
+        # If the relational expression was just a variable (no relational operator after it)
+        relational_operators = {
+            TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
+            TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL,
+            TokenType.ASSIGN, TokenType.RIGHT_PAREN,
+        }
+        # If start_token is VAR_INIT and after parsing, the next token is not a relational operator or right paren
+        if start_token and start_token.type == TokenType.VAR_INIT:
+            if (self.current_token and 
+                self.current_token.type not in relational_operators and 
+                self.current_token.type != TokenType.RIGHT_PAREN):
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                error_msg += "Expected relational operator after variable in logical expression.\n"
+                expected_tokens_str = ', '.join([
+                    "==",
+                    "<=",
+                    ">=",
+                    "!=",
+                    "<",
+                    ">",
+                    "=",
+                    ")"
+                ])
+                error_msg += f"Expected Token: {{{expected_tokens_str}}}"
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected=expected_tokens_str,
+                    token=self.current_token.value,
+                    nonterminal="relational_expression"
+                )
+
+        self.parse_more_logical()  # Recursive call            
+        self.parse_relational_expression()
+        self.parse_log_operator()
+
     def parse_log_operator(self) -> None:
         """<log_operator> → AND | OR"""
         self.current_nonterminal = "log_operator"
@@ -3121,7 +3193,7 @@ class Parser:
                     expected=">=,==, !=, <, <=, >, )",
                     token=self.current_token.value,
                     nonterminal="logical_operator"
-                )
+                )   
             
             # If the current token is not a valid relational operator, show an error
             if self.current_token and self.current_token.type not in valid_relational_operators:
