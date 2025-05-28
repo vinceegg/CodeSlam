@@ -2796,87 +2796,198 @@ class Parser:
         self.expect(TokenType.SEMICOLON, strict=True)
 
     def parse_play_statement(self) -> None:
-        """<play_statement> → Play (<expression>) {<team_statement>}"""
-        self.current_nonterminal = "play_statement"
-        expected_tokens = self.get_expected_tokens("play_statement")
-        
-        if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
-            self.error_handler("play_statement", "FIRST", expected_tokens)
-        
-        self.expect(TokenType.PLAY, strict=True)
-        self.expect(TokenType.LEFT_PAREN, strict=True)
-        
-        # Save the current position before parsing the condition expression
-        condition_start = self.current
-        first_token_is_var = self.current_token and self.current_token.type == TokenType.VAR_INIT
-        
-        # Parse the first identifier in the condition
-        if first_token_is_var:
-            self.advance()  # Consume the first identifier
+            """<play_statement> → Play (<expression>) {<team_statement>}"""
+            self.current_nonterminal = "play_statement"
+            expected_tokens = self.get_expected_tokens("play_statement")
             
-            # Check if the token following the identifier is a valid relational operator
-            valid_relational_operators = {
-                TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
-                TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL,
-                TokenType.MOD
-            }
+            if not self.current_token or not any(self.match_token_type(self.current_token, t) for t in expected_tokens):
+                self.error_handler("play_statement", "FIRST", expected_tokens)
             
-            # If the current token is not a valid relational operator, show an error
-            if self.current_token and self.current_token.type not in valid_relational_operators:
+            self.expect(TokenType.PLAY, strict=True)
+            self.expect(TokenType.LEFT_PAREN, strict=True)
+            
+            # NEW: Check for empty condition - Fix for Play()
+            if self.current_token and self.current_token.type == TokenType.RIGHT_PAREN:
                 error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
                 error_msg += f"Unexpected Token: {self.current_token.value}\n"
-                expected_tokens_str = ', '.join(t.value for t in valid_relational_operators if hasattr(t, 'value'))
-                error_msg += f"Expected relational operator: {{{expected_tokens_str}}}"
+                error_msg += "Expected condition expression in Play statement"
                 
                 raise SyntaxError(
                     error_msg,
                     self.line_number,
                     self.column,
-                    expected=expected_tokens_str,
+                    expected="Empty play condition", #IF EMPTY CONDITION
                     token=self.current_token.value,
-                    nonterminal="relational_operator"
+                    nonterminal="play_statement"
                 )
+            # NEW: Handle chantlit as a invalid condition
+            if self.current_token and self.current_token.type == TokenType.CHANTLIT:
+                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                error_msg += "Expected condition expression in Play statement"
+                
+                raise SyntaxError(
+                    error_msg,
+                    self.line_number,
+                    self.column,
+                    expected="Invalid play condition: Chant Literal is not allowed",
+                    token=self.current_token.value,
+                    nonterminal="play_statement"
+                )    
             
-            # Go back to where we started
-            self.current = condition_start
-            self.current_token = self.tokens[self.current]
-            self.skip_whitespace_and_comments()
-        
-        # Now proceed with regular expression parsing
-        try:
-            self.parse_expression()
-        except SyntaxError as e:
-            # If we encounter a syntax error in the condition expression
-            # Check if we have two identifiers next to each other
-            if (self.current_token and self.current_token.type == TokenType.VAR_INIT and 
-                condition_start < self.current and self.tokens[condition_start].type == TokenType.VAR_INIT):
-                # We have two identifiers adjacent - this is likely a case where a relational operator is missing
-                relational_operators = {
+            # Save the current position before parsing the condition expression
+            condition_start = self.current
+            first_token_is_var = self.current_token and self.current_token.type == TokenType.VAR_INIT
+            
+            # Parse the first identifier in the condition
+            if first_token_is_var:
+                self.advance()  # Consume the first identifier
+                
+                # Check if the token following the identifier is a valid relational operator
+                valid_relational_operators = {
                     TokenType.LESS_THAN, TokenType.GREATER_THAN, TokenType.EQUAL,
-                    TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL
+                    TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL, TokenType.NOT_EQUAL,
+                    TokenType.MOD
                 }
-                # Create a custom error message showing only relational operators as expected
-                error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
-                error_msg += f"Unexpected Token: {self.current_token.value}\n"
-                expected_tokens_str = ', '.join(t.value for t in relational_operators if hasattr(t, 'value'))
-                error_msg += f"Expected relational operator: {{{expected_tokens_str}}}"
                 
-                raise SyntaxError(
-                    error_msg,
-                    self.line_number,
-                    self.column,
-                    expected=expected_tokens_str,
-                    token=self.current_token.value,
-                    nonterminal="relational_operator"
-                )
-            else:
-                # Re-raise the original error
-                raise
-        
-        self.expect(TokenType.RIGHT_PAREN, strict=True)
-        self.expect(TokenType.CODE_BLOCK_LEFT, strict=True)
-        self.parse_team_statement()
-        self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
+                # NEW: Check for missing relational operator between two variables
+                # This fixes: Play(@x < 0 @y > 10) - missing AND/OR
+                if self.current_token and self.current_token.type == TokenType.VAR_INIT:
+                    error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                    error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                    error_msg += "Expected Token: {AND, OR}"
+                    
+                    raise SyntaxError(
+                        error_msg,
+                        self.line_number,
+                        self.column,
+                        expected="AND, OR",
+                        token=self.current_token.value,
+                        nonterminal="logical_operator"
+                    )
+                
+                # If the current token is not a valid relational operator, show an error
+                if self.current_token and self.current_token.type not in valid_relational_operators:
+                    error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                    error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                    expected_tokens_str = ', '.join(t.value for t in valid_relational_operators if hasattr(t, 'value'))
+                    error_msg += f"Expected relational operator: {{{expected_tokens_str}}}"
+                    
+                    raise SyntaxError(
+                        error_msg,
+                        self.line_number,
+                        self.column,
+                        expected=expected_tokens_str,
+                        token=self.current_token.value,
+                        nonterminal="relational_operator"
+                    )
+                
+                # Go back to where we started
+                self.current = condition_start
+                self.current_token = self.tokens[self.current]
+                self.skip_whitespace_and_comments()
+            
+            # Now proceed with regular expression parsing
+            try:
+                self.parse_expression()
+            except SyntaxError as e:
+                # NEW: Handle logical operator errors - Fix for @x < 0 @y > 10
+                if (self.current_token and self.current_token.type == TokenType.VAR_INIT and 
+                    condition_start < self.current and self.tokens[condition_start].type == TokenType.VAR_INIT):
+                    
+                    # Check if we have a complete relational expression before this variable
+                    # This means we're missing AND/OR between conditions
+                    error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                    error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                    error_msg += "Expected Token: {AND, OR}"
+                    
+                    raise SyntaxError(
+                        error_msg,
+                        self.line_number,
+                        self.column,
+                        expected="AND, OR",
+                        token=self.current_token.value,
+                        nonterminal="logical_operator"
+                    )
+                
+                # NEW: Handle missing operand after relational operator - Fix for @x !=)
+                elif (hasattr(e, 'nonterminal') and e.nonterminal == "arithmetic_expression" and 
+                    self.current_token and self.current_token.type == TokenType.RIGHT_PAREN):
+                    
+                    # We're missing the right operand after a relational operator
+                    # Show only the tokens that can start an arithmetic expression
+                    arithmetic_first_tokens = {
+                        TokenType.VAR_INIT,
+                        TokenType.FEINTLIT,
+                        TokenType.NEGAFEINT,
+                        TokenType.FLOATERLIT,
+                        TokenType.NEGAFLOATER,
+                        TokenType.LEFT_PAREN
+                    }
+                    
+                    error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                    error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                    expected_tokens_str = ', '.join([
+                        "@variable",
+                        "Negative Feint Literal", 
+                        "Feint Literal",
+                        "Floater Literal",
+                        "Negative Floater Literal", 
+                        "Floater",
+                        "Feint",
+                        "("
+                    ])
+                    error_msg += f"Expected Token: {{{expected_tokens_str}}}"
+                    
+                    raise SyntaxError(
+                        error_msg,
+                        self.line_number,
+                        self.column,
+                        expected=expected_tokens_str,
+                        token=self.current_token.value,
+                        nonterminal="arithmetic_expression"
+                    )
+                
+                # NEW: Handle unclosed condition parentheses - Fix for Play((@x == 1) {
+                elif (self.current_token and self.current_token.type not in {TokenType.RIGHT_PAREN} and
+                    self.current_token.type in {TokenType.COLON, TokenType.CODE_BLOCK_LEFT, TokenType.NEWLINE}):
+                    
+                    # We're likely missing the closing parenthesis for the condition
+                    error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                    error_msg += f"Unexpected Token: {self.current_token.value}\n"
+                    error_msg += "Expected Token: {)}"
+                    
+                    raise SyntaxError(
+                        error_msg,
+                        self.line_number,
+                        self.column,
+                        expected=">=,==, OR, !=, <, AND, <=, >, )",
+                        token=self.current_token.value,
+                        nonterminal="play_statement"
+                    )
+                
+                # NEW: Handle end of file while parsing condition
+                elif not self.current_token:
+                    error_msg = f"Syntax Error at line {self.line_number}, column {self.column}:\n"
+                    error_msg += "Unexpected end of file while parsing Play condition.\n"
+                    error_msg += "Expected Token: {)}"
+                    
+                    raise SyntaxError(
+                        error_msg,
+                        self.line_number,
+                        self.column,
+                        expected=")",
+                        token="EOF",
+                        nonterminal="play_statement"
+                    )
+                else:
+                    # Re-raise the original error if none of our specific cases match
+                    raise
+            
+            self.expect(TokenType.RIGHT_PAREN, strict=True)
+            self.expect(TokenType.CODE_BLOCK_LEFT, strict=True)
+            self.parse_team_statement()
+            self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
     
     def parse_run_play_statement(self) -> None:
         """<run_play_statement> → Run {<team_statement>} Play (<expression>);"""
@@ -2892,10 +3003,8 @@ class Parser:
         self.expect(TokenType.CODE_BLOCK_RIGHT, strict=True)
         self.expect(TokenType.PLAY, strict=True)
         self.expect(TokenType.LEFT_PAREN, strict=True)
-        self.parse_expression()
-        self.expect(TokenType.RIGHT_PAREN, strict=True)
-        self.expect(TokenType.SEMICOLON, strict=True)
-    
+
+            
     def parse_team_block(self) -> None:
         """<team_block> → Team() { <local_dec> <team_statement> }"""
         self.current_nonterminal = "team_block"
